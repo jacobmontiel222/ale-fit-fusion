@@ -1,4 +1,4 @@
-import { Bell, Utensils, Activity, TrendingUp, ArrowRight, Scale } from "lucide-react";
+import { Bell, Utensils, Activity, TrendingUp, ArrowRight, Scale, Footprints, Flame } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -38,6 +38,7 @@ const Index = () => {
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">Ejercicio:</span>
+                  <Flame className="w-4 h-4 text-accent" />
                   <span className="text-sm font-semibold text-foreground">252 Kcal</span>
                 </div>
               </div>
@@ -69,7 +70,7 @@ const Index = () => {
           {/* Steps Card */}
           <StatsCard>
             <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-foreground" />
+              <Footprints className="w-5 h-5 text-foreground" />
               <h3 className="text-lg font-semibold text-foreground">Pasos</h3>
             </div>
             <p className="text-4xl font-bold text-foreground mb-2">12.432</p>
