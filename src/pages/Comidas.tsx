@@ -1,4 +1,4 @@
-import { Plus, ScanLine, ArrowLeft } from "lucide-react";
+import { Plus, ChefHat } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -17,20 +17,17 @@ const Comidas = () => {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button 
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-card rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-foreground" />
-          </button>
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground">Comidas</h1>
         </div>
 
         {/* Main Calories Summary */}
         <StatsCard className="relative overflow-hidden">
-          <div className="flex flex-col items-center gap-6">
-            <CircularProgress value={1428} max={2000} />
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Objetivo: 2000 Kcal</p>
+              <CircularProgress value={1428} max={2000} size={120} strokeWidth={10} />
+            </div>
             
             <div className="w-full space-y-3">
               <div className="flex justify-between items-center">
@@ -73,16 +70,16 @@ const Comidas = () => {
         </StatsCard>
 
         {/* Meal Cards */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {meals.map((meal, index) => (
-            <StatsCard key={index}>
+            <StatsCard key={index} className="py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground mb-1">{meal.name}</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-0.5">{meal.name}</h3>
                   <p className="text-muted-foreground text-sm">{meal.calories} Kcal</p>
                 </div>
-                <button className="w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform">
-                  <Plus className="w-5 h-5 text-primary-foreground" />
+                <button className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform">
+                  <Plus className="w-4 h-4 text-primary-foreground" />
                 </button>
               </div>
             </StatsCard>
@@ -93,12 +90,12 @@ const Comidas = () => {
         <StatsCard>
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-              <ScanLine className="w-6 h-6 text-primary" />
+              <ChefHat className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground mb-2">Recetas</h3>
               <p className="text-sm text-muted-foreground">
-                Crea y guarda tus recetas personalizadas combinando varios alimentos.
+                Crea y guarda tus recetas personalizadas.
               </p>
             </div>
           </div>
