@@ -1,4 +1,4 @@
-import { Bell, Utensils, Activity, TrendingUp, ArrowRight, Scale, Footprints, Flame } from "lucide-react";
+import { Bell, Utensils, TrendingUp, ArrowRight, Scale, Footprints, Flame, MessageCircle } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -13,9 +13,14 @@ const Index = () => {
             <h1 className="text-3xl font-bold text-foreground">Hola, Nombre</h1>
             <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello!</p>
           </div>
-          <button className="p-2 hover:bg-card rounded-full transition-colors">
-            <Bell className="w-6 h-6 text-foreground" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="p-2 hover:bg-card rounded-full transition-colors">
+              <MessageCircle className="w-6 h-6 text-foreground" />
+            </button>
+            <button className="p-2 hover:bg-card rounded-full transition-colors">
+              <Bell className="w-6 h-6 text-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Main Calories Card */}
@@ -36,9 +41,8 @@ const Index = () => {
                   <span className="text-sm font-semibold text-foreground">572 Kcal</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-muted-foreground" />
+                  <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
                   <span className="text-sm text-muted-foreground">Ejercicio:</span>
-                  <Flame className="w-4 h-4 text-accent" />
                   <span className="text-sm font-semibold text-foreground">252 Kcal</span>
                 </div>
               </div>
@@ -78,13 +82,13 @@ const Index = () => {
           </StatsCard>
 
           {/* Weight Card */}
-          <StatsCard>
-            <div className="flex items-center gap-2 mb-4">
-              <Scale className="w-5 h-5 text-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">Peso</h3>
+          <StatsCard className="py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Scale className="w-4 h-4 text-foreground" />
+              <h3 className="text-base font-semibold text-foreground">Peso</h3>
             </div>
-            <p className="text-4xl font-bold text-foreground mb-2">92.5 Kg</p>
-            <p className="text-sm text-accent font-semibold">-5 Kg</p>
+            <p className="text-3xl font-bold text-foreground mb-1.5">92.5 Kg</p>
+            <p className="text-xs text-accent font-semibold">-5 Kg</p>
           </StatsCard>
 
           {/* Progress Card */}
