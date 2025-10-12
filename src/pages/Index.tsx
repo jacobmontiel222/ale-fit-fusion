@@ -2,8 +2,11 @@ import { Bell, Utensils, TrendingUp, ArrowRight, Scale, Footprints, Flame, Messa
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
@@ -24,7 +27,10 @@ const Index = () => {
         </div>
 
         {/* Main Calories Card */}
-        <StatsCard className="relative overflow-hidden">
+        <StatsCard 
+          className="relative overflow-hidden cursor-pointer hover:bg-secondary/50 transition-colors"
+          onClick={() => navigate('/comidas')}
+        >
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <CircularProgress value={1428} max={2000} />
@@ -53,7 +59,10 @@ const Index = () => {
         {/* Grid of Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
           {/* Macros Card */}
-          <StatsCard>
+          <StatsCard 
+            className="cursor-pointer hover:bg-secondary/50 transition-colors"
+            onClick={() => navigate('/comidas')}
+          >
             <h3 className="text-lg font-semibold text-foreground mb-4">Macros</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
@@ -110,7 +119,10 @@ const Index = () => {
         </div>
 
         {/* Gym Session Card */}
-        <StatsCard className="cursor-pointer hover:bg-secondary transition-colors">
+        <StatsCard 
+          className="cursor-pointer hover:bg-secondary transition-colors"
+          onClick={() => navigate('/gimnasio')}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-1">Gym Session</h3>
