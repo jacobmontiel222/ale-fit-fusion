@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Scale, Footprints } from "lucide-react";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from "date-fns";
+import { es } from "date-fns/locale";
 import { BottomNav } from "@/components/BottomNav";
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
@@ -22,9 +24,10 @@ interface StepsEntry {
 const Analytics = () => {
   const [searchParams] = useSearchParams();
   const focusSection = searchParams.get('focus');
+  const shouldAddWeight = searchParams.get('add') === 'true';
 
-  const [weightRange, setWeightRange] = useState<7 | 14 | 30>(7);
-  const [stepsRange, setStepsRange] = useState<7 | 14 | 30>(7);
+  const [weightRange, setWeightRange] = useState<'week' | 'month'>('week');
+  const [stepsRange, setStepsRange] = useState<'week' | 'month'>('week');
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newWeightDate, setNewWeightDate] = useState(new Date().toISOString().split('T')[0]);
@@ -72,7 +75,7 @@ const Analytics = () => {
     return mockData;
   });
 
-  // Scroll to focused section
+  // Scroll to focused section and open add weight dialog if needed
   useEffect(() => {
     if (focusSection) {
       setTimeout(() => {
@@ -82,12 +85,28 @@ const Analytics = () => {
         }
       }, 100);
     }
-  }, [focusSection]);
+    if (shouldAddWeight && focusSection === 'weight') {
+      setShowAddWeight(true);
+    }
+  }, [focusSection, shouldAddWeight]);
 
-  const getFilteredData = <T extends { date: string }>(data: T[], range: number): T[] => {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - range + 1);
-    return data.filter(entry => new Date(entry.date) >= cutoffDate);
+  const getFilteredData = <T extends { date: string }>(data: T[], range: 'week' | 'month'): T[] => {
+    const today = new Date();
+    let startDate: Date;
+    let endDate: Date;
+
+    if (range === 'week') {
+      startDate = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+      endDate = endOfWeek(today, { weekStartsOn: 1 }); // Sunday
+    } else {
+      startDate = startOfMonth(today);
+      endDate = endOfMonth(today);
+    }
+
+    return data.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= startDate && entryDate <= endDate;
+    });
   };
 
   // Custom tooltip components
@@ -100,7 +119,7 @@ const Analytics = () => {
             {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
           </p>
           <p className="text-base font-bold" style={{ color: COLORS.weight }}>
-            {data.kg.toFixed(1)} kg
+            {data.kg.toFixed(2)} kg
           </p>
         </div>
       );
@@ -193,17 +212,22 @@ const Analytics = () => {
 
           {/* Range Selector */}
           <div className="flex gap-2 mb-4">
-            {([7, 14, 30] as const).map(days => (
-              <Button
-                key={days}
-                variant={weightRange === days ? "default" : "outline"}
-                size="sm"
-                onClick={() => setWeightRange(days)}
-                className="flex-1"
-              >
-                {days}d
-              </Button>
-            ))}
+            <Button
+              variant={weightRange === 'week' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeightRange('week')}
+              className="flex-1"
+            >
+              Esta semana
+            </Button>
+            <Button
+              variant={weightRange === 'month' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeightRange('month')}
+              className="flex-1"
+            >
+              Este mes
+            </Button>
           </div>
 
           {/* Chart */}
@@ -220,6 +244,7 @@ const Analytics = () => {
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                  tickFormatter={(value) => `${value.toFixed(2)} kg`}
                 />
                 <Tooltip content={<WeightTooltip />} />
                 <Line 
@@ -239,7 +264,7 @@ const Analytics = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Última medición</p>
               <p className="text-lg font-semibold text-foreground">
-                {lastWeight ? `${lastWeight.kg.toFixed(1)} kg` : '-'}
+                {lastWeight ? `${lastWeight.kg.toFixed(2)} kg` : '-'}
               </p>
               {lastWeight && (
                 <p className="text-xs text-muted-foreground">
@@ -252,7 +277,7 @@ const Analytics = () => {
               <p className={`text-lg font-semibold ${Number(weightDelta) < 0 ? 'text-accent' : 'text-foreground'}`}>
                 {Number(weightDelta) > 0 ? '+' : ''}{weightDelta} kg
               </p>
-              <p className="text-xs text-muted-foreground">{weightRange} días</p>
+              <p className="text-xs text-muted-foreground">{weightRange === 'week' ? 'Esta semana' : 'Este mes'}</p>
             </div>
           </div>
         </StatsCard>
@@ -268,17 +293,22 @@ const Analytics = () => {
 
           {/* Range Selector */}
           <div className="flex gap-2 mb-4">
-            {([7, 14, 30] as const).map(days => (
-              <Button
-                key={days}
-                variant={stepsRange === days ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStepsRange(days)}
-                className="flex-1"
-              >
-                {days}d
-              </Button>
-            ))}
+            <Button
+              variant={stepsRange === 'week' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStepsRange('week')}
+              className="flex-1"
+            >
+              Esta semana
+            </Button>
+            <Button
+              variant={stepsRange === 'month' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStepsRange('month')}
+              className="flex-1"
+            >
+              Este mes
+            </Button>
           </div>
 
           {/* Chart */}
@@ -312,7 +342,7 @@ const Analytics = () => {
               <p className="text-lg font-semibold text-foreground">
                 {stepsAverage.toLocaleString('es-ES')}
               </p>
-              <p className="text-xs text-muted-foreground">{stepsRange} días</p>
+              <p className="text-xs text-muted-foreground">{stepsRange === 'week' ? 'Esta semana' : 'Este mes'}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>

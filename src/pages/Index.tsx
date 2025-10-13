@@ -1,11 +1,45 @@
-import { Bell, Utensils, TrendingUp, ArrowRight, Scale, Footprints, Flame, MessageCircle } from "lucide-react";
+import { Bell, Utensils, ArrowRight, Scale, Footprints, Flame, MessageCircle, UserRound } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+
+interface WeightEntry {
+  date: string;
+  kg: number;
+}
+
+interface StepsEntry {
+  date: string;
+  steps: number;
+}
 
 const Index = () => {
   const navigate = useNavigate();
+  const today = new Date().toISOString().split('T')[0];
+  
+  const [todayWeight, setTodayWeight] = useState<number | null>(null);
+  const [todaySteps, setTodaySteps] = useState<number>(0);
+
+  useEffect(() => {
+    // Load today's weight
+    const storedWeight = localStorage.getItem("analyticsWeight");
+    if (storedWeight) {
+      const weightData: WeightEntry[] = JSON.parse(storedWeight);
+      const todayEntry = weightData.find(entry => entry.date === today);
+      setTodayWeight(todayEntry?.kg || null);
+    }
+
+    // Load today's steps
+    const storedSteps = localStorage.getItem("analyticsSteps");
+    if (storedSteps) {
+      const stepsData: StepsEntry[] = JSON.parse(storedSteps);
+      const todayEntry = stepsData.find(entry => entry.date === today);
+      setTodaySteps(todayEntry?.steps || 0);
+    }
+  }, [today]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -89,7 +123,7 @@ const Index = () => {
               <Footprints className="w-5 h-5 text-foreground" />
               <h3 className="text-lg font-semibold text-foreground">Pasos</h3>
             </div>
-            <p className="text-4xl font-bold text-foreground mb-2">12.432</p>
+            <p className="text-4xl font-bold text-foreground mb-2">{todaySteps.toLocaleString('es-ES')}</p>
             <p className="text-sm text-muted-foreground">Objetivo: 20000</p>
           </StatsCard>
 
@@ -102,25 +136,35 @@ const Index = () => {
               <Scale className="w-4 h-4 text-foreground" />
               <h3 className="text-base font-semibold text-foreground">Peso</h3>
             </div>
-            <p className="text-3xl font-bold text-foreground mb-1.5">92.5 Kg</p>
-            <p className="text-xs text-accent font-semibold">-5 Kg</p>
+            {todayWeight !== null ? (
+              <>
+                <p className="text-3xl font-bold text-foreground mb-1.5">{todayWeight.toFixed(1)} Kg</p>
+                <p className="text-xs text-muted-foreground">Hoy</p>
+              </>
+            ) : (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/analytics?focus=weight&add=true');
+                }}
+                className="mt-2"
+              >
+                Añadir peso
+              </Button>
+            )}
           </StatsCard>
 
-          {/* Progress Card */}
+          {/* Entrenadores Card */}
           <StatsCard>
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">Progreso</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <UserRound className="w-5 h-5 text-foreground" />
+              <h3 className="text-lg font-semibold text-foreground">Entrenadores</h3>
             </div>
-            <div className="h-20 flex items-end justify-between gap-1">
-              {[60, 75, 65, 80, 70, 85, 90].map((height, index) => (
-                <div
-                  key={index}
-                  className="flex-1 bg-progress-ring rounded-t"
-                  style={{ height: `${height}%` }}
-                />
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Encuentra tu entrenador y transforma tu proceso.
+            </p>
           </StatsCard>
         </div>
 
