@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Scale, Footprints } from "lucide-react";
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from "date-fns";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, eachDayOfInterval, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { BottomNav } from "@/components/BottomNav";
 import { StatsCard } from "@/components/StatsCard";
@@ -26,8 +26,9 @@ const Analytics = () => {
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
 
-  const [weightRange, setWeightRange] = useState<'week' | 'month'>('week');
-  const [stepsRange, setStepsRange] = useState<'week' | 'month'>('week');
+  type DateRange = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last6Months';
+  const [weightRange, setWeightRange] = useState<DateRange>('thisWeek');
+  const [stepsRange, setStepsRange] = useState<DateRange>('thisWeek');
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newWeightDate, setNewWeightDate] = useState(new Date().toISOString().split('T')[0]);
@@ -90,22 +91,59 @@ const Analytics = () => {
     }
   }, [focusSection, shouldAddWeight]);
 
-  const getFilteredData = <T extends { date: string }>(data: T[], range: 'week' | 'month'): T[] => {
+  const getDateRange = (range: DateRange): { startDate: Date; endDate: Date } => {
     const today = new Date();
     let startDate: Date;
     let endDate: Date;
 
-    if (range === 'week') {
-      startDate = startOfWeek(today, { weekStartsOn: 1 }); // Monday
-      endDate = endOfWeek(today, { weekStartsOn: 1 }); // Sunday
-    } else {
-      startDate = startOfMonth(today);
-      endDate = endOfMonth(today);
+    switch (range) {
+      case 'thisWeek':
+        startDate = startOfWeek(today, { weekStartsOn: 1 });
+        endDate = endOfWeek(today, { weekStartsOn: 1 });
+        break;
+      case 'lastWeek':
+        const lastWeekStart = subWeeks(today, 1);
+        startDate = startOfWeek(lastWeekStart, { weekStartsOn: 1 });
+        endDate = endOfWeek(lastWeekStart, { weekStartsOn: 1 });
+        break;
+      case 'thisMonth':
+        startDate = startOfMonth(today);
+        endDate = endOfMonth(today);
+        break;
+      case 'lastMonth':
+        const lastMonth = subMonths(today, 1);
+        startDate = startOfMonth(lastMonth);
+        endDate = endOfMonth(lastMonth);
+        break;
+      case 'last3Months':
+        startDate = subMonths(today, 3);
+        endDate = today;
+        break;
+      case 'last6Months':
+        startDate = subMonths(today, 6);
+        endDate = today;
+        break;
     }
 
-    return data.filter(entry => {
-      const entryDate = new Date(entry.date);
-      return entryDate >= startDate && entryDate <= endDate;
+    return { startDate, endDate };
+  };
+
+  const getAllDaysInRange = (startDate: Date, endDate: Date): string[] => {
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    return days.map(day => day.toISOString().split('T')[0]);
+  };
+
+  const getFilteredDataWithAllDays = <T extends { date: string }>(
+    data: T[],
+    range: DateRange,
+    fillValue: Partial<T>
+  ): T[] => {
+    const { startDate, endDate } = getDateRange(range);
+    const allDays = getAllDaysInRange(startDate, endDate);
+    
+    return allDays.map(date => {
+      const existingEntry = data.find(entry => entry.date === date);
+      return existingEntry || { date, ...fillValue } as T;
     });
   };
 
@@ -163,25 +201,45 @@ const Analytics = () => {
     setNewWeightDate(new Date().toISOString().split('T')[0]);
   };
 
-  const filteredWeightData = getFilteredData(weightData, weightRange);
-  const filteredStepsData = getFilteredData(stepsData, stepsRange);
+  const filteredWeightData = getFilteredDataWithAllDays(weightData, weightRange, { kg: null as any });
+  const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
 
   const formatChartData = (data: WeightEntry[] | StepsEntry[]) => {
     return data.map(entry => ({
       ...entry,
-      day: new Date(entry.date).getDate().toString()
+      day: format(new Date(entry.date), 'd', { locale: es })
     }));
+  };
+
+  const calculateNiceYAxisTicks = (data: WeightEntry[]): number[] => {
+    const validData = data.filter(d => d.kg !== null);
+    if (validData.length === 0) return [70, 71, 72, 73, 74, 75];
+    
+    const minWeight = Math.min(...validData.map(d => d.kg));
+    const maxWeight = Math.max(...validData.map(d => d.kg));
+    
+    const rangeMin = Math.floor(minWeight * 2) / 2; // Round down to nearest 0.5
+    const rangeMax = Math.ceil(maxWeight * 2) / 2; // Round up to nearest 0.5
+    
+    const ticks: number[] = [];
+    for (let i = rangeMin; i <= rangeMax; i += 0.5) {
+      ticks.push(i);
+    }
+    
+    return ticks;
   };
 
   const weightChartData = formatChartData(filteredWeightData);
   const stepsChartData = formatChartData(filteredStepsData);
+  const weightYAxisTicks = calculateNiceYAxisTicks(filteredWeightData);
 
-  const weightDelta = filteredWeightData.length >= 2 
-    ? (filteredWeightData[filteredWeightData.length - 1].kg - filteredWeightData[0].kg).toFixed(1)
+  const validWeightData = filteredWeightData.filter(d => d.kg !== null);
+  const weightDelta = validWeightData.length >= 2 
+    ? (validWeightData[validWeightData.length - 1].kg - validWeightData[0].kg).toFixed(1)
     : "0.0";
 
-  const lastWeight = filteredWeightData.length > 0 
-    ? filteredWeightData[filteredWeightData.length - 1]
+  const lastWeight = validWeightData.length > 0 
+    ? validWeightData[validWeightData.length - 1]
     : null;
 
   const stepsAverage = filteredStepsData.length > 0
@@ -211,22 +269,48 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <Button
-              variant={weightRange === 'week' ? "default" : "outline"}
+              variant={weightRange === 'thisWeek' ? "default" : "outline"}
               size="sm"
-              onClick={() => setWeightRange('week')}
-              className="flex-1"
+              onClick={() => setWeightRange('thisWeek')}
             >
               Esta semana
             </Button>
             <Button
-              variant={weightRange === 'month' ? "default" : "outline"}
+              variant={weightRange === 'lastWeek' ? "default" : "outline"}
               size="sm"
-              onClick={() => setWeightRange('month')}
-              className="flex-1"
+              onClick={() => setWeightRange('lastWeek')}
+            >
+              La semana pasada
+            </Button>
+            <Button
+              variant={weightRange === 'thisMonth' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeightRange('thisMonth')}
             >
               Este mes
+            </Button>
+            <Button
+              variant={weightRange === 'lastMonth' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeightRange('lastMonth')}
+            >
+              El mes pasado
+            </Button>
+            <Button
+              variant={weightRange === 'last3Months' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeightRange('last3Months')}
+            >
+              Últimos 3 meses
+            </Button>
+            <Button
+              variant={weightRange === 'last6Months' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWeightRange('last6Months')}
+            >
+              Últimos 6 meses
             </Button>
           </div>
 
@@ -243,7 +327,8 @@ const Analytics = () => {
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                  ticks={weightYAxisTicks}
+                  domain={[weightYAxisTicks[0], weightYAxisTicks[weightYAxisTicks.length - 1]]}
                   tickFormatter={(value) => `${value.toFixed(2)} kg`}
                 />
                 <Tooltip content={<WeightTooltip />} />
@@ -254,6 +339,7 @@ const Analytics = () => {
                   strokeWidth={3}
                   dot={{ fill: COLORS.weight, r: 4 }}
                   activeDot={{ r: 6 }}
+                  connectNulls={false}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -277,7 +363,13 @@ const Analytics = () => {
               <p className={`text-lg font-semibold ${Number(weightDelta) < 0 ? 'text-accent' : 'text-foreground'}`}>
                 {Number(weightDelta) > 0 ? '+' : ''}{weightDelta} kg
               </p>
-              <p className="text-xs text-muted-foreground">{weightRange === 'week' ? 'Esta semana' : 'Este mes'}</p>
+              <p className="text-xs text-muted-foreground">
+                {weightRange === 'thisWeek' ? 'Esta semana' : 
+                 weightRange === 'lastWeek' ? 'La semana pasada' :
+                 weightRange === 'thisMonth' ? 'Este mes' :
+                 weightRange === 'lastMonth' ? 'El mes pasado' :
+                 weightRange === 'last3Months' ? 'Últimos 3 meses' : 'Últimos 6 meses'}
+              </p>
             </div>
           </div>
         </StatsCard>
@@ -292,22 +384,34 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             <Button
-              variant={stepsRange === 'week' ? "default" : "outline"}
+              variant={stepsRange === 'thisWeek' ? "default" : "outline"}
               size="sm"
-              onClick={() => setStepsRange('week')}
-              className="flex-1"
+              onClick={() => setStepsRange('thisWeek')}
             >
               Esta semana
             </Button>
             <Button
-              variant={stepsRange === 'month' ? "default" : "outline"}
+              variant={stepsRange === 'lastWeek' ? "default" : "outline"}
               size="sm"
-              onClick={() => setStepsRange('month')}
-              className="flex-1"
+              onClick={() => setStepsRange('lastWeek')}
+            >
+              La semana pasada
+            </Button>
+            <Button
+              variant={stepsRange === 'thisMonth' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStepsRange('thisMonth')}
             >
               Este mes
+            </Button>
+            <Button
+              variant={stepsRange === 'lastMonth' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStepsRange('lastMonth')}
+            >
+              El mes pasado
             </Button>
           </div>
 
@@ -342,7 +446,11 @@ const Analytics = () => {
               <p className="text-lg font-semibold text-foreground">
                 {stepsAverage.toLocaleString('es-ES')}
               </p>
-              <p className="text-xs text-muted-foreground">{stepsRange === 'week' ? 'Esta semana' : 'Este mes'}</p>
+              <p className="text-xs text-muted-foreground">
+                {stepsRange === 'thisWeek' ? 'Esta semana' : 
+                 stepsRange === 'lastWeek' ? 'La semana pasada' :
+                 stepsRange === 'thisMonth' ? 'Este mes' : 'El mes pasado'}
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>

@@ -1,4 +1,4 @@
-import { Bell, Utensils, ArrowRight, Scale, Footprints, Flame, MessageCircle, UserRound } from "lucide-react";
+import { Bell, Utensils, ArrowRight, Scale, Footprints, Flame, MessageCircle, Dumbbell } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -159,11 +159,11 @@ const Index = () => {
           {/* Entrenadores Card */}
           <StatsCard>
             <div className="flex items-center gap-2 mb-3">
-              <UserRound className="w-5 h-5 text-foreground" />
+              <Dumbbell className="w-5 h-5 text-foreground" />
               <h3 className="text-lg font-semibold text-foreground">Entrenadores</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Encuentra tu entrenador y transforma tu proceso.
+              Encuentra tu entrenador ideal.
             </p>
           </StatsCard>
         </div>
