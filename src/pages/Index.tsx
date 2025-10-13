@@ -25,19 +25,25 @@ const Index = () => {
   
   const [todayWeight, setTodayWeight] = useState<number | null>(null);
   const [todaySteps, setTodaySteps] = useState<number>(0);
+  const [kcalPerStep, setKcalPerStep] = useState<number>(0.045);
 
   // Get nutrition data for today
   const todayNutrition = getTotals(today);
 
+  // Calculate exercise calories
+  const exerciseKcal = Math.round(todaySteps * kcalPerStep);
+
   useEffect(() => {
-    // Load today's weight
+    // Load today's weight and steps
     const state = getState();
     const todayEntry = state.analyticsWeight.find(entry => entry.date === today);
     setTodayWeight(todayEntry?.kg || null);
 
-    // Load today's steps
     const todayStepsEntry = state.analyticsSteps.find(entry => entry.date === today);
     setTodaySteps(todayStepsEntry?.steps || 0);
+
+    // Load kcalPerStep from profile
+    setKcalPerStep(state.profile.kcalPerStep || 0.045);
   }, [today]);
 
   return (
@@ -66,31 +72,38 @@ const Index = () => {
         </div>
 
         {/* Main Calories Card */}
-        <StatsCard 
-          className="relative overflow-hidden cursor-pointer hover:bg-secondary/50 transition-colors"
-          onClick={() => navigate('/comidas')}
-        >
-          <div className="flex justify-between items-start">
+        <StatsCard className="relative overflow-hidden">
+          <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
               <CircularProgress value={todayNutrition.kcalConsumed} max={todayNutrition.kcalTarget} />
             </div>
-            <div className="flex-1 space-y-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
-                <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget} Kcal</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Utensils className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Consumidas:</span>
-                  <span className="text-sm font-semibold text-foreground">{todayNutrition.kcalConsumed} Kcal</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
-                  <span className="text-sm text-muted-foreground">Restantes:</span>
-                  <span className="text-sm font-semibold text-foreground">{Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed)} Kcal</span>
-                </div>
-              </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
+              <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget.toLocaleString('es-ES')} Kcal</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2">
+            <div 
+              className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
+              onClick={() => navigate('/comidas')}
+            >
+              <p className="text-sm text-muted-foreground mb-1">Consumidas</p>
+              <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
+                {todayNutrition.kcalConsumed.toLocaleString('es-ES')}
+              </p>
+              <p className="text-xs text-muted-foreground">kcal</p>
+            </div>
+            
+            <div 
+              className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
+              onClick={() => navigate('/analytics?focus=steps')}
+            >
+              <p className="text-sm text-muted-foreground mb-1">Ejercicio</p>
+              <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
+                {exerciseKcal.toLocaleString('es-ES')}
+              </p>
+              <p className="text-xs text-muted-foreground">kcal</p>
             </div>
           </div>
         </StatsCard>

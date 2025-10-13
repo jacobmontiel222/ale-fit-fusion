@@ -6,6 +6,7 @@ interface Profile {
   name?: string;
   weightUnit: 'kg' | 'lb';
   height?: number;
+  kcalPerStep?: number;
 }
 
 interface Goals {
@@ -37,6 +38,7 @@ interface AppState {
 const DEFAULT_STATE: AppState = {
   profile: {
     weightUnit: 'kg',
+    kcalPerStep: 0.045,
   },
   goals: {
     dailyCalories: 2000,
