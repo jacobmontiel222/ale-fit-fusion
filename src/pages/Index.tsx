@@ -88,7 +88,10 @@ const Index = () => {
               className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
               onClick={() => navigate('/comidas')}
             >
-              <p className="text-sm text-muted-foreground mb-1">Consumidas</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Utensils className="w-4 h-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Consumidas</p>
+              </div>
               <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
                 {todayNutrition.kcalConsumed.toLocaleString('es-ES')}
               </p>
@@ -99,7 +102,10 @@ const Index = () => {
               className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
               onClick={() => navigate('/analytics?focus=steps')}
             >
-              <p className="text-sm text-muted-foreground mb-1">Ejercicio</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
+                <p className="text-sm text-muted-foreground">Quemadas</p>
+              </div>
               <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
                 {exerciseKcal.toLocaleString('es-ES')}
               </p>
