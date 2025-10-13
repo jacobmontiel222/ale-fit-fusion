@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
@@ -8,53 +8,31 @@ import { MicronutrientsList } from "@/components/MicronutrientsList";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNutrition } from "@/contexts/NutritionContext";
+import { getState, saveGoals } from "@/lib/storage";
 
 const Comidas = () => {
   const navigate = useNavigate();
+  const { getTotals, refreshTotals } = useNutrition();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
-  const [goals, setGoals] = useState(() => {
-    const stored = localStorage.getItem("nutritionGoals");
-    return stored ? JSON.parse(stored) : {
-      calories: 2000,
-      protein: 160,
-      fat: 78,
-      carbs: 200,
-      useGrams: false,
-    };
-  });
 
-  const [consumed, setConsumed] = useState({ calories: 1428, protein: 72, fat: 35, carbs: 25 });
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  const dateISO = formatDate(selectedDate);
+  
+  // Get nutrition data for selected date
+  const dayTotals = getTotals(dateISO);
+  const state = getState();
 
-  useEffect(() => {
-    // Calculate consumed from meals
-    const meals = JSON.parse(localStorage.getItem("meals") || "{}");
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalFat = 0;
-    let totalCarbs = 0;
-
-    Object.values(meals).forEach((mealItems: any) => {
-      mealItems.forEach((item: any) => {
-        totalCalories += item.adjustedMacros.calories;
-        totalProtein += item.adjustedMacros.protein;
-        totalFat += item.adjustedMacros.fat;
-        totalCarbs += item.adjustedMacros.carbs;
-      });
+  const handleSaveGoals = (newGoals: any) => {
+    saveGoals({
+      dailyCalories: newGoals.calories,
+      protein: newGoals.protein,
+      fat: newGoals.fat,
+      carbs: newGoals.carbs,
     });
-
-    setConsumed({
-      calories: Math.round(totalCalories),
-      protein: Math.round(totalProtein * 10) / 10,
-      fat: Math.round(totalFat * 10) / 10,
-      carbs: Math.round(totalCarbs * 10) / 10,
-    });
-  }, []);
-
-  const handleSaveGoals = (newGoals: typeof goals) => {
-    setGoals(newGoals);
-    localStorage.setItem("nutritionGoals", JSON.stringify(newGoals));
+    refreshTotals();
   };
 
   const calculateMacroPercentage = (consumed: number, goal: number) => {
@@ -77,14 +55,24 @@ const Comidas = () => {
     return days;
   };
 
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
-
   const weekDays = getWeekDays();
 
   const meals = [
-    { name: "Desayuno", calories: 450 },
-    { name: "Comida", calories: 720 },
-    { name: "Cena", calories: 580 },
+    { 
+      name: "Desayuno", 
+      calories: dayTotals.breakfast.calories,
+      macros: dayTotals.breakfast.macros,
+    },
+    { 
+      name: "Comida", 
+      calories: dayTotals.lunch.calories,
+      macros: dayTotals.lunch.macros,
+    },
+    { 
+      name: "Cena", 
+      calories: dayTotals.dinner.calories,
+      macros: dayTotals.dinner.macros,
+    },
   ];
 
   return (
@@ -153,44 +141,44 @@ const Comidas = () => {
             <TabsContent value="macros" className="mt-0">
               <div className="flex flex-col items-center gap-2">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Objetivo: {goals.calories} Kcal</p>
-                  <CircularProgress value={consumed.calories} max={goals.calories} size={110} strokeWidth={9} />
+                  <p className="text-xs text-muted-foreground mb-1">Objetivo: {dayTotals.kcalTarget} Kcal</p>
+                  <CircularProgress value={dayTotals.kcalConsumed} max={dayTotals.kcalTarget} size={110} strokeWidth={9} />
                 </div>
                 
                 <div className="w-full space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground text-sm">Consumidas</span>
-                    <span className="text-foreground font-semibold">{consumed.calories} Kcal</span>
+                    <span className="text-foreground font-semibold">{dayTotals.kcalConsumed} Kcal</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground text-sm">Restantes</span>
-                    <span className="text-foreground font-semibold">{goals.calories - consumed.calories} Kcal</span>
+                    <span className="text-foreground font-semibold">{Math.max(0, dayTotals.kcalTarget - dayTotals.kcalConsumed)} Kcal</span>
                   </div>
                   
                   {/* Macros Distribution */}
                   <div className="pt-2 border-t border-border space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm">Proteínas</span>
-                      <span className="text-foreground font-semibold">{consumed.protein}g / {goals.protein}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {state.goals.protein}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.protein, goals.protein)}%` }} />
+                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / state.goals.protein) * 100)}%` }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm">Grasas</span>
-                      <span className="text-foreground font-semibold">{consumed.fat}g / {goals.fat}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {state.goals.fat}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.fat, goals.fat)}%` }} />
+                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / state.goals.fat) * 100)}%` }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm">Carbohidratos</span>
-                      <span className="text-foreground font-semibold">{consumed.carbs}g / {goals.carbs}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {state.goals.carbs}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.carbs, goals.carbs)}%` }} />
+                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / state.goals.carbs) * 100)}%` }} />
                     </div>
                   </div>
                 </div>
@@ -210,7 +198,11 @@ const Comidas = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-0.5">{meal.name}</h3>
-                  <p className="text-muted-foreground text-sm">{meal.calories} Kcal</p>
+                  {meal.calories > 0 ? (
+                    <p className="text-muted-foreground text-sm">{meal.calories} Kcal</p>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">Sin alimentos añadidos</p>
+                  )}
                 </div>
                 <button 
                   onClick={() => navigate(`/add-food?meal=${meal.name}`)}
@@ -245,7 +237,13 @@ const Comidas = () => {
       <EditGoalModal
         open={showEditModal}
         onOpenChange={setShowEditModal}
-        currentGoals={goals}
+        currentGoals={{
+          calories: state.goals.dailyCalories,
+          protein: state.goals.protein,
+          fat: state.goals.fat,
+          carbs: state.goals.carbs,
+          useGrams: false,
+        }}
         onSave={handleSaveGoals}
       />
 

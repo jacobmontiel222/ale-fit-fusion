@@ -5,6 +5,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useNutrition } from "@/contexts/NutritionContext";
+import { getState } from "@/lib/storage";
 
 interface WeightEntry {
   date: string;
@@ -18,27 +20,24 @@ interface StepsEntry {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { getTotals } = useNutrition();
   const today = new Date().toISOString().split('T')[0];
   
   const [todayWeight, setTodayWeight] = useState<number | null>(null);
   const [todaySteps, setTodaySteps] = useState<number>(0);
 
+  // Get nutrition data for today
+  const todayNutrition = getTotals(today);
+
   useEffect(() => {
     // Load today's weight
-    const storedWeight = localStorage.getItem("analyticsWeight");
-    if (storedWeight) {
-      const weightData: WeightEntry[] = JSON.parse(storedWeight);
-      const todayEntry = weightData.find(entry => entry.date === today);
-      setTodayWeight(todayEntry?.kg || null);
-    }
+    const state = getState();
+    const todayEntry = state.analyticsWeight.find(entry => entry.date === today);
+    setTodayWeight(todayEntry?.kg || null);
 
     // Load today's steps
-    const storedSteps = localStorage.getItem("analyticsSteps");
-    if (storedSteps) {
-      const stepsData: StepsEntry[] = JSON.parse(storedSteps);
-      const todayEntry = stepsData.find(entry => entry.date === today);
-      setTodaySteps(todayEntry?.steps || 0);
-    }
+    const todayStepsEntry = state.analyticsSteps.find(entry => entry.date === today);
+    setTodaySteps(todayStepsEntry?.steps || 0);
   }, [today]);
 
   return (
@@ -73,23 +72,23 @@ const Index = () => {
         >
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <CircularProgress value={1428} max={2000} />
+              <CircularProgress value={todayNutrition.kcalConsumed} max={todayNutrition.kcalTarget} />
             </div>
             <div className="flex-1 space-y-4">
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
-                <p className="text-3xl font-bold text-foreground">2000 Kcal</p>
+                <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget} Kcal</p>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Utensils className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Comidas:</span>
-                  <span className="text-sm font-semibold text-foreground">572 Kcal</span>
+                  <span className="text-sm text-muted-foreground">Consumidas:</span>
+                  <span className="text-sm font-semibold text-foreground">{todayNutrition.kcalConsumed} Kcal</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
-                  <span className="text-sm text-muted-foreground">Ejercicio:</span>
-                  <span className="text-sm font-semibold text-foreground">252 Kcal</span>
+                  <span className="text-sm text-muted-foreground">Restantes:</span>
+                  <span className="text-sm font-semibold text-foreground">{Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed)} Kcal</span>
                 </div>
               </div>
             </div>
@@ -107,15 +106,15 @@ const Index = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground text-sm">Proteínas (P)</span>
-                <span className="text-foreground font-semibold">72 g</span>
+                <span className="text-foreground font-semibold">{todayNutrition.macrosG.protein} g</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground text-sm">Grasas (F)</span>
-                <span className="text-foreground font-semibold">35 g</span>
+                <span className="text-foreground font-semibold">{todayNutrition.macrosG.fat} g</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground text-sm">Carbs (C)</span>
-                <span className="text-foreground font-semibold">25 g</span>
+                <span className="text-foreground font-semibold">{todayNutrition.macrosG.carbs} g</span>
               </div>
             </div>
           </StatsCard>

@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { NutritionProvider } from "@/contexts/NutritionContext";
+import { Splash } from "@/components/Splash";
 import Index from "./pages/Index";
 import Comidas from "./pages/Comidas";
 import AddFood from "./pages/AddFood";
@@ -15,27 +18,37 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/comidas" element={<Comidas />} />
-          <Route path="/add-food" element={<AddFood />} />
-          <Route path="/create-recipe" element={<CreateRecipe />} />
-          <Route path="/gimnasio" element={<Gimnasio />} />
-          <Route path="/comunidad" element={<Comunidad />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/profile" element={<Profile />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  if (showSplash) {
+    return <Splash onComplete={() => setShowSplash(false)} />;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <NutritionProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/comidas" element={<Comidas />} />
+              <Route path="/add-food" element={<AddFood />} />
+              <Route path="/create-recipe" element={<CreateRecipe />} />
+              <Route path="/gimnasio" element={<Gimnasio />} />
+              <Route path="/comunidad" element={<Comunidad />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/profile" element={<Profile />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </NutritionProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
