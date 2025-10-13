@@ -87,7 +87,28 @@ const AddFood = () => {
     const foodToAdd = selectedFood || manualFood;
     const adjustedMacros = calculateAdjustedMacros(foodToAdd, servingAmount);
     
-    // Store in localStorage
+    // Check if adding to recipe
+    if (meal === "recipe") {
+      // Add to recipe items in sessionStorage temporarily
+      const recipeItem = {
+        name: foodToAdd.name,
+        amount: servingAmount,
+        unit: foodToAdd.servingUnit,
+        calories: adjustedMacros.calories,
+        protein: adjustedMacros.protein,
+        fat: adjustedMacros.fat,
+        carbs: adjustedMacros.carbs,
+      };
+      
+      const pendingRecipeItems = JSON.parse(sessionStorage.getItem("pendingRecipeItems") || "[]");
+      pendingRecipeItems.push(recipeItem);
+      sessionStorage.setItem("pendingRecipeItems", JSON.stringify(pendingRecipeItems));
+      
+      navigate("/create-recipe");
+      return;
+    }
+    
+    // Store in localStorage for meals
     const existingMeals = JSON.parse(localStorage.getItem("meals") || "{}");
     if (!existingMeals[meal]) {
       existingMeals[meal] = [];

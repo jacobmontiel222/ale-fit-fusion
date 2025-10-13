@@ -40,6 +40,9 @@ All colors MUST be HSL.
 
     --progress-ring: 0 0% 75%;
     --progress-bg: 0 0% 20%;
+    
+    --chart-1: 210 80% 50%;
+    --chart-2: 142 70% 45%;
   }
 }
 

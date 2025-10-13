@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from "recharts";
 
 interface WeightEntry {
   date: string;
@@ -28,6 +28,12 @@ const Analytics = () => {
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newWeightDate, setNewWeightDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Color scheme
+  const COLORS = {
+    weight: "hsl(var(--chart-1))",
+    steps: "hsl(var(--chart-2))",
+  };
 
   // Initialize mock data
   const [weightData, setWeightData] = useState<WeightEntry[]>(() => {
@@ -82,6 +88,41 @@ const Analytics = () => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - range + 1);
     return data.filter(entry => new Date(entry.date) >= cutoffDate);
+  };
+
+  // Custom tooltip components
+  const WeightTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload as WeightEntry & { day: string };
+      return (
+        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold text-foreground mb-1">
+            {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+          </p>
+          <p className="text-base font-bold" style={{ color: COLORS.weight }}>
+            {data.kg.toFixed(1)} kg
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const StepsTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload as StepsEntry & { day: string };
+      return (
+        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold text-foreground mb-1">
+            {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+          </p>
+          <p className="text-base font-bold" style={{ color: COLORS.steps }}>
+            {data.steps.toLocaleString('es-ES')} pasos
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   const addWeight = () => {
@@ -141,7 +182,7 @@ const Analytics = () => {
         <StatsCard id="weight">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Scale className="w-5 h-5 text-accent" />
+              <Scale className="w-5 h-5" style={{ color: COLORS.weight }} />
               <h2 className="text-xl font-semibold text-foreground">Peso</h2>
             </div>
             <Button size="sm" onClick={() => setShowAddWeight(true)}>
@@ -180,20 +221,14 @@ const Analytics = () => {
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   domain={['dataMin - 0.5', 'dataMax + 0.5']}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
+                <Tooltip content={<WeightTooltip />} />
                 <Line 
                   type="monotone" 
                   dataKey="kg" 
-                  stroke="hsl(var(--accent))" 
-                  strokeWidth={2}
-                  dot={{ fill: 'hsl(var(--accent))' }}
+                  stroke={COLORS.weight}
+                  strokeWidth={3}
+                  dot={{ fill: COLORS.weight, r: 4 }}
+                  activeDot={{ r: 6 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -226,7 +261,7 @@ const Analytics = () => {
         <StatsCard id="steps">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Footprints className="w-5 h-5 text-accent" />
+              <Footprints className="w-5 h-5" style={{ color: COLORS.steps }} />
               <h2 className="text-xl font-semibold text-foreground">Pasos</h2>
             </div>
           </div>
@@ -260,17 +295,10 @@ const Analytics = () => {
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '0.5rem'
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
+                <Tooltip content={<StepsTooltip />} />
                 <Bar 
                   dataKey="steps" 
-                  fill="hsl(var(--accent))"
+                  fill={COLORS.steps}
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

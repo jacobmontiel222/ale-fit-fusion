@@ -4,8 +4,10 @@ import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
 import { EditGoalModal } from "@/components/EditGoalModal";
+import { MicronutrientsList } from "@/components/MicronutrientsList";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Comidas = () => {
   const navigate = useNavigate();
@@ -131,61 +133,74 @@ const Comidas = () => {
           </div>
         </StatsCard>
 
-        {/* Main Calories Summary */}
-        <StatsCard className="relative overflow-hidden py-4">
+        {/* Main Calories Summary with Tabs */}
+        <StatsCard className="relative overflow-hidden py-3">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 rounded-full"
+            className="absolute top-3 right-3 rounded-full z-10"
             onClick={() => setShowEditModal(true)}
           >
             <Settings className="w-5 h-5" />
           </Button>
           
-          <div className="flex flex-col items-center gap-3">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1.5">Objetivo: {goals.calories} Kcal</p>
-              <CircularProgress value={consumed.calories} max={goals.calories} size={110} strokeWidth={9} />
-            </div>
+          <Tabs defaultValue="macros" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="macros">Macros</TabsTrigger>
+              <TabsTrigger value="micronutrients">Micronutrientes</TabsTrigger>
+            </TabsList>
             
-            <div className="w-full space-y-2.5">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Consumidas</span>
-                <span className="text-foreground font-semibold">{consumed.calories} Kcal</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Restantes</span>
-                <span className="text-foreground font-semibold">{goals.calories - consumed.calories} Kcal</span>
-              </div>
-              
-              {/* Macros Distribution */}
-              <div className="pt-3 border-t border-border space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">Proteínas</span>
-                  <span className="text-foreground font-semibold">{consumed.protein}g / {goals.protein}g</span>
-                </div>
-                <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                  <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.protein, goals.protein)}%` }} />
+            <TabsContent value="macros" className="mt-0">
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Objetivo: {goals.calories} Kcal</p>
+                  <CircularProgress value={consumed.calories} max={goals.calories} size={110} strokeWidth={9} />
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">Grasas</span>
-                  <span className="text-foreground font-semibold">{consumed.fat}g / {goals.fat}g</span>
-                </div>
-                <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                  <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.fat, goals.fat)}%` }} />
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground text-sm">Carbohidratos</span>
-                  <span className="text-foreground font-semibold">{consumed.carbs}g / {goals.carbs}g</span>
-                </div>
-                <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                  <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.carbs, goals.carbs)}%` }} />
+                <div className="w-full space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground text-sm">Consumidas</span>
+                    <span className="text-foreground font-semibold">{consumed.calories} Kcal</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground text-sm">Restantes</span>
+                    <span className="text-foreground font-semibold">{goals.calories - consumed.calories} Kcal</span>
+                  </div>
+                  
+                  {/* Macros Distribution */}
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground text-sm">Proteínas</span>
+                      <span className="text-foreground font-semibold">{consumed.protein}g / {goals.protein}g</span>
+                    </div>
+                    <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
+                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.protein, goals.protein)}%` }} />
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground text-sm">Grasas</span>
+                      <span className="text-foreground font-semibold">{consumed.fat}g / {goals.fat}g</span>
+                    </div>
+                    <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
+                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.fat, goals.fat)}%` }} />
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground text-sm">Carbohidratos</span>
+                      <span className="text-foreground font-semibold">{consumed.carbs}g / {goals.carbs}g</span>
+                    </div>
+                    <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
+                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${calculateMacroPercentage(consumed.carbs, goals.carbs)}%` }} />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="micronutrients" className="mt-0">
+              <MicronutrientsList />
+            </TabsContent>
+          </Tabs>
         </StatsCard>
 
         {/* Meal Cards */}
@@ -209,17 +224,20 @@ const Comidas = () => {
         </div>
 
         {/* Recipes Card */}
-        <StatsCard>
+        <StatsCard className="cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/create-recipe")}>
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <ChefHat className="w-6 h-6 text-primary" />
             </div>
-            <div>
+            <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground mb-2">Recetas</h3>
               <p className="text-sm text-muted-foreground">
                 Crea y guarda tus recetas personalizadas.
               </p>
             </div>
+            <Button size="icon" variant="ghost" className="rounded-full">
+              <Plus className="w-5 h-5" />
+            </Button>
           </div>
         </StatsCard>
       </div>
