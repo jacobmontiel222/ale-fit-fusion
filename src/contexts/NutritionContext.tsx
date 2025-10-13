@@ -36,7 +36,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
   const getTotals = (dateISO: string): DayTotals => {
     const state = getState();
     const goals = state.goals;
-    const meals = state.meals || [];
+    const meals = Array.isArray(state.meals) ? state.meals : [];
 
     // Filter meals for the specific date
     const dayMeals = meals.filter((meal: any) => meal.date === dateISO);
