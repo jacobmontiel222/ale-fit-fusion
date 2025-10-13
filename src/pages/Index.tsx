@@ -1,4 +1,4 @@
-import { Bell, Utensils, ArrowRight, Scale, Footprints, Flame, MessageCircle, Dumbbell } from "lucide-react";
+import { Bell, Utensils, ArrowRight, Scale, Footprints, Flame, MessageCircle, Dumbbell, User } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -56,6 +56,12 @@ const Index = () => {
             </button>
             <button className="p-2 hover:bg-card rounded-full transition-colors">
               <Bell className="w-6 h-6 text-foreground" />
+            </button>
+            <button 
+              className="p-2 hover:bg-card rounded-full transition-colors"
+              onClick={() => navigate('/profile')}
+            >
+              <User className="w-6 h-6 text-foreground" />
             </button>
           </div>
         </div>
