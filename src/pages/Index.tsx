@@ -81,7 +81,10 @@ const Index = () => {
           </StatsCard>
 
           {/* Steps Card */}
-          <StatsCard>
+          <StatsCard 
+            className="cursor-pointer hover:bg-secondary/50 transition-colors"
+            onClick={() => navigate('/analytics?focus=steps')}
+          >
             <div className="flex items-center gap-2 mb-4">
               <Footprints className="w-5 h-5 text-foreground" />
               <h3 className="text-lg font-semibold text-foreground">Pasos</h3>
@@ -91,7 +94,10 @@ const Index = () => {
           </StatsCard>
 
           {/* Weight Card */}
-          <StatsCard className="py-4">
+          <StatsCard 
+            className="py-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+            onClick={() => navigate('/analytics?focus=weight')}
+          >
             <div className="flex items-center gap-2 mb-3">
               <Scale className="w-4 h-4 text-foreground" />
               <h3 className="text-base font-semibold text-foreground">Peso</h3>

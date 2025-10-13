@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChefHat, Settings } from "lucide-react";
+import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 const Comidas = () => {
   const navigate = useNavigate();
   
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
   const [goals, setGoals] = useState(() => {
     const stored = localStorage.getItem("nutritionGoals");
@@ -58,6 +59,26 @@ const Comidas = () => {
     return Math.min(100, (consumed / goal) * 100);
   };
 
+  // Generate calendar days (current week)
+  const getWeekDays = () => {
+    const days = [];
+    const current = new Date(selectedDate);
+    const dayOfWeek = current.getDay();
+    const startOfWeek = new Date(current);
+    startOfWeek.setDate(current.getDate() - dayOfWeek);
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek);
+      day.setDate(startOfWeek.getDate() + i);
+      days.push(day);
+    }
+    return days;
+  };
+
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+  const weekDays = getWeekDays();
+
   const meals = [
     { name: "Desayuno", calories: 450 },
     { name: "Comida", calories: 720 },
@@ -72,8 +93,46 @@ const Comidas = () => {
           <h1 className="text-3xl font-bold text-foreground">Comidas</h1>
         </div>
 
+        {/* Mini Calendar */}
+        <StatsCard className="mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button variant="ghost" size="icon">
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <h2 className="text-lg font-semibold text-foreground">
+              {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+            </h2>
+            <Button variant="ghost" size="icon">
+              <ChevronRight className="w-5 h-5" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {weekDays.map((day, idx) => {
+              const isSelected = formatDate(day) === formatDate(selectedDate);
+              const isToday = formatDate(day) === formatDate(new Date());
+              
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedDate(day)}
+                  className={`flex flex-col items-center py-2 rounded-lg transition-colors ${
+                    isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'
+                  }`}
+                >
+                  <span className="text-xs text-muted-foreground mb-1">
+                    {day.toLocaleDateString('es-ES', { weekday: 'short' }).charAt(0).toUpperCase()}
+                  </span>
+                  <span className={`text-sm font-semibold ${isToday ? 'text-accent' : ''}`}>
+                    {day.getDate()}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </StatsCard>
+
         {/* Main Calories Summary */}
-        <StatsCard className="relative overflow-hidden">
+        <StatsCard className="relative overflow-hidden py-4">
           <Button
             variant="ghost"
             size="icon"
@@ -83,24 +142,24 @@ const Comidas = () => {
             <Settings className="w-5 h-5" />
           </Button>
           
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-3">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Objetivo: {goals.calories} Kcal</p>
-              <CircularProgress value={consumed.calories} max={goals.calories} size={120} strokeWidth={10} />
+              <p className="text-sm text-muted-foreground mb-1.5">Objetivo: {goals.calories} Kcal</p>
+              <CircularProgress value={consumed.calories} max={goals.calories} size={110} strokeWidth={9} />
             </div>
             
-            <div className="w-full space-y-3">
+            <div className="w-full space-y-2.5">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Consumidas</span>
-                <span className="text-foreground font-semibold text-lg">{consumed.calories} Kcal</span>
+                <span className="text-muted-foreground text-sm">Consumidas</span>
+                <span className="text-foreground font-semibold">{consumed.calories} Kcal</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Restantes</span>
-                <span className="text-foreground font-semibold text-lg">{goals.calories - consumed.calories} Kcal</span>
+                <span className="text-muted-foreground text-sm">Restantes</span>
+                <span className="text-foreground font-semibold">{goals.calories - consumed.calories} Kcal</span>
               </div>
               
               {/* Macros Distribution */}
-              <div className="pt-4 border-t border-border space-y-2">
+              <div className="pt-3 border-t border-border space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground text-sm">Proteínas</span>
                   <span className="text-foreground font-semibold">{consumed.protein}g / {goals.protein}g</span>
