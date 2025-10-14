@@ -98,7 +98,10 @@ const AddFood = () => {
           console.log("📦 Datos recibidos del webhook:", data);
           console.log("📊 per_100g:", data.per_100g);
           
-          if (data?.error) {
+          // El webhook devuelve un array, tomamos el primer elemento
+          const productData = Array.isArray(data) ? data[0] : data;
+          
+          if (productData?.error) {
             toast({
               title: "No encontrado",
               description: "No hay coincidencias para este código.",
@@ -107,12 +110,12 @@ const AddFood = () => {
           }
           
           const item: FoodItem = {
-            name: data.name ?? "Producto",
-            brand: data.brand ?? "",
-            calories: data.per_100g?.kcal ?? 0,
-            protein: data.per_100g?.protein_g ?? 0,
-            fat: data.per_100g?.fat_g ?? 0,
-            carbs: data.per_100g?.carbs_g ?? 0,
+            name: productData.name ?? "Producto",
+            brand: productData.brand ?? "",
+            calories: productData.per_100g?.kcal ?? 0,
+            protein: productData.per_100g?.protein ?? 0,  // Sin el sufijo _g
+            fat: productData.per_100g?.fat ?? 0,          // Sin el sufijo _g
+            carbs: productData.per_100g?.carbs ?? 0,      // Sin el sufijo _g
             servingSize: 100,
             servingUnit: "g",
           };
