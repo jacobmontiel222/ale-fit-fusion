@@ -47,31 +47,40 @@ const Profile = () => {
   const [autoBackup, setAutoBackup] = useState(false);
 
   useEffect(() => {
-    // Load user profile from database
-    const fetchUserProfile = async () => {
-      if (user?.id) {
-        const { data, error } = await supabase
+    const loadProfile = async () => {
+      // 1) Read name from session metadata first
+      const { data: authData } = await supabase.auth.getUser();
+      const metaName = authData.user?.user_metadata?.name as string | undefined;
+      if (metaName && metaName.trim().length > 0) {
+        setProfileData((p) => ({ ...p, name: metaName }));
+        setEditData((p) => ({ ...p, name: metaName }));
+      }
+
+      // 2) Try profiles table for persisted fields (and name override if present)
+      const uid = authData.user?.id || user?.id;
+      if (uid) {
+        const { data } = await supabase
           .from('profiles')
           .select('name, height, current_weight, target_weight, avatar_url')
-          .eq('id', user.id)
+          .eq('id', uid)
           .maybeSingle();
-        
-        if (data && !error) {
+
+        if (data) {
           const profile = {
-            name: data.name || "Usuario",
-            height: data.height,
-            current_weight: data.current_weight,
-            target_weight: data.target_weight,
-            avatar_url: data.avatar_url
+            name: data.name || metaName || 'Usuario',
+            height: data.height ?? null,
+            current_weight: data.current_weight ?? null,
+            target_weight: data.target_weight ?? null,
+            avatar_url: data.avatar_url ?? null,
           };
           setProfileData(profile);
           setEditData(profile);
         }
       }
     };
-    
-    fetchUserProfile();
-  }, [user]);
+
+    loadProfile();
+  }, [user?.id]);
 
   const handleEditProfile = () => {
     setIsEditing(true);

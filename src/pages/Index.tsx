@@ -38,23 +38,30 @@ const Index = () => {
   const exerciseKcal = Math.round(todaySteps * kcalPerStep);
 
   useEffect(() => {
-    // Load user profile name
-    const fetchUserProfile = async () => {
-      if (user?.id) {
-        const { data, error } = await supabase
+    const loadDisplayName = async () => {
+      // 1) Read from session metadata immediately
+      const { data: authData } = await supabase.auth.getUser();
+      const metaName = authData.user?.user_metadata?.name as string | undefined;
+      if (metaName && metaName.trim().length > 0) {
+        setUserName(metaName);
+      }
+
+      // 2) Try profiles table and prefer it if present
+      const uid = authData.user?.id || user?.id;
+      if (uid) {
+        const { data } = await supabase
           .from('profiles')
           .select('name')
-          .eq('id', user.id)
-          .single();
-        
-        if (data && !error) {
+          .eq('id', uid)
+          .maybeSingle();
+        if (data?.name) {
           setUserName(data.name);
         }
       }
     };
-    
-    fetchUserProfile();
-  }, [user]);
+
+    loadDisplayName();
+  }, [user?.id]);
 
   useEffect(() => {
     // Load today's weight and steps
