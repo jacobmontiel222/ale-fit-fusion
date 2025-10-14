@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Camera, Search } from "lucide-react";
+import { ArrowLeft, Camera, Search, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/StatsCard";
 import { toast } from "@/hooks/use-toast";
 import { BrowserMultiFormatReader } from "@zxing/browser";
+import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
+import { addMealItem, type MealItem } from "@/lib/meals";
 
 interface FoodItem {
   name: string;
@@ -48,9 +50,14 @@ const AddFood = () => {
   });
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [foodHistory, setFoodHistory] = useState<HistoryItem[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<any>(null);
+  
+  useEffect(() => {
+    setFoodHistory(getFoodHistory());
+  }, []);
 
   const filteredFoods = mockFoods.filter(food =>
     food.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -181,17 +188,34 @@ const AddFood = () => {
       return;
     }
     
-    // Store in localStorage for meals
-    const existingMeals = JSON.parse(localStorage.getItem("meals") || "{}");
-    if (!existingMeals[meal]) {
-      existingMeals[meal] = [];
-    }
-    existingMeals[meal].push({
-      ...foodToAdd,
-      amount: servingAmount,
-      adjustedMacros,
+    // Add to food history
+    addToHistory({
+      name: foodToAdd.name,
+      brand: foodToAdd.brand,
+      calories: foodToAdd.calories,
+      protein: foodToAdd.protein,
+      fat: foodToAdd.fat,
+      carbs: foodToAdd.carbs,
+      servingSize: foodToAdd.servingSize,
+      servingUnit: foodToAdd.servingUnit,
+      meal: meal,
     });
-    localStorage.setItem("meals", JSON.stringify(existingMeals));
+    
+    // Add to daily meals
+    const today = new Date().toISOString().split('T')[0];
+    const mealItem: MealItem = {
+      name: foodToAdd.name,
+      brand: foodToAdd.brand,
+      calories: adjustedMacros.calories,
+      protein: adjustedMacros.protein,
+      fat: adjustedMacros.fat,
+      carbs: adjustedMacros.carbs,
+      amount: servingAmount,
+      unit: foodToAdd.servingUnit,
+      addedAt: new Date().toISOString(),
+    };
+    
+    addMealItem(today, meal as 'Desayuno' | 'Comida' | 'Cena', mealItem);
     
     toast({
       title: "Alimento añadido",
@@ -199,6 +223,21 @@ const AddFood = () => {
     });
     
     navigate("/comidas");
+  };
+  
+  const handleHistoryItemClick = (item: HistoryItem) => {
+    setSelectedFood({
+      name: item.name,
+      brand: item.brand,
+      calories: item.calories,
+      protein: item.protein,
+      fat: item.fat,
+      carbs: item.carbs,
+      servingSize: item.servingSize,
+      servingUnit: item.servingUnit,
+    });
+    setServingAmount(item.servingSize);
+    setManualEntry(false);
   };
 
   return (
@@ -387,6 +426,37 @@ const AddFood = () => {
                     <p className="text-xs text-muted-foreground">por {food.servingSize} {food.servingUnit}</p>
                   </div>
                   <Button size="sm">Añadir</Button>
+                </div>
+              </StatsCard>
+            ))}
+          </div>
+        )}
+        
+        {/* Food History */}
+        {!selectedFood && !manualEntry && !searchQuery && foodHistory.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <h3>Historial reciente</h3>
+            </div>
+            {foodHistory.slice(0, 10).map((item) => (
+              <StatsCard 
+                key={item.id} 
+                className="cursor-pointer hover:bg-secondary/50 transition-colors" 
+                onClick={() => handleHistoryItemClick(item)}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">{item.name}</h4>
+                    {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {item.calories} kcal · P: {item.protein}g · G: {item.fat}g · C: {item.carbs}g
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.servingSize} {item.servingUnit} · {item.meal}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="ghost">Añadir</Button>
                 </div>
               </StatsCard>
             ))}

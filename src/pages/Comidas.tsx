@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNutrition } from "@/contexts/NutritionContext";
 import { getState, saveGoals } from "@/lib/storage";
+import { getDailyMeals, removeMealItem, getMealTotals } from "@/lib/meals";
 
 const Comidas = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Comidas = () => {
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
+  const [dailyMeals, setDailyMeals] = useState<any>(null);
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
   const dateISO = formatDate(selectedDate);
@@ -24,6 +26,18 @@ const Comidas = () => {
   // Get nutrition data for selected date
   const dayTotals = getTotals(dateISO);
   const state = getState();
+  
+  useEffect(() => {
+    const meals = getDailyMeals(dateISO);
+    setDailyMeals(meals);
+  }, [dateISO]);
+  
+  const handleRemoveItem = (mealName: 'Desayuno' | 'Comida' | 'Cena', index: number) => {
+    removeMealItem(dateISO, mealName, index);
+    const updatedMeals = getDailyMeals(dateISO);
+    setDailyMeals(updatedMeals);
+    refreshTotals();
+  };
 
   const handleSaveGoals = (newGoals: any) => {
     saveGoals({
@@ -142,7 +156,18 @@ const Comidas = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">Objetivo: {dayTotals.kcalTarget} Kcal</p>
-                  <CircularProgress value={dayTotals.kcalConsumed} max={dayTotals.kcalTarget} size={110} strokeWidth={9} />
+                  <CircularProgress 
+                    value={dayTotals.kcalConsumed} 
+                    max={dayTotals.kcalTarget} 
+                    size={110} 
+                    strokeWidth={9}
+                    protein={dayTotals.macrosG.protein}
+                    fat={dayTotals.macrosG.fat}
+                    carbs={dayTotals.macrosG.carbs}
+                    proteinGoal={state.goals.protein}
+                    fatGoal={state.goals.fat}
+                    carbsGoal={state.goals.carbs}
+                  />
                 </div>
                 
                 <div className="w-full space-y-2">
@@ -158,27 +183,36 @@ const Comidas = () => {
                   {/* Macros Distribution */}
                   <div className="pt-2 border-t border-border space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground text-sm">Proteínas</span>
+                      <span className="text-muted-foreground text-sm flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--protein))' }}></span>
+                        Proteínas
+                      </span>
                       <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {state.goals.protein}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / state.goals.protein) * 100)}%` }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / state.goals.protein) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground text-sm">Grasas</span>
+                      <span className="text-muted-foreground text-sm flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--fat))' }}></span>
+                        Grasas
+                      </span>
                       <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {state.goals.fat}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / state.goals.fat) * 100)}%` }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / state.goals.fat) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground text-sm">Carbohidratos</span>
+                      <span className="text-muted-foreground text-sm flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--carbs))' }}></span>
+                        Carbohidratos
+                      </span>
                       <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {state.goals.carbs}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="bg-progress-ring h-full rounded-full" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / state.goals.carbs) * 100)}%` }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / state.goals.carbs) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
                     </div>
                   </div>
                 </div>
@@ -193,26 +227,60 @@ const Comidas = () => {
 
         {/* Meal Cards */}
         <div className="space-y-2.5">
-          {meals.map((meal, index) => (
-            <StatsCard key={index} className="py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-0.5">{meal.name}</h3>
-                  {meal.calories > 0 ? (
-                    <p className="text-muted-foreground text-sm">{meal.calories} Kcal</p>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">Sin alimentos añadidos</p>
-                  )}
+          {meals.map((meal, index) => {
+            const mealItems = dailyMeals?.[meal.name] || [];
+            const mealTotals = getMealTotals(mealItems);
+            
+            return (
+              <StatsCard key={index} className="py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-0.5">{meal.name}</h3>
+                    {mealTotals.calories > 0 ? (
+                      <div className="text-sm">
+                        <p className="text-foreground font-semibold">{mealTotals.calories} Kcal</p>
+                        <p className="text-muted-foreground text-xs">
+                          P: {Math.round(mealTotals.protein)}g · G: {Math.round(mealTotals.fat)}g · C: {Math.round(mealTotals.carbs)}g
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">Sin alimentos añadidos</p>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => navigate(`/add-food?meal=${meal.name}`)}
+                    className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform"
+                  >
+                    <Plus className="w-4 h-4 text-primary-foreground" />
+                  </button>
                 </div>
-                <button 
-                  onClick={() => navigate(`/add-food?meal=${meal.name}`)}
-                  className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform"
-                >
-                  <Plus className="w-4 h-4 text-primary-foreground" />
-                </button>
-              </div>
-            </StatsCard>
-          ))}
+                
+                {/* List of foods in this meal */}
+                {mealItems.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-border">
+                    {mealItems.map((item: any, itemIndex: number) => (
+                      <div key={itemIndex} className="flex items-start justify-between text-sm">
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.amount} {item.unit} · {item.calories} kcal
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => handleRemoveItem(meal.name as 'Desayuno' | 'Comida' | 'Cena', itemIndex)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </StatsCard>
+            );
+          })}
         </div>
 
         {/* Recipes Card */}

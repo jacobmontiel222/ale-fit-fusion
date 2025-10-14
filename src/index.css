@@ -41,6 +41,10 @@ All colors MUST be HSL.
     --progress-ring: 0 0% 75%;
     --progress-bg: 0 0% 20%;
     
+    --protein: 142 76% 45%;
+    --fat: 45 93% 47%;
+    --carbs: 217 91% 60%;
+    
     --chart-1: 210 80% 50%;
     --chart-2: 142 70% 45%;
   }
