@@ -95,6 +95,9 @@ const AddFood = () => {
           });
           const data = await res.json();
           
+          console.log("📦 Datos recibidos del webhook:", data);
+          console.log("📊 per_100g:", data.per_100g);
+          
           if (data?.error) {
             toast({
               title: "No encontrado",
