@@ -178,13 +178,6 @@ const Login = () => {
           .
         </p>
         
-        {/* Supabase Config Link */}
-        <button
-          onClick={() => navigate("/supabase-config")}
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          ⚙️ Configurar Supabase
-        </button>
       </div>
     </div>
   );
