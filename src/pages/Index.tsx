@@ -75,8 +75,8 @@ const Index = () => {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Hola, {userName} 👋</h1>
-            <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello! 💪</p>
+            <h1 className="text-3xl font-bold text-foreground">Hola, {userName}</h1>
+            <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello!</p>
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 hover:bg-card rounded-full transition-colors">

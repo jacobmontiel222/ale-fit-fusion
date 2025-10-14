@@ -108,7 +108,7 @@ const Profile = () => {
           <h2 className="text-2xl font-bold text-foreground mb-1">
             {userName}
           </h2>
-          <p className="text-muted-foreground mb-4">Vamos a por ello 💪</p>
+          <p className="text-muted-foreground mb-4">Vamos a por ello</p>
           <Button variant="secondary" className="w-48">
             Editar perfil
           </Button>
@@ -120,19 +120,19 @@ const Profile = () => {
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-foreground">Altura</span>
-              <span className="text-muted-foreground">{state.profile.height || 180} cm</span>
+              <span className="text-muted-foreground">0 cm</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-foreground">Peso actual</span>
-              <span className="text-muted-foreground">75 kg</span>
+              <span className="text-muted-foreground">0 kg</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-foreground">Peso objetivo</span>
-              <span className="text-muted-foreground">70 kg</span>
+              <span className="text-muted-foreground">0 kg</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-foreground">Objetivo general</span>
-              <span className="text-muted-foreground">Ponerse en forma</span>
+              <span className="text-muted-foreground">—</span>
             </div>
           </div>
         </StatsCard>
@@ -170,7 +170,7 @@ const Profile = () => {
           <div className="space-y-4">
             <button className="w-full flex justify-between items-center text-left">
               <span className="text-foreground">Cambiar email</span>
-              <span className="text-muted-foreground text-sm">a.guerrero@...</span>
+              <span className="text-muted-foreground text-sm">{user?.email || ''}</span>
             </button>
             <button className="w-full flex justify-between items-center text-left">
               <span className="text-foreground">Cambiar contraseña</span>
