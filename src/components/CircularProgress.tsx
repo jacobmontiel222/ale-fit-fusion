@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 interface CircularProgressProps {
   value: number;
   max: number;
@@ -23,15 +25,32 @@ export const CircularProgress = ({
   fatGoal = 1,
   carbsGoal = 1,
 }: CircularProgressProps) => {
+  const [animatedProtein, setAnimatedProtein] = useState(0);
+  const [animatedFat, setAnimatedFat] = useState(0);
+  const [animatedCarbs, setAnimatedCarbs] = useState(0);
+  const [animatedValue, setAnimatedValue] = useState(0);
+  
+  // Animate the values smoothly when they change
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setAnimatedProtein(protein);
+      setAnimatedFat(fat);
+      setAnimatedCarbs(carbs);
+      setAnimatedValue(value);
+    }, 50);
+    
+    return () => clearTimeout(timeout);
+  }, [protein, fat, carbs, value]);
+  
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const percentage = (value / max) * 100;
+  const percentage = (animatedValue / max) * 100;
   const offset = circumference - (percentage / 100) * circumference;
   
-  // Calculate macro percentages
-  const proteinPercentage = Math.min(100, (protein / proteinGoal) * 100);
-  const fatPercentage = Math.min(100, (fat / fatGoal) * 100);
-  const carbsPercentage = Math.min(100, (carbs / carbsGoal) * 100);
+  // Calculate macro percentages with animated values
+  const proteinPercentage = Math.min(100, (animatedProtein / proteinGoal) * 100);
+  const fatPercentage = Math.min(100, (animatedFat / fatGoal) * 100);
+  const carbsPercentage = Math.min(100, (animatedCarbs / carbsGoal) * 100);
   
   // Calculate segments for the colored ring
   const totalMacros = proteinGoal + fatGoal + carbsGoal;
@@ -67,7 +86,7 @@ export const CircularProgress = ({
           strokeDasharray={`${proteinSegment} ${circumference - proteinSegment}`}
           strokeDashoffset={proteinOffset}
           strokeLinecap="round"
-          className="transition-all duration-500"
+          className="transition-all duration-700 ease-out"
         />
         
         {/* Fat segment (yellow) - offset by protein segment */}
@@ -81,7 +100,7 @@ export const CircularProgress = ({
           strokeDasharray={`${fatSegment} ${circumference - fatSegment}`}
           strokeDashoffset={fatOffset - proteinSegment}
           strokeLinecap="round"
-          className="transition-all duration-500"
+          className="transition-all duration-700 ease-out"
         />
         
         {/* Carbs segment (blue) - offset by protein + fat segments */}
@@ -95,11 +114,11 @@ export const CircularProgress = ({
           strokeDasharray={`${carbsSegment} ${circumference - carbsSegment}`}
           strokeDashoffset={carbsOffset - proteinSegment - fatSegment}
           strokeLinecap="round"
-          className="transition-all duration-500"
+          className="transition-all duration-700 ease-out"
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center">
-        <span className="text-4xl font-bold text-foreground">{value}</span>
+        <span className="text-4xl font-bold text-foreground transition-all duration-500">{animatedValue}</span>
         <span className="text-sm text-muted-foreground">Kcal</span>
       </div>
     </div>
