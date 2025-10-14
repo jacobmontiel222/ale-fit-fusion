@@ -12,6 +12,8 @@ import Gimnasio from "./pages/Gimnasio";
 import Comunidad from "./pages/Comunidad";
 import Analytics from "./pages/Analytics";
 import Profile from "./pages/Profile";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => {
               <Route path="/comunidad" element={<Comunidad />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
