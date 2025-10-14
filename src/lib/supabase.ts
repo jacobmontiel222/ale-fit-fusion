@@ -7,11 +7,7 @@ const getSupabaseConfig = () => {
   const externalKey = localStorage.getItem('EXTERNAL_SUPABASE_ANON_KEY');
 
   if (!externalUrl || !externalKey) {
-    // Redirect to config page if not on it already
-    if (!window.location.pathname.includes('/supabase-config')) {
-      window.location.href = '/supabase-config';
-    }
-    // Return dummy config to prevent errors during redirect
+    // Return dummy config to prevent errors
     return {
       url: 'https://placeholder.supabase.co',
       key: 'placeholder-key',
