@@ -1,26 +1,23 @@
-import { ArrowLeft, Download, Upload, User } from "lucide-react";
+import { X, ChevronRight, Download, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
-import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { getState, exportJSON, importJSON } from "@/lib/storage";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [state, setState] = useState(getState());
-  const [showLoginDialog, setShowLoginDialog] = useState(false);
-
-  useEffect(() => {
-    setState(getState());
-  }, []);
+  const state = getState();
+  
+  const [darkMode, setDarkMode] = useState(true);
+  const [notifications, setNotifications] = useState(false);
+  const [smartReminders, setSmartReminders] = useState(false);
+  const [biometricAuth, setBiometricAuth] = useState(true);
+  const [autoBackup, setAutoBackup] = useState(false);
 
   const handleExport = () => {
     const data = exportJSON();
@@ -49,7 +46,7 @@ const Profile = () => {
           const success = importJSON(content);
           if (success) {
             toast.success('Datos importados correctamente');
-            setState(getState());
+            window.location.reload();
           } else {
             toast.error('Error al importar datos');
           }
@@ -61,86 +58,170 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-8">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-card rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6 text-foreground" />
-          </button>
-          <h1 className="text-3xl font-bold text-foreground">Perfil</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex-1" />
+          <h1 className="text-2xl font-bold text-foreground">Perfil</h1>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={() => navigate('/')}
+              className="p-2 hover:bg-card rounded-full transition-colors"
+            >
+              <X className="w-6 h-6 text-foreground" />
+            </button>
+          </div>
         </div>
 
-        {/* Local Data Section */}
+        {/* Avatar and User Info */}
+        <div className="flex flex-col items-center mb-6">
+          <Avatar className="w-28 h-28 mb-4">
+            <AvatarImage src="" />
+            <AvatarFallback className="bg-muted text-foreground text-3xl">
+              {state.profile.name?.[0]?.toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <h2 className="text-2xl font-bold text-foreground mb-1">
+            {state.profile.name || 'Usuario'}
+          </h2>
+          <p className="text-muted-foreground mb-4">Vamos a por ello 💪</p>
+          <Button variant="secondary" className="w-48">
+            Editar perfil
+          </Button>
+        </div>
+
+        {/* Información personal */}
         <StatsCard>
-          <h2 className="text-xl font-semibold text-foreground mb-4">Datos locales</h2>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Información personal</h3>
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Nombre</span>
-              <span className="text-foreground font-semibold">
-                {state.profile.name || 'No establecido'}
-              </span>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">Altura</span>
+              <span className="text-muted-foreground">{state.profile.height || 180} cm</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Unidad de peso</span>
-              <span className="text-foreground font-semibold">{state.profile.weightUnit}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">Peso actual</span>
+              <span className="text-muted-foreground">75 kg</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Altura</span>
-              <span className="text-foreground font-semibold">
-                {state.profile.height ? `${state.profile.height} cm` : 'No establecido'}
-              </span>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">Peso objetivo</span>
+              <span className="text-muted-foreground">70 kg</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Objetivo kcal</span>
-              <span className="text-foreground font-semibold">
-                {state.goals.dailyCalories} kcal
-              </span>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">Objetivo general</span>
+              <span className="text-muted-foreground">Ponerse en forma</span>
             </div>
           </div>
         </StatsCard>
 
-        {/* Account Section */}
+        {/* Preferencias de la aplicación */}
         <StatsCard>
-          <h2 className="text-xl font-semibold text-foreground mb-4">Cuenta (futuro)</h2>
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowLoginDialog(true)}
-            >
-              <User className="w-4 h-4 mr-2" />
-              Iniciar sesión / Crear cuenta
-            </Button>
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={handleExport}>
-                <Download className="w-4 h-4 mr-2" />
-                Exportar datos
-              </Button>
-              <Button variant="outline" onClick={handleImport}>
-                <Upload className="w-4 h-4 mr-2" />
-                Importar datos
-              </Button>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Preferencias de la aplicación</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Label htmlFor="dark-mode" className="text-foreground cursor-pointer">Modo oscuro</Label>
+              <Switch id="dark-mode" checked={darkMode} onCheckedChange={setDarkMode} />
+            </div>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="notifications" className="text-foreground cursor-pointer">Notificaciones</Label>
+              <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
+            </div>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="smart-reminders" className="text-foreground cursor-pointer">Recordatorios inteligentes</Label>
+              <Switch id="smart-reminders" checked={smartReminders} onCheckedChange={setSmartReminders} />
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">Unidades</span>
+              <span className="text-muted-foreground">{state.profile.weightUnit === 'kg' ? 'Métrico' : 'Imperial'}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">Idioma</span>
+              <span className="text-muted-foreground">Español</span>
             </div>
           </div>
         </StatsCard>
+
+        {/* Cuenta y seguridad */}
+        <StatsCard>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Cuenta y seguridad</h3>
+          <div className="space-y-4">
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Cambiar email</span>
+              <span className="text-muted-foreground text-sm">a.guerrero@...</span>
+            </button>
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Cambiar contraseña</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="biometric" className="text-foreground cursor-pointer">Face ID / Touch ID</Label>
+              <Switch id="biometric" checked={biometricAuth} onCheckedChange={setBiometricAuth} />
+            </div>
+          </div>
+        </StatsCard>
+
+        {/* Sincronización y datos */}
+        <StatsCard>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Sincronización y datos</h3>
+          <div className="space-y-4">
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Conectar con Google Fit / Apple Health</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button onClick={handleExport} className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Exportar datos</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="auto-backup" className="text-foreground cursor-pointer">Copia de seguridad automática</Label>
+              <Switch id="auto-backup" checked={autoBackup} onCheckedChange={setAutoBackup} />
+            </div>
+          </div>
+        </StatsCard>
+
+        {/* Ayuda y soporte */}
+        <StatsCard>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Ayuda y soporte</h3>
+          <div className="space-y-4">
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">FAQ / Centro de ayuda</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Contactar soporte</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Informar de un bug</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </StatsCard>
+
+        {/* Legal */}
+        <StatsCard>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Legal</h3>
+          <div className="space-y-4">
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Política de privacidad</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button className="w-full flex justify-between items-center text-left">
+              <span className="text-foreground">Términos de servicio</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </StatsCard>
+
+        {/* Cerrar sesión */}
+        <Button 
+          variant="destructive" 
+          className="w-full mt-6"
+          onClick={() => toast.info('Funcionalidad próximamente')}
+        >
+          Cerrar sesión
+        </Button>
       </div>
-
-      {/* Login Dialog */}
-      <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Próximamente</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tus datos se guardan localmente de forma segura. Pronto podrás crear una cuenta para sincronizar tus datos en la nube.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Button onClick={() => setShowLoginDialog(false)}>Entendido</Button>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
