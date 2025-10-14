@@ -179,6 +179,7 @@ const Comidas = () => {
                     proteinGoal={state.goals.protein}
                     fatGoal={state.goals.fat}
                     carbsGoal={state.goals.carbs}
+                    showMacroColors={true}
                   />
                 </div>
                 
