@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Camera, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/StatsCard";
 import { toast } from "@/hooks/use-toast";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 
 interface FoodItem {
   name: string;
@@ -45,32 +46,98 @@ const AddFood = () => {
     servingSize: 100,
     servingUnit: "g",
   });
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const controlsRef = useRef<any>(null);
 
   const filteredFoods = mockFoods.filter(food =>
     food.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleScan = () => {
-    // Mock scanner - in production this would open camera
-    toast({
-      title: "Escáner activado",
-      description: "Funcionalidad de escáner en desarrollo. Usando datos mock...",
-    });
+  const stopScanner = () => {
+    try {
+      controlsRef.current?.stop();
+    } catch {}
+    setScanning(false);
+  };
+
+  useEffect(() => {
+    return () => stopScanner();
+  }, []);
+
+  const startScanner = async () => {
+    setScannerOpen(true);
+    setScanning(true);
+    if (!readerRef.current) {
+      readerRef.current = new BrowserMultiFormatReader();
+    }
+    await new Promise(r => setTimeout(r, 50));
     
-    // Simulate scanned food
-    const scannedFood = {
-      name: "Producto escaneado",
-      brand: "Marca detectada",
-      calories: 250,
-      protein: 8,
-      fat: 12,
-      carbs: 28,
-      servingSize: 100,
-      servingUnit: "g",
-    };
-    
-    setSelectedFood(scannedFood);
-    setServingAmount(100);
+    try {
+      await readerRef.current.decodeFromVideoDevice(undefined, videoRef.current!, async (result, err, controls) => {
+        if (!result) return;
+        controlsRef.current = controls;
+        const barcode = result.getText();
+        if (!/^\d{8,14}$/.test(barcode)) return;
+        
+        controls?.stop();
+        stopScanner();
+        setScannerOpen(false);
+        
+        try {
+          const url = import.meta.env.VITE_N8N_BARCODE_URL ?? "https://TU_N8N_URL/webhook/barcode";
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ barcode })
+          });
+          const data = await res.json();
+          
+          if (data?.error) {
+            toast({
+              title: "No encontrado",
+              description: "No hay coincidencias para este código.",
+            });
+            return;
+          }
+          
+          const item: FoodItem = {
+            name: data.name ?? "Producto",
+            brand: data.brand ?? "",
+            calories: data.per_100g?.kcal ?? 0,
+            protein: data.per_100g?.protein_g ?? 0,
+            fat: data.per_100g?.fat_g ?? 0,
+            carbs: data.per_100g?.carbs_g ?? 0,
+            servingSize: 100,
+            servingUnit: "g",
+          };
+          
+          setSelectedFood(item);
+          setServingAmount(item.servingSize);
+          
+          toast({
+            title: "Escaneado",
+            description: `${item.name} detectado`,
+          });
+        } catch {
+          toast({
+            title: "Error",
+            description: "Fallo al consultar el producto.",
+            variant: "destructive",
+          });
+        }
+      });
+    } catch (error) {
+      toast({
+        title: "Error de cámara",
+        description: "Autoriza la cámara o usa HTTPS.",
+        variant: "destructive",
+      });
+      setScannerOpen(false);
+      setScanning(false);
+    }
   };
 
   const calculateAdjustedMacros = (food: FoodItem, amount: number) => {
@@ -157,7 +224,7 @@ const AddFood = () => {
               className="pl-9"
             />
           </div>
-          <Button onClick={handleScan} size="icon">
+          <Button onClick={startScanner} size="icon">
             <Camera className="w-4 h-4" />
           </Button>
         </div>
@@ -320,6 +387,30 @@ const AddFood = () => {
           </div>
         )}
       </div>
+
+      {/* Scanner Modal */}
+      {scannerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
+          <div className="flex items-center justify-between p-4 text-white">
+            <span className="font-semibold">Escanea el código de barras</span>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                stopScanner();
+                setScannerOpen(false);
+              }}
+            >
+              Cerrar
+            </Button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+          </div>
+          <div className="p-4 text-center text-white">
+            {scanning ? "Apunta al código…" : "Preparando cámara…"}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
