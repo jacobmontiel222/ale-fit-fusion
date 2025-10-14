@@ -11,6 +11,7 @@ interface CircularProgressProps {
   proteinGoal?: number;
   fatGoal?: number;
   carbsGoal?: number;
+  showMacroColors?: boolean;
 }
 
 export const CircularProgress = ({ 
@@ -24,6 +25,7 @@ export const CircularProgress = ({
   proteinGoal = 1,
   fatGoal = 1,
   carbsGoal = 1,
+  showMacroColors = false,
 }: CircularProgressProps) => {
   const [animatedProtein, setAnimatedProtein] = useState(0);
   const [animatedFat, setAnimatedFat] = useState(0);
@@ -44,6 +46,10 @@ export const CircularProgress = ({
   
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
+  
+  // For single color mode: simple progress
+  const percentage = (animatedValue / max) * 100;
+  const singleOffset = circumference - (Math.min(percentage, 100) / 100) * circumference;
   
   // Convert macros to kcal: protein and carbs = 4 kcal/g, fat = 9 kcal/g
   const proteinKcal = animatedProtein * 4;
@@ -73,55 +79,73 @@ export const CircularProgress = ({
           fill="none"
         />
         
-        {/* Protein arc (green) - starts at 0 */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="hsl(var(--protein))"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={proteinOffset}
-          strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
-        />
-        
-        {/* Fat arc (yellow) - starts after protein */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="hsl(var(--fat))"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={fatOffset}
-          strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
-          style={{
-            transform: `rotate(${(proteinKcal / max) * 360}deg)`,
-            transformOrigin: 'center',
-          }}
-        />
-        
-        {/* Carbs arc (blue) - starts after protein + fat */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="hsl(var(--carbs))"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={carbsOffset}
-          strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
-          style={{
-            transform: `rotate(${((proteinKcal + fatKcal) / max) * 360}deg)`,
-            transformOrigin: 'center',
-          }}
-        />
+        {!showMacroColors ? (
+          /* Single color progress (white) */
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="hsl(var(--primary))"
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={singleOffset}
+            strokeLinecap="round"
+            className="transition-all duration-700 ease-out"
+          />
+        ) : (
+          <>
+            {/* Protein arc (green) - starts at 0 */}
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="hsl(var(--protein))"
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={circumference}
+              strokeDashoffset={proteinOffset}
+              strokeLinecap="round"
+              className="transition-all duration-700 ease-out"
+            />
+            
+            {/* Fat arc (yellow) - starts after protein */}
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="hsl(var(--fat))"
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={circumference}
+              strokeDashoffset={fatOffset}
+              strokeLinecap="round"
+              className="transition-all duration-700 ease-out"
+              style={{
+                transform: `rotate(${(proteinKcal / max) * 360}deg)`,
+                transformOrigin: 'center',
+              }}
+            />
+            
+            {/* Carbs arc (blue) - starts after protein + fat */}
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke="hsl(var(--carbs))"
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={circumference}
+              strokeDashoffset={carbsOffset}
+              strokeLinecap="round"
+              className="transition-all duration-700 ease-out"
+              style={{
+                transform: `rotate(${((proteinKcal + fatKcal) / max) * 360}deg)`,
+                transformOrigin: 'center',
+              }}
+            />
+          </>
+        )}
       </svg>
       <div className="absolute flex flex-col items-center justify-center">
         <span className="text-4xl font-bold text-foreground transition-all duration-500">{animatedValue}</span>
