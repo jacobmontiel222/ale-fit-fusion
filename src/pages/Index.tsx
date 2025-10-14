@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNutrition } from "@/contexts/NutritionContext";
 import { getState } from "@/lib/storage";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeightEntry {
   date: string;
@@ -21,8 +23,10 @@ interface StepsEntry {
 const Index = () => {
   const navigate = useNavigate();
   const { getTotals } = useNutrition();
+  const { user } = useAuth();
   const today = new Date().toISOString().split('T')[0];
   
+  const [userName, setUserName] = useState<string>("Usuario");
   const [todayWeight, setTodayWeight] = useState<number | null>(null);
   const [todaySteps, setTodaySteps] = useState<number>(0);
   const [kcalPerStep, setKcalPerStep] = useState<number>(0.045);
@@ -32,6 +36,25 @@ const Index = () => {
 
   // Calculate exercise calories
   const exerciseKcal = Math.round(todaySteps * kcalPerStep);
+
+  useEffect(() => {
+    // Load user profile name
+    const fetchUserProfile = async () => {
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        
+        if (data && !error) {
+          setUserName(data.name);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
     // Load today's weight and steps
@@ -52,8 +75,8 @@ const Index = () => {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Hola, Nombre</h1>
-            <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello!</p>
+            <h1 className="text-3xl font-bold text-foreground">Hola, {userName} 👋</h1>
+            <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello! 💪</p>
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 hover:bg-card rounded-full transition-colors">

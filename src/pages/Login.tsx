@@ -3,16 +3,34 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Settings } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Supabase authentication
-    navigate("/");
+    
+    if (!email || !password) return;
+    
+    setIsLoading(true);
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      toast({
+        title: "Error al iniciar sesión",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    
+    setIsLoading(false);
   };
 
   const handleSignUp = () => {
@@ -20,13 +38,17 @@ const Login = () => {
   };
 
   const handleGoogleAuth = () => {
-    // TODO: Implement Google OAuth
-    console.log("Google auth");
+    toast({
+      title: "Próximamente",
+      description: "La autenticación con Google estará disponible pronto.",
+    });
   };
 
   const handleAppleAuth = () => {
-    // TODO: Implement Apple OAuth
-    console.log("Apple auth");
+    toast({
+      title: "Próximamente",
+      description: "La autenticación con Apple estará disponible pronto.",
+    });
   };
 
   return (
@@ -76,10 +98,22 @@ const Login = () => {
         {/* Log In Button */}
         <Button
           type="submit"
-          className="w-full h-14 bg-[#007AFF] hover:bg-[#0066DD] text-white font-semibold rounded-2xl text-base mt-6"
+          disabled={isLoading || !email || !password}
+          className="w-full h-14 bg-[#007AFF] hover:bg-[#0066DD] text-white font-semibold rounded-2xl text-base mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Log In
+          {isLoading ? "Iniciando sesión..." : "Log In"}
         </Button>
+
+        {/* Forgot Password Link */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => navigate("/reset-password")}
+            className="text-muted-foreground hover:text-foreground text-sm hover:underline"
+          >
+            Forgot password?
+          </button>
+        </div>
 
         {/* Sign Up Button */}
         <Button

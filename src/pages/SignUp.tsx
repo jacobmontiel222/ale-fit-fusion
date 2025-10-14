@@ -2,22 +2,65 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
+  const { toast } = useToast();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignUp = (e: React.FormEvent) => {
+  // Password validation checks
+  const hasMinLength = password.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const passwordsMatch = password === confirmPassword && password.length > 0;
+
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords don't match");
+    
+    if (!hasMinLength || !hasUpperCase || !hasNumber) {
+      toast({
+        title: "Contraseña inválida",
+        description: "La contraseña debe cumplir todos los requisitos.",
+        variant: "destructive",
+      });
       return;
     }
-    // TODO: Implement Supabase authentication
-    navigate("/");
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Las contraseñas no coinciden",
+        description: "Verifica que ambas contraseñas sean iguales.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    const { error } = await signUp(email, password, name);
+    
+    if (error) {
+      toast({
+        title: "Error al crear cuenta",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "¡Cuenta creada!",
+        description: "Tu cuenta ha sido creada exitosamente.",
+      });
+      // User will be automatically redirected by AuthContext
+    }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -44,6 +87,16 @@ const SignUp = () => {
 
       {/* Form */}
       <form onSubmit={handleSignUp} className="w-full max-w-md space-y-4">
+        {/* Name Input */}
+        <Input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="h-14 bg-secondary border-none text-foreground placeholder:text-muted-foreground rounded-2xl text-base"
+          required
+        />
+
         {/* Email Input */}
         <Input
           type="email"
@@ -74,12 +127,56 @@ const SignUp = () => {
           required
         />
 
+        {/* Password Validation Checklist */}
+        {password.length > 0 && (
+          <div className="p-3 bg-secondary rounded-xl space-y-2">
+            <p className="text-xs text-muted-foreground mb-2">La contraseña debe contener:</p>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasMinLength ? 'bg-green-500' : 'bg-muted'}`}>
+                  {hasMinLength && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className={hasMinLength ? 'text-foreground' : 'text-muted-foreground'}>
+                  Mínimo 8 caracteres
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasUpperCase ? 'bg-green-500' : 'bg-muted'}`}>
+                  {hasUpperCase && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className={hasUpperCase ? 'text-foreground' : 'text-muted-foreground'}>
+                  Una letra mayúscula
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasNumber ? 'bg-green-500' : 'bg-muted'}`}>
+                  {hasNumber && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className={hasNumber ? 'text-foreground' : 'text-muted-foreground'}>
+                  Un número
+                </span>
+              </div>
+              {confirmPassword.length > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${passwordsMatch ? 'bg-green-500' : 'bg-muted'}`}>
+                    {passwordsMatch && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className={passwordsMatch ? 'text-foreground' : 'text-muted-foreground'}>
+                    Las contraseñas coinciden
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Sign Up Button */}
         <Button
           type="submit"
-          className="w-full h-14 bg-[#007AFF] hover:bg-[#0066DD] text-white font-semibold rounded-2xl text-base mt-6"
+          disabled={isLoading || !name || !email || !password || !confirmPassword || !hasMinLength || !hasUpperCase || !hasNumber || !passwordsMatch}
+          className="w-full h-14 bg-[#007AFF] hover:bg-[#0066DD] text-white font-semibold rounded-2xl text-base mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Sign Up
+          {isLoading ? "Creando cuenta..." : "Sign Up"}
         </Button>
 
         {/* Already have account */}

@@ -5,19 +5,42 @@ import { StatsCard } from "@/components/StatsCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getState, exportJSON, importJSON } from "@/lib/storage";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const state = getState();
   
+  const [userName, setUserName] = useState<string>("Usuario");
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(false);
   const [smartReminders, setSmartReminders] = useState(false);
   const [biometricAuth, setBiometricAuth] = useState(true);
   const [autoBackup, setAutoBackup] = useState(false);
+
+  useEffect(() => {
+    // Load user profile name from database
+    const fetchUserProfile = async () => {
+      if (user?.id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        
+        if (data && !error) {
+          setUserName(data.name);
+        }
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   const handleExport = () => {
     const data = exportJSON();
@@ -79,11 +102,11 @@ const Profile = () => {
           <Avatar className="w-28 h-28 mb-4">
             <AvatarImage src="" />
             <AvatarFallback className="bg-muted text-foreground text-3xl">
-              {state.profile.name?.[0]?.toUpperCase() || 'U'}
+              {userName?.[0]?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
           <h2 className="text-2xl font-bold text-foreground mb-1">
-            {state.profile.name || 'Usuario'}
+            {userName}
           </h2>
           <p className="text-muted-foreground mb-4">Vamos a por ello 💪</p>
           <Button variant="secondary" className="w-48">
@@ -217,7 +240,10 @@ const Profile = () => {
         <Button 
           variant="destructive" 
           className="w-full mt-6"
-          onClick={() => toast.info('Funcionalidad próximamente')}
+          onClick={async () => {
+            await signOut();
+            toast.success('Sesión cerrada exitosamente');
+          }}
         >
           Cerrar sesión
         </Button>
