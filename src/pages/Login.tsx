@@ -159,7 +159,7 @@ const Login = () => {
       </div>
 
       {/* Footer */}
-      <div className="w-full max-w-md mt-8 text-center space-y-4">
+      <div className="w-full max-w-md mt-8 text-center">
         <p className="text-muted-foreground text-xs leading-relaxed">
           By continuing, you agree to our{" "}
           <button 
@@ -177,14 +177,6 @@ const Login = () => {
           </button>
           .
         </p>
-        
-        {/* Supabase Config Link */}
-        <button
-          onClick={() => navigate("/supabase-config")}
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          ⚙️ Configurar Supabase externo
-        </button>
       </div>
     </div>
   );
