@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getState } from '@/lib/storage';
+import { getDailyMeals, getMealTotals } from '@/lib/meals';
 
 interface MacroData {
   protein: number;
@@ -32,62 +33,57 @@ const NutritionContext = createContext<NutritionContextType | undefined>(undefin
 
 export function NutritionProvider({ children }: { children: ReactNode }) {
   const [refresh, setRefresh] = useState(0);
+  
+  // Listen for meals updates and auto-refresh
+  useEffect(() => {
+    const handleMealsUpdate = () => {
+      setRefresh((prev) => prev + 1);
+    };
+    
+    window.addEventListener('mealsUpdated', handleMealsUpdate);
+    return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
+  }, []);
 
   const getTotals = (dateISO: string): DayTotals => {
     const state = getState();
     const goals = state.goals;
-    const meals = Array.isArray(state.meals) ? state.meals : [];
-
-    // Filter meals for the specific date
-    const dayMeals = meals.filter((meal: any) => meal.date === dateISO);
-
-    // Calculate totals by meal type
-    const breakfast: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
-    const lunch: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
-    const dinner: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    
+    // Get meals from the new meals.ts system
+    const dailyMeals = getDailyMeals(dateISO);
+    
+    // Calculate totals for each meal type
+    const breakfastTotals = getMealTotals(dailyMeals.Desayuno);
+    const lunchTotals = getMealTotals(dailyMeals.Comida);
+    const dinnerTotals = getMealTotals(dailyMeals.Cena);
+    
+    const breakfast: MealData = {
+      calories: breakfastTotals.calories,
+      macros: {
+        protein: breakfastTotals.protein,
+        fat: breakfastTotals.fat,
+        carbs: breakfastTotals.carbs,
+      },
+    };
+    
+    const lunch: MealData = {
+      calories: lunchTotals.calories,
+      macros: {
+        protein: lunchTotals.protein,
+        fat: lunchTotals.fat,
+        carbs: lunchTotals.carbs,
+      },
+    };
+    
+    const dinner: MealData = {
+      calories: dinnerTotals.calories,
+      macros: {
+        protein: dinnerTotals.protein,
+        fat: dinnerTotals.fat,
+        carbs: dinnerTotals.carbs,
+      },
+    };
+    
     const snacks: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
-
-    dayMeals.forEach((meal: any) => {
-      const mealData = {
-        calories: meal.adjustedMacros?.calories || 0,
-        macros: {
-          protein: meal.adjustedMacros?.protein || 0,
-          fat: meal.adjustedMacros?.fat || 0,
-          carbs: meal.adjustedMacros?.carbs || 0,
-        },
-      };
-
-      switch (meal.mealType?.toLowerCase()) {
-        case 'desayuno':
-        case 'breakfast':
-          breakfast.calories += mealData.calories;
-          breakfast.macros.protein += mealData.macros.protein;
-          breakfast.macros.fat += mealData.macros.fat;
-          breakfast.macros.carbs += mealData.macros.carbs;
-          break;
-        case 'comida':
-        case 'lunch':
-          lunch.calories += mealData.calories;
-          lunch.macros.protein += mealData.macros.protein;
-          lunch.macros.fat += mealData.macros.fat;
-          lunch.macros.carbs += mealData.macros.carbs;
-          break;
-        case 'cena':
-        case 'dinner':
-          dinner.calories += mealData.calories;
-          dinner.macros.protein += mealData.macros.protein;
-          dinner.macros.fat += mealData.macros.fat;
-          dinner.macros.carbs += mealData.macros.carbs;
-          break;
-        case 'snacks':
-        case 'snack':
-          snacks.calories += mealData.calories;
-          snacks.macros.protein += mealData.macros.protein;
-          snacks.macros.fat += mealData.macros.fat;
-          snacks.macros.carbs += mealData.macros.carbs;
-          break;
-      }
-    });
 
     // Calculate day totals
     const kcalConsumed = breakfast.calories + lunch.calories + dinner.calories + snacks.calories;

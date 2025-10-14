@@ -32,6 +32,18 @@ const Comidas = () => {
     setDailyMeals(meals);
   }, [dateISO]);
   
+  // Listen to meals updates to refresh in real-time
+  useEffect(() => {
+    const handleMealsUpdate = () => {
+      const meals = getDailyMeals(dateISO);
+      setDailyMeals(meals);
+      refreshTotals();
+    };
+    
+    window.addEventListener('mealsUpdated', handleMealsUpdate);
+    return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
+  }, [dateISO, refreshTotals]);
+  
   const handleRemoveItem = (mealName: 'Desayuno' | 'Comida' | 'Cena', index: number) => {
     removeMealItem(dateISO, mealName, index);
     const updatedMeals = getDailyMeals(dateISO);

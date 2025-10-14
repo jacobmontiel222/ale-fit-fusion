@@ -52,6 +52,9 @@ export function addMealItem(dateISO: string, meal: 'Desayuno' | 'Comida' | 'Cena
     
     allMeals[dateISO][meal].push(item);
     localStorage.setItem(MEALS_KEY, JSON.stringify(allMeals));
+    
+    // Dispatch custom event to notify components
+    window.dispatchEvent(new CustomEvent('mealsUpdated', { detail: { dateISO, meal } }));
   } catch (error) {
     console.error('Error adding meal item:', error);
   }
@@ -64,6 +67,9 @@ export function removeMealItem(dateISO: string, meal: 'Desayuno' | 'Comida' | 'C
     if (allMeals[dateISO] && allMeals[dateISO][meal]) {
       allMeals[dateISO][meal].splice(index, 1);
       localStorage.setItem(MEALS_KEY, JSON.stringify(allMeals));
+      
+      // Dispatch custom event to notify components
+      window.dispatchEvent(new CustomEvent('mealsUpdated', { detail: { dateISO, meal } }));
     }
   } catch (error) {
     console.error('Error removing meal item:', error);
