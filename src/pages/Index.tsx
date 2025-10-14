@@ -80,6 +80,9 @@ const Index = () => {
             <div className="flex-1">
               <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
               <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget.toLocaleString('es-ES')} Kcal</p>
+              <p className="text-sm font-normal text-muted-foreground mt-1">
+                {Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed).toLocaleString('es-ES')} kcal restantes
+              </p>
             </div>
           </div>
           
