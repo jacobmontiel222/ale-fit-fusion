@@ -101,6 +101,30 @@ CREATE TABLE IF NOT EXISTS public.routine_exercises (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- 8. Tabla de recetas
+CREATE TABLE IF NOT EXISTS public.recipes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- 9. Tabla de ingredientes de recetas
+CREATE TABLE IF NOT EXISTS public.recipe_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id UUID NOT NULL REFERENCES public.recipes(id) ON DELETE CASCADE,
+  food_name TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  unit TEXT NOT NULL,
+  calories NUMERIC NOT NULL,
+  protein NUMERIC NOT NULL,
+  fat NUMERIC NOT NULL,
+  carbs NUMERIC NOT NULL,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- =====================================================
 -- FUNCIONES Y TRIGGERS
 -- =====================================================
@@ -169,6 +193,10 @@ CREATE TRIGGER update_routine_exercises_updated_at
   BEFORE UPDATE ON public.routine_exercises
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+CREATE TRIGGER update_recipes_updated_at
+  BEFORE UPDATE ON public.recipes
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================
@@ -181,6 +209,8 @@ ALTER TABLE public.daily_weight ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_steps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gym_routines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.routine_exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recipe_items ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para profiles
 CREATE POLICY "Users can view their own profile"
@@ -313,6 +343,56 @@ CREATE POLICY "Users can delete exercises from their routines"
     AND gym_routines.user_id = auth.uid()
   ));
 
+-- Políticas para recipes
+CREATE POLICY "Users can view their own recipes"
+  ON public.recipes FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own recipes"
+  ON public.recipes FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own recipes"
+  ON public.recipes FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own recipes"
+  ON public.recipes FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Políticas para recipe_items
+CREATE POLICY "Users can view items from their recipes"
+  ON public.recipe_items FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM public.recipes
+    WHERE recipes.id = recipe_items.recipe_id
+    AND recipes.user_id = auth.uid()
+  ));
+
+CREATE POLICY "Users can insert items to their recipes"
+  ON public.recipe_items FOR INSERT
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.recipes
+    WHERE recipes.id = recipe_items.recipe_id
+    AND recipes.user_id = auth.uid()
+  ));
+
+CREATE POLICY "Users can update items in their recipes"
+  ON public.recipe_items FOR UPDATE
+  USING (EXISTS (
+    SELECT 1 FROM public.recipes
+    WHERE recipes.id = recipe_items.recipe_id
+    AND recipes.user_id = auth.uid()
+  ));
+
+CREATE POLICY "Users can delete items from their recipes"
+  ON public.recipe_items FOR DELETE
+  USING (EXISTS (
+    SELECT 1 FROM public.recipes
+    WHERE recipes.id = recipe_items.recipe_id
+    AND recipes.user_id = auth.uid()
+  ));
+
 -- =====================================================
 -- ÍNDICES PARA MEJORAR RENDIMIENTO
 -- =====================================================
@@ -322,3 +402,5 @@ CREATE INDEX IF NOT EXISTS idx_daily_weight_user_date ON public.daily_weight(use
 CREATE INDEX IF NOT EXISTS idx_daily_steps_user_date ON public.daily_steps(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_gym_routines_user ON public.gym_routines(user_id);
 CREATE INDEX IF NOT EXISTS idx_routine_exercises_routine ON public.routine_exercises(routine_id);
+CREATE INDEX IF NOT EXISTS idx_recipes_user ON public.recipes(user_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON public.recipe_items(recipe_id);
