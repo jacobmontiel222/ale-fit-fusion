@@ -16,6 +16,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface RecipeItem {
   id: string;
@@ -49,6 +55,8 @@ const Recipes = () => {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [recipeToAdd, setRecipeToAdd] = useState<Recipe | null>(null);
 
   useEffect(() => {
     loadRecipes();
@@ -153,6 +161,51 @@ const Recipes = () => {
     setDeleteDialogOpen(true);
   };
 
+  const openAddDialog = (recipe: Recipe) => {
+    setRecipeToAdd(recipe);
+    setAddDialogOpen(true);
+  };
+
+  const handleAddToMeal = async (mealType: string) => {
+    if (!recipeToAdd || !user) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Crear entradas de comida para cada item de la receta
+      const mealEntries = recipeToAdd.items.map(item => ({
+        user_id: user.id,
+        date: today,
+        meal_type: mealType,
+        food_name: item.food_name,
+        amount: item.amount,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        fat: item.fat,
+        carbs: item.carbs,
+        entry_method: 'recipe',
+      }));
+
+      const { error } = await supabase
+        .from('meal_entries')
+        .insert(mealEntries);
+
+      if (error) {
+        toast.error('Error al añadir la receta');
+        console.error(error);
+        return;
+      }
+
+      toast.success(`Receta añadida a ${mealType === 'breakfast' ? 'desayuno' : mealType === 'lunch' ? 'comida' : 'cena'}`);
+      setAddDialogOpen(false);
+      setRecipeToAdd(null);
+    } catch (error) {
+      toast.error('Error al añadir la receta');
+      console.error(error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
@@ -217,14 +270,23 @@ const Recipes = () => {
                       })}
                     </p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => confirmDelete(recipe.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => openAddDialog(recipe)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Añadir
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => confirmDelete(recipe.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Totals */}
@@ -291,6 +353,38 @@ const Recipes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Add to Meal Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Añadir receta a comida</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 pt-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              ¿A qué comida quieres añadir "{recipeToAdd?.name}"?
+            </p>
+            <Button
+              className="w-full"
+              onClick={() => handleAddToMeal('breakfast')}
+            >
+              Desayuno
+            </Button>
+            <Button
+              className="w-full"
+              onClick={() => handleAddToMeal('lunch')}
+            >
+              Comida
+            </Button>
+            <Button
+              className="w-full"
+              onClick={() => handleAddToMeal('dinner')}
+            >
+              Cena
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
