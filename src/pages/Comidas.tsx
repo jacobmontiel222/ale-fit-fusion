@@ -9,56 +9,144 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNutrition } from "@/contexts/NutritionContext";
-import { getState, saveGoals } from "@/lib/storage";
-import { getDailyMeals, removeMealItem, getMealTotals } from "@/lib/meals";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 const Comidas = () => {
   const navigate = useNavigate();
   const { getTotals, refreshTotals } = useNutrition();
+  const { user } = useAuth();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
-  const [dailyMeals, setDailyMeals] = useState<any>(null);
+  const [dailyMeals, setDailyMeals] = useState<any[]>([]);
+  const [dayTotals, setDayTotals] = useState({
+    kcalTarget: 2000,
+    kcalConsumed: 0,
+    macrosG: { protein: 0, fat: 0, carbs: 0 },
+    breakfast: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
+    lunch: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
+    dinner: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } }
+  });
+  const [goals, setGoals] = useState({
+    dailyCalories: 2000,
+    protein: 150,
+    fat: 65,
+    carbs: 250,
+  });
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
   const dateISO = formatDate(selectedDate);
   
-  // Get nutrition data for selected date
-  const dayTotals = getTotals(dateISO);
-  const state = getState();
-  
   useEffect(() => {
-    const meals = getDailyMeals(dateISO);
-    setDailyMeals(meals);
-  }, [dateISO]);
+    const loadData = async () => {
+      if (!user) return;
+
+      // Load meals
+      const { data: meals } = await supabase
+        .from('meal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', dateISO)
+        .order('created_at', { ascending: true });
+
+      setDailyMeals(meals || []);
+
+      // Load nutrition totals
+      const totals = await getTotals(dateISO);
+      setDayTotals(totals);
+
+      // Load goals
+      const { data: goalsData } = await supabase
+        .from('nutrition_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (goalsData) {
+        setGoals({
+          dailyCalories: goalsData.calories_goal,
+          protein: goalsData.protein_goal,
+          fat: goalsData.fat_goal,
+          carbs: goalsData.carbs_goal,
+        });
+      }
+    };
+
+    loadData();
+  }, [dateISO, user]);
   
   // Listen to meals updates to refresh in real-time
   useEffect(() => {
-    const handleMealsUpdate = () => {
-      const meals = getDailyMeals(dateISO);
-      setDailyMeals(meals);
-      refreshTotals();
+    const handleMealsUpdate = async () => {
+      if (!user) return;
+      
+      const { data: meals } = await supabase
+        .from('meal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', dateISO)
+        .order('created_at', { ascending: true });
+
+      setDailyMeals(meals || []);
+      
+      const totals = await getTotals(dateISO);
+      setDayTotals(totals);
     };
     
     window.addEventListener('mealsUpdated', handleMealsUpdate);
     return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
-  }, [dateISO, refreshTotals]);
+  }, [dateISO, getTotals, refreshTotals, user]);
   
-  const handleRemoveItem = (mealName: 'Desayuno' | 'Comida' | 'Cena', index: number) => {
-    removeMealItem(dateISO, mealName, index);
-    const updatedMeals = getDailyMeals(dateISO);
-    setDailyMeals(updatedMeals);
-    refreshTotals();
+  const handleRemoveItem = async (mealType: string, itemId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('meal_entries')
+      .delete()
+      .eq('id', itemId)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      const { data: meals } = await supabase
+        .from('meal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', dateISO)
+        .order('created_at', { ascending: true });
+
+      setDailyMeals(meals || []);
+      
+      const totals = await getTotals(dateISO);
+      setDayTotals(totals);
+    }
   };
 
-  const handleSaveGoals = (newGoals: any) => {
-    saveGoals({
-      dailyCalories: newGoals.calories,
-      protein: newGoals.protein,
-      fat: newGoals.fat,
-      carbs: newGoals.carbs,
-    });
-    refreshTotals();
+  const handleSaveGoals = async (newGoals: any) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('nutrition_goals')
+      .upsert({
+        user_id: user.id,
+        calories_goal: newGoals.calories,
+        protein_goal: newGoals.protein,
+        fat_goal: newGoals.fat,
+        carbs_goal: newGoals.carbs,
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (!error) {
+      setGoals({
+        dailyCalories: newGoals.calories,
+        protein: newGoals.protein,
+        fat: newGoals.fat,
+        carbs: newGoals.carbs,
+      });
+      const totals = await getTotals(dateISO);
+      setDayTotals(totals);
+    }
   };
 
   const calculateMacroPercentage = (consumed: number, goal: number) => {
@@ -173,12 +261,12 @@ const Comidas = () => {
                     max={dayTotals.kcalTarget} 
                     size={110} 
                     strokeWidth={9}
-                    protein={dayTotals.macrosG.protein}
+                  protein={dayTotals.macrosG.protein}
                     fat={dayTotals.macrosG.fat}
                     carbs={dayTotals.macrosG.carbs}
-                    proteinGoal={state.goals.protein}
-                    fatGoal={state.goals.fat}
-                    carbsGoal={state.goals.carbs}
+                    proteinGoal={goals.protein}
+                    fatGoal={goals.fat}
+                    carbsGoal={goals.carbs}
                     showMacroColors={true}
                   />
                 </div>
@@ -200,10 +288,10 @@ const Comidas = () => {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--protein))' }}></span>
                         Proteínas
                       </span>
-                      <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {state.goals.protein}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {goals.protein}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / state.goals.protein) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / goals.protein) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
@@ -211,10 +299,10 @@ const Comidas = () => {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--fat))' }}></span>
                         Grasas
                       </span>
-                      <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {state.goals.fat}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {goals.fat}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / state.goals.fat) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / goals.fat) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
@@ -222,10 +310,10 @@ const Comidas = () => {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--carbs))' }}></span>
                         Carbohidratos
                       </span>
-                      <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {state.goals.carbs}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {goals.carbs}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / state.goals.carbs) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / goals.carbs) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
                     </div>
                   </div>
                 </div>
@@ -240,20 +328,23 @@ const Comidas = () => {
 
         {/* Meal Cards */}
         <div className="space-y-2.5">
-          {meals.map((meal, index) => {
-            const mealItems = dailyMeals?.[meal.name] || [];
-            const mealTotals = getMealTotals(mealItems);
+          {[
+            { name: "Desayuno", data: dayTotals.breakfast },
+            { name: "Comida", data: dayTotals.lunch },
+            { name: "Cena", data: dayTotals.dinner }
+          ].map((meal, index) => {
+            const mealItems = dailyMeals.filter((m: any) => m.meal_type === meal.name);
             
             return (
               <StatsCard key={index} className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-0.5">{meal.name}</h3>
-                    {mealTotals.calories > 0 ? (
+                    {meal.data.calories > 0 ? (
                       <div className="text-sm">
-                        <p className="text-foreground font-semibold">{mealTotals.calories} Kcal</p>
+                        <p className="text-foreground font-semibold">{Math.round(meal.data.calories)} Kcal</p>
                         <p className="text-muted-foreground text-xs">
-                          P: {Math.round(mealTotals.protein)}g · G: {Math.round(mealTotals.fat)}g · C: {Math.round(mealTotals.carbs)}g
+                          P: {Math.round(meal.data.macros.protein)}g · G: {Math.round(meal.data.macros.fat)}g · C: {Math.round(meal.data.macros.carbs)}g
                         </p>
                       </div>
                     ) : (
@@ -271,19 +362,19 @@ const Comidas = () => {
                 {/* List of foods in this meal */}
                 {mealItems.length > 0 && (
                   <div className="space-y-2 pt-2 border-t border-border">
-                    {mealItems.map((item: any, itemIndex: number) => (
-                      <div key={itemIndex} className="flex items-start justify-between text-sm">
+                    {mealItems.map((item: any) => (
+                      <div key={item.id} className="flex items-start justify-between text-sm">
                         <div className="flex-1">
-                          <p className="font-medium text-foreground">{item.name}</p>
+                          <p className="font-medium text-foreground">{item.food_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {item.amount} {item.unit} · {item.calories} kcal
+                            {item.amount} {item.unit} · {Math.round(item.calories)} kcal
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => handleRemoveItem(meal.name as 'Desayuno' | 'Comida' | 'Cena', itemIndex)}
+                          onClick={() => handleRemoveItem(meal.name, item.id)}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
@@ -319,10 +410,10 @@ const Comidas = () => {
         open={showEditModal}
         onOpenChange={setShowEditModal}
         currentGoals={{
-          calories: state.goals.dailyCalories,
-          protein: state.goals.protein,
-          fat: state.goals.fat,
-          carbs: state.goals.carbs,
+          calories: goals.dailyCalories,
+          protein: goals.protein,
+          fat: goals.fat,
+          carbs: goals.carbs,
           useGrams: false,
         }}
         onSave={handleSaveGoals}

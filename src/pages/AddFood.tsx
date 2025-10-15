@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/StatsCard";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
-import { addMealItem, type MealItem } from "@/lib/meals";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 interface FoodItem {
   name: string;
@@ -19,6 +20,7 @@ interface FoodItem {
   carbs: number;
   servingSize: number;
   servingUnit: string;
+  barcode?: string;
 }
 
 const mockFoods: FoodItem[] = [
@@ -33,6 +35,7 @@ const mockFoods: FoodItem[] = [
 const AddFood = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const meal = searchParams.get("meal") || "Desayuno";
   const selectedDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
   
@@ -110,10 +113,7 @@ const AddFood = () => {
           const productData = Array.isArray(data) ? data[0] : data;
           
           if (productData?.error) {
-            toast({
-              title: "No encontrado",
-              description: "No hay coincidencias para este código.",
-            });
+            toast.error("No hay coincidencias para este código.");
             return;
           }
           
@@ -131,24 +131,13 @@ const AddFood = () => {
           setSelectedFood(item);
           setServingAmount(item.servingSize);
           
-          toast({
-            title: "Escaneado",
-            description: `${item.name} detectado`,
-          });
+          toast.success(`${item.name} detectado`);
         } catch {
-          toast({
-            title: "Error",
-            description: "Fallo al consultar el producto.",
-            variant: "destructive",
-          });
+          toast.error("Fallo al consultar el producto.");
         }
       });
     } catch (error) {
-      toast({
-        title: "Error de cámara",
-        description: "Autoriza la cámara o usa HTTPS.",
-        variant: "destructive",
-      });
+      toast.error("Autoriza la cámara o usa HTTPS.");
       setScannerOpen(false);
       setScanning(false);
     }
@@ -164,7 +153,12 @@ const AddFood = () => {
     };
   };
 
-  const handleAddFood = () => {
+  const handleAddFood = async () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para añadir comidas");
+      return;
+    }
+
     const foodToAdd = selectedFood || manualFood;
     const adjustedMacros = calculateAdjustedMacros(foodToAdd, servingAmount);
     
@@ -202,26 +196,35 @@ const AddFood = () => {
       meal: meal,
     });
     
-    // Add to daily meals - use selected date from URL
-    const mealItem: MealItem = {
-      name: foodToAdd.name,
-      brand: foodToAdd.brand,
-      calories: adjustedMacros.calories,
-      protein: adjustedMacros.protein,
-      fat: adjustedMacros.fat,
-      carbs: adjustedMacros.carbs,
-      amount: servingAmount,
-      unit: foodToAdd.servingUnit,
-      addedAt: new Date().toISOString(),
-    };
+    // Add to Supabase meal_entries
+    const { error } = await supabase
+      .from('meal_entries')
+      .insert({
+        user_id: user.id,
+        date: selectedDate,
+        meal_type: meal,
+        food_name: foodToAdd.name,
+        brand: foodToAdd.brand || null,
+        amount: servingAmount,
+        unit: foodToAdd.servingUnit,
+        calories: adjustedMacros.calories,
+        protein: adjustedMacros.protein,
+        fat: adjustedMacros.fat,
+        carbs: adjustedMacros.carbs,
+        barcode: foodToAdd.barcode || null,
+        entry_method: 'manual'
+      });
+
+    if (error) {
+      toast.error("Error al añadir el alimento");
+      console.error(error);
+      return;
+    }
     
-    addMealItem(selectedDate, meal as 'Desayuno' | 'Comida' | 'Cena', mealItem);
+    // Trigger meals update event
+    window.dispatchEvent(new CustomEvent('mealsUpdated'));
     
-    toast({
-      title: "Alimento añadido",
-      description: `${foodToAdd.name} añadido a ${meal}`,
-    });
-    
+    toast.success(`${foodToAdd.name} añadido a ${meal}`);
     navigate("/comidas");
   };
   

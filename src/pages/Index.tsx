@@ -30,9 +30,11 @@ const Index = () => {
   const [todayWeight, setTodayWeight] = useState<number | null>(null);
   const [todaySteps, setTodaySteps] = useState<number>(0);
   const [kcalPerStep, setKcalPerStep] = useState<number>(0.045);
-
-  // Get nutrition data for today
-  const todayNutrition = getTotals(today);
+  const [todayNutrition, setTodayNutrition] = useState({
+    kcalConsumed: 0,
+    kcalTarget: 2000,
+    macrosG: { protein: 0, fat: 0, carbs: 0 }
+  });
 
   // Calculate exercise calories
   const exerciseKcal = Math.round(todaySteps * kcalPerStep);
@@ -64,17 +66,41 @@ const Index = () => {
   }, [user?.id]);
 
   useEffect(() => {
-    // Load today's weight and steps
-    const state = getState();
-    const todayEntry = state.analyticsWeight.find(entry => entry.date === today);
-    setTodayWeight(todayEntry?.kg || null);
+    // Load today's weight and steps from Supabase
+    const loadData = async () => {
+      if (!user) return;
 
-    const todayStepsEntry = state.analyticsSteps.find(entry => entry.date === today);
-    setTodaySteps(todayStepsEntry?.steps || 0);
+      // Load weight
+      const { data: weightData } = await supabase
+        .from('daily_weight')
+        .select('weight')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
+      
+      if (weightData) {
+        setTodayWeight(Number(weightData.weight));
+      }
 
-    // Load kcalPerStep from profile
-    setKcalPerStep(state.profile.kcalPerStep || 0.045);
-  }, [today]);
+      // Load steps
+      const { data: stepsData } = await supabase
+        .from('daily_steps')
+        .select('steps')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
+      
+      if (stepsData) {
+        setTodaySteps(stepsData.steps);
+      }
+
+      // Load nutrition data
+      const nutrition = await getTotals(today);
+      setTodayNutrition(nutrition);
+    };
+
+    loadData();
+  }, [today, user]);
 
   return (
     <div className="min-h-screen bg-background pb-24">

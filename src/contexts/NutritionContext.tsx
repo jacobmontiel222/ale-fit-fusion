@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getState } from '@/lib/storage';
-import { getDailyMeals, getMealTotals } from '@/lib/meals';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 
 interface MacroData {
   protein: number;
@@ -25,7 +25,7 @@ interface DayTotals {
 }
 
 interface NutritionContextType {
-  getTotals: (dateISO: string) => DayTotals;
+  getTotals: (dateISO: string) => Promise<DayTotals>;
   refreshTotals: () => void;
 }
 
@@ -33,6 +33,7 @@ const NutritionContext = createContext<NutritionContextType | undefined>(undefin
 
 export function NutritionProvider({ children }: { children: ReactNode }) {
   const [refresh, setRefresh] = useState(0);
+  const { user } = useAuth();
   
   // Listen for meals updates and auto-refresh
   useEffect(() => {
@@ -44,46 +45,78 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
   }, []);
 
-  const getTotals = (dateISO: string): DayTotals => {
-    const state = getState();
-    const goals = state.goals;
-    
-    // Get meals from the new meals.ts system
-    const dailyMeals = getDailyMeals(dateISO);
-    
-    // Calculate totals for each meal type
-    const breakfastTotals = getMealTotals(dailyMeals.Desayuno);
-    const lunchTotals = getMealTotals(dailyMeals.Comida);
-    const dinnerTotals = getMealTotals(dailyMeals.Cena);
-    
-    const breakfast: MealData = {
-      calories: breakfastTotals.calories,
-      macros: {
-        protein: breakfastTotals.protein,
-        fat: breakfastTotals.fat,
-        carbs: breakfastTotals.carbs,
-      },
+  const getTotals = async (dateISO: string): Promise<DayTotals> => {
+    // Default values if no user is logged in
+    if (!user) {
+      return {
+        kcalTarget: 2000,
+        kcalConsumed: 0,
+        macrosG: { protein: 0, fat: 0, carbs: 0 },
+        macrosPct: { protein: 0, fat: 0, carbs: 0 },
+        breakfast: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
+        lunch: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
+        dinner: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
+        snacks: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
+      };
+    }
+
+    // Get nutrition goals from Supabase
+    const { data: goalsData } = await supabase
+      .from('nutrition_goals')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const goals = goalsData || {
+      calories_goal: 2000,
+      protein_goal: 150,
+      fat_goal: 65,
+      carbs_goal: 250,
     };
-    
-    const lunch: MealData = {
-      calories: lunchTotals.calories,
-      macros: {
-        protein: lunchTotals.protein,
-        fat: lunchTotals.fat,
-        carbs: lunchTotals.carbs,
-      },
-    };
-    
-    const dinner: MealData = {
-      calories: dinnerTotals.calories,
-      macros: {
-        protein: dinnerTotals.protein,
-        fat: dinnerTotals.fat,
-        carbs: dinnerTotals.carbs,
-      },
-    };
-    
+
+    // Get meal entries for the day from Supabase
+    const { data: meals } = await supabase
+      .from('meal_entries')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', dateISO);
+
+    // Initialize meal totals
+    const breakfast: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    const lunch: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    const dinner: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
     const snacks: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+
+    // Calculate meal totals
+    if (meals) {
+      meals.forEach((meal) => {
+        const calories = Number(meal.calories) || 0;
+        const protein = Number(meal.protein) || 0;
+        const fat = Number(meal.fat) || 0;
+        const carbs = Number(meal.carbs) || 0;
+
+        switch (meal.meal_type) {
+          case 'Desayuno':
+            breakfast.calories += calories;
+            breakfast.macros.protein += protein;
+            breakfast.macros.fat += fat;
+            breakfast.macros.carbs += carbs;
+            break;
+          case 'Comida':
+            lunch.calories += calories;
+            lunch.macros.protein += protein;
+            lunch.macros.fat += fat;
+            lunch.macros.carbs += carbs;
+            break;
+          case 'Cena':
+            dinner.calories += calories;
+            dinner.macros.protein += protein;
+            dinner.macros.fat += fat;
+            dinner.macros.carbs += carbs;
+            break;
+        }
+      });
+    }
 
     // Calculate day totals
     const kcalConsumed = breakfast.calories + lunch.calories + dinner.calories + snacks.calories;
@@ -95,13 +128,13 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
 
     // Calculate percentages
     const macrosPct = {
-      protein: goals.dailyCalories > 0 ? ((macrosG.protein * 4) / goals.dailyCalories) * 100 : 0,
-      fat: goals.dailyCalories > 0 ? ((macrosG.fat * 9) / goals.dailyCalories) * 100 : 0,
-      carbs: goals.dailyCalories > 0 ? ((macrosG.carbs * 4) / goals.dailyCalories) * 100 : 0,
+      protein: goals.calories_goal > 0 ? ((macrosG.protein * 4) / goals.calories_goal) * 100 : 0,
+      fat: goals.calories_goal > 0 ? ((macrosG.fat * 9) / goals.calories_goal) * 100 : 0,
+      carbs: goals.calories_goal > 0 ? ((macrosG.carbs * 4) / goals.calories_goal) * 100 : 0,
     };
 
     return {
-      kcalTarget: goals.dailyCalories,
+      kcalTarget: goals.calories_goal,
       kcalConsumed: Math.round(kcalConsumed),
       macrosG: {
         protein: Math.round(macrosG.protein * 10) / 10,
