@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Comidas from "./pages/Comidas";
 import AddFood from "./pages/AddFood";
 import CreateRecipe from "./pages/CreateRecipe";
+import Recipes from "./pages/Recipes";
 import Gimnasio from "./pages/Gimnasio";
 import Comunidad from "./pages/Comunidad";
 import Analytics from "./pages/Analytics";
@@ -74,6 +75,7 @@ const App = () => {
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/comidas" element={<ProtectedRoute><Comidas /></ProtectedRoute>} />
                 <Route path="/add-food" element={<ProtectedRoute><AddFood /></ProtectedRoute>} />
+                <Route path="/recipes" element={<ProtectedRoute><Recipes /></ProtectedRoute>} />
                 <Route path="/create-recipe" element={<ProtectedRoute><CreateRecipe /></ProtectedRoute>} />
                 <Route path="/gimnasio" element={<ProtectedRoute><Gimnasio /></ProtectedRoute>} />
                 <Route path="/comunidad" element={<ProtectedRoute><Comunidad /></ProtectedRoute>} />

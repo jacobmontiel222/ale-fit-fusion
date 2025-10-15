@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/StatsCard";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 interface RecipeItem {
   name: string;
@@ -19,6 +21,7 @@ interface RecipeItem {
 
 const CreateRecipe = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [recipeName, setRecipeName] = useState("");
   const [items, setItems] = useState<RecipeItem[]>([]);
 
@@ -51,43 +54,73 @@ const CreateRecipe = () => {
     );
   };
 
-  const handleSaveRecipe = () => {
+  const handleSaveRecipe = async () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para guardar recetas");
+      return;
+    }
+
     if (!recipeName.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor, añade un nombre a la receta",
-        variant: "destructive",
-      });
+      toast.error("Por favor, añade un nombre a la receta");
       return;
     }
 
     if (items.length === 0) {
-      toast({
-        title: "Error",
-        description: "Por favor, añade al menos un alimento",
-        variant: "destructive",
-      });
+      toast.error("Por favor, añade al menos un alimento");
       return;
     }
 
-    const recipes = JSON.parse(localStorage.getItem("recipes") || "[]");
-    recipes.push({
-      name: recipeName,
-      items,
-      totals: calculateTotals(),
-      createdAt: new Date().toISOString(),
-    });
-    localStorage.setItem("recipes", JSON.stringify(recipes));
+    try {
+      // 1. Crear la receta en Supabase
+      const { data: recipe, error: recipeError } = await supabase
+        .from('recipes')
+        .insert({
+          user_id: user.id,
+          name: recipeName
+        })
+        .select()
+        .single();
 
-    // Clear sessionStorage
-    sessionStorage.removeItem("pendingRecipeItems");
+      if (recipeError || !recipe) {
+        toast.error("Error al guardar la receta");
+        console.error(recipeError);
+        return;
+      }
 
-    toast({
-      title: "Receta guardada",
-      description: `${recipeName} se ha guardado correctamente`,
-    });
+      // 2. Guardar todos los ingredientes
+      const recipeItems = items.map((item, index) => ({
+        recipe_id: recipe.id,
+        food_name: item.name,
+        amount: item.amount,
+        unit: item.unit,
+        calories: item.calories,
+        protein: item.protein,
+        fat: item.fat,
+        carbs: item.carbs,
+        order_index: index
+      }));
 
-    navigate("/comidas");
+      const { error: itemsError } = await supabase
+        .from('recipe_items')
+        .insert(recipeItems);
+
+      if (itemsError) {
+        // Si falla al guardar los items, eliminar la receta
+        await supabase.from('recipes').delete().eq('id', recipe.id);
+        toast.error("Error al guardar los ingredientes");
+        console.error(itemsError);
+        return;
+      }
+
+      // 3. Limpiar sessionStorage
+      sessionStorage.removeItem("pendingRecipeItems");
+
+      toast.success(`${recipeName} se ha guardado correctamente`);
+      navigate("/comidas");
+    } catch (error) {
+      toast.error("Error inesperado al guardar la receta");
+      console.error(error);
+    }
   };
 
   const totals = calculateTotals();

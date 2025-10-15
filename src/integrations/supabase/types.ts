@@ -230,6 +230,80 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_items: {
+        Row: {
+          amount: number
+          calories: number
+          carbs: number
+          created_at: string
+          fat: number
+          food_name: string
+          id: string
+          order_index: number
+          protein: number
+          recipe_id: string
+          unit: string
+        }
+        Insert: {
+          amount: number
+          calories: number
+          carbs: number
+          created_at?: string
+          fat: number
+          food_name: string
+          id?: string
+          order_index?: number
+          protein: number
+          recipe_id: string
+          unit: string
+        }
+        Update: {
+          amount?: number
+          calories?: number
+          carbs?: number
+          created_at?: string
+          fat?: number
+          food_name?: string
+          id?: string
+          order_index?: number
+          protein?: number
+          recipe_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       routine_exercises: {
         Row: {
           created_at: string

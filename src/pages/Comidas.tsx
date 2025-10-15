@@ -388,7 +388,7 @@ const Comidas = () => {
         </div>
 
         {/* Recipes Card */}
-        <StatsCard className="cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/create-recipe")}>
+        <StatsCard className="cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate("/recipes")}>
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <ChefHat className="w-6 h-6 text-primary" />
