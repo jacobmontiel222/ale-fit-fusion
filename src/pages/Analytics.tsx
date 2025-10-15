@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Scale, Footprints } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, eachDayOfInterval, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { BottomNav } from "@/components/BottomNav";
@@ -23,6 +25,7 @@ interface StepsEntry {
 
 const Analytics = () => {
   const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
 
@@ -39,42 +42,39 @@ const Analytics = () => {
     steps: "hsl(var(--chart-2))",
   };
 
-  // Initialize mock data
-  const [weightData, setWeightData] = useState<WeightEntry[]>(() => {
-    const stored = localStorage.getItem("analyticsWeight");
-    if (stored) return JSON.parse(stored);
-    
-    // Generate mock data for the last 30 days
-    const mockData: WeightEntry[] = [];
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      mockData.push({
-        date: date.toISOString().split('T')[0],
-        kg: 73 - (i * 0.025) + (Math.random() * 0.4 - 0.2)
-      });
-    }
-    localStorage.setItem("analyticsWeight", JSON.stringify(mockData));
-    return mockData;
-  });
+  // Load data from Supabase
+  const [weightData, setWeightData] = useState<WeightEntry[]>([]);
+  const [stepsData, setStepsData] = useState<StepsEntry[]>([]);
 
-  const [stepsData, setStepsData] = useState<StepsEntry[]>(() => {
-    const stored = localStorage.getItem("analyticsSteps");
-    if (stored) return JSON.parse(stored);
-    
-    // Generate mock data for the last 30 days
-    const mockData: StepsEntry[] = [];
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      mockData.push({
-        date: date.toISOString().split('T')[0],
-        steps: Math.floor(6000 + Math.random() * 6000)
-      });
-    }
-    localStorage.setItem("analyticsSteps", JSON.stringify(mockData));
-    return mockData;
-  });
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+
+      // Load weight data
+      const { data: weights } = await supabase
+        .from('daily_weight')
+        .select('date, weight')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
+
+      if (weights) {
+        setWeightData(weights.map(w => ({ date: w.date, kg: Number(w.weight) })));
+      }
+
+      // Load steps data
+      const { data: steps } = await supabase
+        .from('daily_steps')
+        .select('date, steps')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
+
+      if (steps) {
+        setStepsData(steps.map(s => ({ date: s.date, steps: s.steps })));
+      }
+    };
+
+    loadData();
+  }, [user]);
 
   // Scroll to focused section and open add weight dialog if needed
   useEffect(() => {
@@ -182,23 +182,34 @@ const Analytics = () => {
     return null;
   };
 
-  const addWeight = () => {
-    if (!newWeight || isNaN(Number(newWeight))) return;
+  const addWeight = async () => {
+    if (!newWeight || isNaN(Number(newWeight)) || !user) return;
     
-    const newEntry: WeightEntry = {
-      date: newWeightDate,
-      kg: Number(newWeight)
-    };
-    
-    const updatedData = [...weightData, newEntry].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    
-    setWeightData(updatedData);
-    localStorage.setItem("analyticsWeight", JSON.stringify(updatedData));
-    setShowAddWeight(false);
-    setNewWeight("");
-    setNewWeightDate(new Date().toISOString().split('T')[0]);
+    const { error } = await supabase
+      .from('daily_weight')
+      .upsert({
+        user_id: user.id,
+        date: newWeightDate,
+        weight: Number(newWeight)
+      }, {
+        onConflict: 'user_id,date'
+      });
+
+    if (!error) {
+      const newEntry: WeightEntry = {
+        date: newWeightDate,
+        kg: Number(newWeight)
+      };
+      
+      const updatedData = [...weightData.filter(w => w.date !== newWeightDate), newEntry].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      setWeightData(updatedData);
+      setShowAddWeight(false);
+      setNewWeight("");
+      setNewWeightDate(new Date().toISOString().split('T')[0]);
+    }
   };
 
   const filteredWeightData = getFilteredDataWithAllDays(weightData, weightRange, { kg: null as any });

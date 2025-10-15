@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, ChevronLeft, ChevronRight, Search, Copy, Trash2, Play, Save, FileText } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 interface Set {
   id: string;
@@ -46,12 +48,51 @@ const exerciseLibrary = [
 ];
 
 const Gimnasio = () => {
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [showExerciseSearch, setShowExerciseSearch] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+
+  // Load routines from Supabase
+  useEffect(() => {
+    const loadRoutines = async () => {
+      if (!user) return;
+
+      const { data: routinesData } = await supabase
+        .from('gym_routines')
+        .select(`
+          *,
+          routine_exercises(*)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (routinesData) {
+        const formattedRoutines: Routine[] = routinesData.map(r => ({
+          id: r.id,
+          date: r.created_at.split('T')[0],
+          title: r.name,
+          notes: r.description || "",
+          exercises: (r.routine_exercises || []).map((ex: any) => ({
+            id: ex.id,
+            name: ex.exercise_name,
+            sets: Array.from({ length: ex.sets }, (_, i) => ({
+              id: `${ex.id}_${i}`,
+              series: i + 1,
+              weight: ex.weight || 0,
+              reps: ex.reps || 0,
+            }))
+          }))
+        }));
+        setRoutines(formattedRoutines);
+      }
+    };
+
+    loadRoutines();
+  }, [user]);
 
   // Generate calendar days (current week)
   const getWeekDays = () => {
@@ -75,15 +116,31 @@ const Gimnasio = () => {
     return routines.filter(r => r.date === formatDate(date));
   };
 
-  const createNewRoutine = () => {
+  const createNewRoutine = async () => {
+    if (!user) return;
+
+    const { data: newRoutineData, error } = await supabase
+      .from('gym_routines')
+      .insert({
+        user_id: user.id,
+        name: "Nueva Rutina",
+        description: "",
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error || !newRoutineData) return;
+
     const newRoutine: Routine = {
-      id: Date.now().toString(),
-      date: formatDate(selectedDate), // Uses currently selected date
-      title: "Nueva Rutina",
+      id: newRoutineData.id,
+      date: newRoutineData.created_at.split('T')[0],
+      title: newRoutineData.name,
       exercises: [],
-      notes: "",
+      notes: newRoutineData.description || "",
     };
-    setRoutines([...routines, newRoutine]);
+    
+    setRoutines([newRoutine, ...routines]);
     setEditingRoutine(newRoutine);
   };
 
@@ -190,8 +247,46 @@ const Gimnasio = () => {
     setEditingRoutine({ ...editingRoutine, exercises: updatedExercises });
   };
 
-  const saveRoutine = () => {
-    if (!editingRoutine) return;
+  const saveRoutine = async () => {
+    if (!editingRoutine || !user) return;
+
+    // Update routine in Supabase
+    const { error: routineError } = await supabase
+      .from('gym_routines')
+      .update({
+        name: editingRoutine.title,
+        description: editingRoutine.notes
+      })
+      .eq('id', editingRoutine.id)
+      .eq('user_id', user.id);
+
+    if (routineError) {
+      console.error('Error saving routine:', routineError);
+      return;
+    }
+
+    // Delete existing exercises
+    await supabase
+      .from('routine_exercises')
+      .delete()
+      .eq('routine_id', editingRoutine.id);
+
+    // Insert new exercises
+    for (const exercise of editingRoutine.exercises) {
+      if (exercise.sets.length > 0) {
+        const firstSet = exercise.sets[0];
+        await supabase
+          .from('routine_exercises')
+          .insert({
+            routine_id: editingRoutine.id,
+            exercise_name: exercise.name,
+            sets: exercise.sets.length,
+            reps: firstSet.reps || 0,
+            weight: firstSet.weight || 0,
+            order_index: 0
+          });
+      }
+    }
     
     setRoutines(routines.map(r => r.id === editingRoutine.id ? editingRoutine : r));
     setEditingRoutine(null);
