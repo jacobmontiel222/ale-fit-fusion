@@ -261,7 +261,7 @@ const Comidas = () => {
                     )}
                   </div>
                   <button 
-                    onClick={() => navigate(`/add-food?meal=${meal.name}`)}
+                    onClick={() => navigate(`/add-food?meal=${meal.name}&date=${dateISO}`)}
                     className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform"
                   >
                     <Plus className="w-4 h-4 text-primary-foreground" />

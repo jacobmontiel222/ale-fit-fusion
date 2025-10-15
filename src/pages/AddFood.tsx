@@ -34,6 +34,7 @@ const AddFood = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const meal = searchParams.get("meal") || "Desayuno";
+  const selectedDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
@@ -201,8 +202,7 @@ const AddFood = () => {
       meal: meal,
     });
     
-    // Add to daily meals
-    const today = new Date().toISOString().split('T')[0];
+    // Add to daily meals - use selected date from URL
     const mealItem: MealItem = {
       name: foodToAdd.name,
       brand: foodToAdd.brand,
@@ -215,7 +215,7 @@ const AddFood = () => {
       addedAt: new Date().toISOString(),
     };
     
-    addMealItem(today, meal as 'Desayuno' | 'Comida' | 'Cena', mealItem);
+    addMealItem(selectedDate, meal as 'Desayuno' | 'Comida' | 'Cena', mealItem);
     
     toast({
       title: "Alimento añadido",

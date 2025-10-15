@@ -78,7 +78,7 @@ const Gimnasio = () => {
   const createNewRoutine = () => {
     const newRoutine: Routine = {
       id: Date.now().toString(),
-      date: formatDate(selectedDate),
+      date: formatDate(selectedDate), // Uses currently selected date
       title: "Nueva Rutina",
       exercises: [],
       notes: "",
