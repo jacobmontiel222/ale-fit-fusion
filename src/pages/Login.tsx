@@ -19,14 +19,37 @@ const Login = () => {
     
     if (!email || !password) return;
     
+    console.log('Attempting login from:', window.location.href);
     setIsLoading(true);
+    
     const { error } = await signIn(email, password);
     
     if (error) {
+      let errorMessage = error.message;
+      
+      // Provide user-friendly error messages
+      if (error.message.includes('Invalid login')) {
+        errorMessage = 'Email o contraseña incorrectos';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Por favor confirma tu email antes de iniciar sesión';
+      } else if (error.message.includes('requested path is invalid')) {
+        errorMessage = 'Error de configuración. Verifica las URLs de redirección en Supabase';
+      } else if (error.message.includes('invalid_grant')) {
+        errorMessage = 'Credenciales inválidas. Verifica tu email y contraseña';
+      } else if (error.message.includes('redirect')) {
+        errorMessage = 'Error de redirección. Contacta al administrador';
+      }
+      
       toast({
         title: "Error al iniciar sesión",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
+      });
+      
+      console.error('Login failed:', {
+        error: error.message,
+        location: window.location.href,
+        userAgent: navigator.userAgent
       });
     }
     

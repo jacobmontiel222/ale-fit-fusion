@@ -67,12 +67,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Login error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+      } else {
+        console.log('Login successful');
+      }
+      
+      return { error };
+    } catch (err: any) {
+      console.error('Unexpected login error:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {

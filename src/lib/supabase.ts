@@ -34,6 +34,7 @@ export const supabase = createClient<Database>(config.url, config.key, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    flowType: 'pkce', // PKCE flow for better mobile support
   }
 });
 
