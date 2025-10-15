@@ -15,47 +15,49 @@ const SupabaseConfig = () => {
 
   useEffect(() => {
     // Check if already configured
-    const url = localStorage.getItem('EXTERNAL_SUPABASE_URL');
-    const key = localStorage.getItem('EXTERNAL_SUPABASE_ANON_KEY');
-    
+    const url = localStorage.getItem("https://zlhbbwaotshufcixrnyq.supabase.co");
+    const key = localStorage.getItem(
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsaGJid2FvdHNodWZjaXhybnlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NzQ1NTksImV4cCI6MjA3NjA1MDU1OX0.v2RniQ9j2qeb0uaUxW0fITt-lIMLPUutelOVkeFWpXk",
+    );
+
     if (url && key) {
       setIsConfigured(true);
       setSupabaseUrl(url);
-      setSupabaseAnonKey('•'.repeat(20) + key.slice(-10));
+      setSupabaseAnonKey("•".repeat(20) + key.slice(-10));
     }
   }, []);
 
   const handleSave = () => {
     if (!supabaseUrl || !supabaseAnonKey) {
-      toast.error('Por favor completa todos los campos');
+      toast.error("Por favor completa todos los campos");
       return;
     }
 
-    if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
-      toast.error('URL de Supabase inválida');
+    if (!supabaseUrl.startsWith("https://") || !supabaseUrl.includes(".supabase.co")) {
+      toast.error("URL de Supabase inválida");
       return;
     }
 
     // Save to localStorage
-    localStorage.setItem('EXTERNAL_SUPABASE_URL', supabaseUrl);
-    localStorage.setItem('EXTERNAL_SUPABASE_ANON_KEY', supabaseAnonKey);
-    
-    toast.success('Configuración guardada exitosamente');
+    localStorage.setItem("EXTERNAL_SUPABASE_URL", supabaseUrl);
+    localStorage.setItem("EXTERNAL_SUPABASE_ANON_KEY", supabaseAnonKey);
+
+    toast.success("Configuración guardada exitosamente");
     setIsConfigured(true);
-    
+
     // Reload to apply new configuration
     setTimeout(() => {
-      window.location.href = '/login';
+      window.location.href = "/login";
     }, 1000);
   };
 
   const handleReset = () => {
-    localStorage.removeItem('EXTERNAL_SUPABASE_URL');
-    localStorage.removeItem('EXTERNAL_SUPABASE_ANON_KEY');
-    setSupabaseUrl('');
-    setSupabaseAnonKey('');
+    localStorage.removeItem("EXTERNAL_SUPABASE_URL");
+    localStorage.removeItem("EXTERNAL_SUPABASE_ANON_KEY");
+    setSupabaseUrl("");
+    setSupabaseAnonKey("");
     setIsConfigured(false);
-    toast.success('Configuración eliminada');
+    toast.success("Configuración eliminada");
   };
 
   return (
@@ -66,9 +68,7 @@ const SupabaseConfig = () => {
             <Database className="w-6 h-6" />
             Configuración de Supabase
           </CardTitle>
-          <CardDescription>
-            Configura tu instancia externa de Supabase para usar como backend
-          </CardDescription>
+          <CardDescription>Configura tu instancia externa de Supabase para usar como backend</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isConfigured && (
@@ -91,9 +91,7 @@ const SupabaseConfig = () => {
               onChange={(e) => setSupabaseUrl(e.target.value)}
               disabled={isConfigured}
             />
-            <p className="text-xs text-muted-foreground">
-              La URL de tu proyecto en Supabase
-            </p>
+            <p className="text-xs text-muted-foreground">La URL de tu proyecto en Supabase</p>
           </div>
 
           <div className="space-y-2">
@@ -109,9 +107,7 @@ const SupabaseConfig = () => {
               onChange={(e) => setSupabaseAnonKey(e.target.value)}
               disabled={isConfigured}
             />
-            <p className="text-xs text-muted-foreground">
-              La clave anónima (anon/public key) de tu proyecto
-            </p>
+            <p className="text-xs text-muted-foreground">La clave anónima (anon/public key) de tu proyecto</p>
           </div>
 
           <div className="flex gap-2 pt-4">
@@ -120,7 +116,7 @@ const SupabaseConfig = () => {
                 <Button onClick={handleSave} className="flex-1">
                   Guardar configuración
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/login')}>
+                <Button variant="outline" onClick={() => navigate("/login")}>
                   Cancelar
                 </Button>
               </>
@@ -129,7 +125,7 @@ const SupabaseConfig = () => {
                 <Button variant="destructive" onClick={handleReset} className="flex-1">
                   Eliminar configuración
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/login')}>
+                <Button variant="outline" onClick={() => navigate("/login")}>
                   Volver
                 </Button>
               </>
