@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FoodItem {
   name: string;

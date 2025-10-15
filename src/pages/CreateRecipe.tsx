@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/StatsCard";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecipeItem {
   name: string;

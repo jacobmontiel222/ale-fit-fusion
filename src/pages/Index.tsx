@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { useNutrition } from "@/contexts/NutritionContext";
 import { getState } from "@/lib/storage";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeightEntry {
   date: string;
