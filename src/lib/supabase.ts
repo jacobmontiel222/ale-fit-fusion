@@ -3,28 +3,41 @@ import type { Database } from '@/integrations/supabase/types';
 
 // Get external Supabase credentials from localStorage
 const getSupabaseConfig = () => {
-  const externalUrl = localStorage.getItem('EXTERNAL_SUPABASE_URL');
-  const externalKey = localStorage.getItem('EXTERNAL_SUPABASE_ANON_KEY');
+  // Prefer Lovable Cloud (env) if available
+  const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+  const envKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 
-  if (!externalUrl || !externalKey) {
-    // Return dummy config to prevent errors
+  if (envUrl && envKey) {
     return {
-      url: 'https://placeholder.supabase.co',
-      key: 'placeholder-key',
-      source: 'unconfigured' as const
+      url: envUrl,
+      key: envKey,
+      source: 'cloud' as const,
     };
   }
 
+  // Fallback to external credentials stored in localStorage
+  const externalUrl = localStorage.getItem('EXTERNAL_SUPABASE_URL');
+  const externalKey = localStorage.getItem('EXTERNAL_SUPABASE_ANON_KEY');
+
+  if (externalUrl && externalKey) {
+    return {
+      url: externalUrl,
+      key: externalKey,
+      source: 'external' as const,
+    };
+  }
+
+  // Return dummy config to prevent errors if nothing is configured
   return {
-    url: externalUrl,
-    key: externalKey,
-    source: 'external' as const
+    url: 'https://placeholder.supabase.co',
+    key: 'placeholder-key',
+    source: 'unconfigured' as const,
   };
 };
 
 const config = getSupabaseConfig();
 
-if (config.source === 'external') {
+if (config.source !== 'unconfigured') {
   console.log(`🔌 Conectado a Supabase (${config.source}): ${config.url}`);
 }
 
