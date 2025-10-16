@@ -236,21 +236,33 @@ const Comidas = () => {
         </StatsCard>
 
         {/* Main Calories Summary with Tabs */}
-        <StatsCard className="relative overflow-hidden py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-3 right-3 rounded-full z-10"
-            onClick={() => setShowEditModal(true)}
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
+        <StatsCard className="overflow-hidden py-3">
+          {/* Header with Edit Button - Fixed positioning */}
+          <div className="flex items-center justify-between mb-3 pr-1">
+            <Tabs defaultValue="macros" className="flex-1">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="macros" className="text-sm truncate">Macros</TabsTrigger>
+                <TabsTrigger value="micronutrients" className="text-sm truncate">Micronutrientes</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-2 rounded-full min-w-[44px] min-h-[44px] flex-shrink-0"
+              onClick={() => setShowEditModal(true)}
+              aria-label="Editar macros"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
+          </div>
           
           <Tabs defaultValue="macros" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="macros">Macros</TabsTrigger>
-              <TabsTrigger value="micronutrients">Micronutrientes</TabsTrigger>
-            </TabsList>
+            <div className="hidden">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="macros">Macros</TabsTrigger>
+                <TabsTrigger value="micronutrients">Micronutrientes</TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value="macros" className="mt-0">
               <div className="flex flex-col items-center gap-2">
