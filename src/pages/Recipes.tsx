@@ -184,7 +184,7 @@ const Recipes = () => {
         protein: item.protein,
         fat: item.fat,
         carbs: item.carbs,
-        entry_method: 'recipe',
+        entry_method: 'manual',
       }));
 
       const { error } = await supabase
@@ -197,7 +197,7 @@ const Recipes = () => {
         return;
       }
 
-      toast.success(`Receta añadida a ${mealType === 'breakfast' ? 'desayuno' : mealType === 'lunch' ? 'comida' : 'cena'}`);
+      toast.success(`Receta añadida a ${mealType}`);
       setAddDialogOpen(false);
       setRecipeToAdd(null);
     } catch (error) {
@@ -366,19 +366,19 @@ const Recipes = () => {
             </p>
             <Button
               className="w-full"
-              onClick={() => handleAddToMeal('breakfast')}
+              onClick={() => handleAddToMeal('Desayuno')}
             >
               Desayuno
             </Button>
             <Button
               className="w-full"
-              onClick={() => handleAddToMeal('lunch')}
+              onClick={() => handleAddToMeal('Comida')}
             >
               Comida
             </Button>
             <Button
               className="w-full"
-              onClick={() => handleAddToMeal('dinner')}
+              onClick={() => handleAddToMeal('Cena')}
             >
               Cena
             </Button>
