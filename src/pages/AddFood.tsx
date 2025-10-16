@@ -42,6 +42,7 @@ const AddFood = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [servingAmount, setServingAmount] = useState(100);
+  const [servingAmountText, setServingAmountText] = useState('100');
   const [manualEntry, setManualEntry] = useState(false);
   const [manualFood, setManualFood] = useState<FoodItem>({
     name: "",
@@ -130,7 +131,7 @@ const AddFood = () => {
           
           setSelectedFood(item);
           setServingAmount(item.servingSize);
-          
+          setServingAmountText(String(item.servingSize));
           toast.success(`${item.name} detectado`);
         } catch {
           toast.error("Fallo al consultar el producto.");
@@ -240,6 +241,7 @@ const AddFood = () => {
       servingUnit: item.servingUnit,
     });
     setServingAmount(item.servingSize);
+    setServingAmountText(String(item.servingSize));
     setManualEntry(false);
   };
 
@@ -312,17 +314,23 @@ const AddFood = () => {
                   <Label htmlFor="amount">Cantidad</Label>
                   <Input
                     id="amount"
-                    type="number"
-                    value={servingAmount}
+                    type="text"
+                    inputMode="decimal"
+                    value={servingAmountText}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === '') {
-                        setServingAmount(0);
-                      } else {
-                        setServingAmount(Math.max(0, parseFloat(val)));
+                      let raw = e.target.value.replace(/[^0-9.]/g, '');
+                      const firstDot = raw.indexOf('.');
+                      if (firstDot !== -1) {
+                        raw = raw.slice(0, firstDot + 1) + raw.slice(firstDot + 1).replace(/\./g, '');
                       }
+                      if (raw.startsWith('0.')) {
+                        raw = '.' + raw.slice(2);
+                      }
+                      setServingAmountText(raw);
+                      const numeric = parseFloat(raw === '.' || raw === '' ? '0' : (raw.startsWith('.') ? '0' + raw : raw));
+                      setServingAmount(Number.isNaN(numeric) ? 0 : Math.max(0, numeric));
                     }}
-                    min={0}
+                    placeholder="Cantidad"
                   />
                 </div>
                 <div>
