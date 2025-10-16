@@ -22,25 +22,39 @@ interface EditGoalModalProps {
 }
 
 export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: EditGoalModalProps) => {
-  const [calories, setCalories] = useState(currentGoals.calories);
+  // Use string for inputs to allow empty state
+  const [caloriesInput, setCaloriesInput] = useState(String(currentGoals.calories));
   
   // Convert grams to percentages for initial values
-  const gramsToPercentage = (grams: number, type: 'protein' | 'fat' | 'carbs') => {
+  const gramsToPercentage = (grams: number, cals: number, type: 'protein' | 'fat' | 'carbs') => {
+    if (cals === 0) return 0;
     const calPerGram = type === 'fat' ? 9 : 4;
     const macroCalories = grams * calPerGram;
-    return Math.round((macroCalories / currentGoals.calories) * 100);
+    return Math.round((macroCalories / cals) * 100);
   };
 
-  const [proteinPct, setProteinPct] = useState(gramsToPercentage(currentGoals.protein, 'protein'));
-  const [fatPct, setFatPct] = useState(gramsToPercentage(currentGoals.fat, 'fat'));
-  const [carbsPct, setCarbsPct] = useState(gramsToPercentage(currentGoals.carbs, 'carbs'));
+  const [proteinPctInput, setProteinPctInput] = useState(
+    String(gramsToPercentage(currentGoals.protein, currentGoals.calories, 'protein'))
+  );
+  const [fatPctInput, setFatPctInput] = useState(
+    String(gramsToPercentage(currentGoals.fat, currentGoals.calories, 'fat'))
+  );
+  const [carbsPctInput, setCarbsPctInput] = useState(
+    String(gramsToPercentage(currentGoals.carbs, currentGoals.calories, 'carbs'))
+  );
 
   useEffect(() => {
-    setCalories(currentGoals.calories);
-    setProteinPct(gramsToPercentage(currentGoals.protein, 'protein'));
-    setFatPct(gramsToPercentage(currentGoals.fat, 'fat'));
-    setCarbsPct(gramsToPercentage(currentGoals.carbs, 'carbs'));
+    setCaloriesInput(String(currentGoals.calories));
+    setProteinPctInput(String(gramsToPercentage(currentGoals.protein, currentGoals.calories, 'protein')));
+    setFatPctInput(String(gramsToPercentage(currentGoals.fat, currentGoals.calories, 'fat')));
+    setCarbsPctInput(String(gramsToPercentage(currentGoals.carbs, currentGoals.calories, 'carbs')));
   }, [currentGoals, open]);
+
+  // Parse values with fallback
+  const calories = Math.max(100, parseFloat(caloriesInput) || 0);
+  const proteinPct = Math.max(0, Math.min(100, parseFloat(proteinPctInput) || 0));
+  const fatPct = Math.max(0, Math.min(100, parseFloat(fatPctInput) || 0));
+  const carbsPct = Math.max(0, Math.min(100, parseFloat(carbsPctInput) || 0));
 
   // Calculate derived values
   const calculateGrams = (percentage: number, type: 'protein' | 'fat' | 'carbs') => {
@@ -49,7 +63,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
     return Math.round((macroCalories / calPerGram) * 2) / 2; // Round to 0.5g
   };
 
-  const calculateCalories = (percentage: number, type: 'protein' | 'fat' | 'carbs') => {
+  const calculateCalories = (percentage: number) => {
     return Math.round((percentage / 100) * calories);
   };
 
@@ -57,39 +71,42 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
   const fatGrams = calculateGrams(fatPct, 'fat');
   const carbsGrams = calculateGrams(carbsPct, 'carbs');
 
-  const proteinCal = calculateCalories(proteinPct, 'protein');
-  const fatCal = calculateCalories(fatPct, 'fat');
-  const carbsCal = calculateCalories(carbsPct, 'carbs');
+  const proteinCal = calculateCalories(proteinPct);
+  const fatCal = calculateCalories(fatPct);
+  const carbsCal = calculateCalories(carbsPct);
 
   const totalPct = proteinPct + fatPct + carbsPct;
-  const isValid = totalPct === 100;
+  const isValid = Math.abs(totalPct - 100) < 0.1; // Allow small rounding errors
 
   // Auto-adjust carbs when protein or fat changes
-  const handleProteinChange = (value: number) => {
-    const newValue = Math.max(0, Math.min(100, value));
-    setProteinPct(newValue);
+  const handleProteinChange = (value: string) => {
+    setProteinPctInput(value);
     
-    // Auto-adjust carbs to maintain 100%
-    const remaining = 100 - newValue - fatPct;
-    if (remaining >= 0 && remaining <= 100) {
-      setCarbsPct(remaining);
+    const newProtein = parseFloat(value) || 0;
+    if (newProtein >= 0 && newProtein <= 100) {
+      const currentFat = parseFloat(fatPctInput) || 0;
+      const remaining = 100 - newProtein - currentFat;
+      if (remaining >= 0 && remaining <= 100) {
+        setCarbsPctInput(String(remaining));
+      }
     }
   };
 
-  const handleFatChange = (value: number) => {
-    const newValue = Math.max(0, Math.min(100, value));
-    setFatPct(newValue);
+  const handleFatChange = (value: string) => {
+    setFatPctInput(value);
     
-    // Auto-adjust carbs to maintain 100%
-    const remaining = 100 - proteinPct - newValue;
-    if (remaining >= 0 && remaining <= 100) {
-      setCarbsPct(remaining);
+    const newFat = parseFloat(value) || 0;
+    if (newFat >= 0 && newFat <= 100) {
+      const currentProtein = parseFloat(proteinPctInput) || 0;
+      const remaining = 100 - currentProtein - newFat;
+      if (remaining >= 0 && remaining <= 100) {
+        setCarbsPctInput(String(remaining));
+      }
     }
   };
 
-  const handleCarbsChange = (value: number) => {
-    const newValue = Math.max(0, Math.min(100, value));
-    setCarbsPct(newValue);
+  const handleCarbsChange = (value: string) => {
+    setCarbsPctInput(value);
   };
 
   const handleSave = () => {
@@ -138,15 +155,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <Input
               id="calories"
               type="number"
-              value={calories}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === '') {
-                  setCalories(100);
-                } else {
-                  setCalories(Math.max(100, parseInt(val)));
-                }
-              }}
+              value={caloriesInput}
+              onChange={(e) => setCaloriesInput(e.target.value)}
               min={100}
               max={10000}
               step={50}
@@ -162,12 +172,12 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total de macros:</span>
               <span className={`text-lg font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                {totalPct}%
+                {totalPct.toFixed(1)}%
               </span>
             </div>
             {!isValid && (
               <p className="text-xs text-muted-foreground mt-1">
-                {totalPct < 100 ? `Faltan ${100 - totalPct}%` : `Sobran ${totalPct - 100}%`}
+                {totalPct < 100 ? `Faltan ${(100 - totalPct).toFixed(1)}%` : `Sobran ${(totalPct - 100).toFixed(1)}%`}
               </p>
             )}
           </div>
@@ -185,11 +195,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="protein"
                     type="number"
-                    value={proteinPct}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      handleProteinChange(val === '' ? 0 : parseFloat(val));
-                    }}
+                    value={proteinPctInput}
+                    onChange={(e) => handleProteinChange(e.target.value)}
                     min={0}
                     max={100}
                     step={1}
@@ -215,11 +222,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="fat"
                     type="number"
-                    value={fatPct}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      handleFatChange(val === '' ? 0 : parseFloat(val));
-                    }}
+                    value={fatPctInput}
+                    onChange={(e) => handleFatChange(e.target.value)}
                     min={0}
                     max={100}
                     step={1}
@@ -245,11 +249,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="carbs"
                     type="number"
-                    value={carbsPct}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      handleCarbsChange(val === '' ? 0 : parseFloat(val));
-                    }}
+                    value={carbsPctInput}
+                    onChange={(e) => handleCarbsChange(e.target.value)}
                     min={0}
                     max={100}
                     step={1}
