@@ -224,16 +224,18 @@ const Analytics = () => {
 
   const calculateNiceYAxisTicks = (data: WeightEntry[]): number[] => {
     const validData = data.filter(d => d.kg !== null);
-    if (validData.length === 0) return [70, 71, 72, 73, 74, 75];
+    if (validData.length === 0) return [65, 70, 75, 80, 85];
     
     const minWeight = Math.min(...validData.map(d => d.kg));
     const maxWeight = Math.max(...validData.map(d => d.kg));
     
-    const rangeMin = Math.floor(minWeight * 2) / 2; // Round down to nearest 0.5
-    const rangeMax = Math.ceil(maxWeight * 2) / 2; // Round up to nearest 0.5
+    // Add 5kg margin above and below
+    const rangeMin = Math.floor(minWeight - 5);
+    const rangeMax = Math.ceil(maxWeight + 5);
     
+    // Use 2.5kg increments for cleaner display
     const ticks: number[] = [];
-    for (let i = rangeMin; i <= rangeMax; i += 0.5) {
+    for (let i = rangeMin; i <= rangeMax; i += 2.5) {
       ticks.push(i);
     }
     
@@ -340,7 +342,8 @@ const Analytics = () => {
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   ticks={weightYAxisTicks}
                   domain={[weightYAxisTicks[0], weightYAxisTicks[weightYAxisTicks.length - 1]]}
-                  tickFormatter={(value) => `${value.toFixed(2)} kg`}
+                  tickFormatter={(value) => `${value.toFixed(1)} kg`}
+                  width={60}
                 />
                 <Tooltip content={<WeightTooltip />} />
                 <Line 
