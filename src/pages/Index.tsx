@@ -126,7 +126,10 @@ const Index = () => {
             <div className="flex-1">
               <CircularProgress value={todayNutrition.kcalConsumed} max={todayNutrition.kcalTarget} />
             </div>
-            <div className="flex-1">
+            <div 
+              className="flex-1 cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-2 -mr-2"
+              onClick={() => navigate('/comidas')}
+            >
               <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
               <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget.toLocaleString('es-ES')} Kcal</p>
               <p className="text-sm font-normal text-muted-foreground mt-1">
