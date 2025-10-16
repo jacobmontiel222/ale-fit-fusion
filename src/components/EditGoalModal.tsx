@@ -127,10 +127,10 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
     }
 
     onSave({
-      calories,
-      protein: finalProteinG,
-      fat: finalFatG,
-      carbs: finalCarbsG,
+      calories: Math.round(calories),
+      protein: Math.round(finalProteinG),
+      fat: Math.round(finalFatG),
+      carbs: Math.round(finalCarbsG),
       useGrams: false,
     });
     onOpenChange(false);
