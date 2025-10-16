@@ -139,7 +139,14 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
               id="calories"
               type="number"
               value={calories}
-              onChange={(e) => setCalories(Math.max(100, parseInt(e.target.value) || 0))}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setCalories(100);
+                } else {
+                  setCalories(Math.max(100, parseInt(val)));
+                }
+              }}
               min={100}
               max={10000}
               step={50}
@@ -179,7 +186,10 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                     id="protein"
                     type="number"
                     value={proteinPct}
-                    onChange={(e) => handleProteinChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleProteinChange(val === '' ? 0 : parseFloat(val));
+                    }}
                     min={0}
                     max={100}
                     step={1}
@@ -206,7 +216,10 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                     id="fat"
                     type="number"
                     value={fatPct}
-                    onChange={(e) => handleFatChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleFatChange(val === '' ? 0 : parseFloat(val));
+                    }}
                     min={0}
                     max={100}
                     step={1}
@@ -233,7 +246,10 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                     id="carbs"
                     type="number"
                     value={carbsPct}
-                    onChange={(e) => handleCarbsChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleCarbsChange(val === '' ? 0 : parseFloat(val));
+                    }}
                     min={0}
                     max={100}
                     step={1}

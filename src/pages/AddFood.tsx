@@ -314,7 +314,14 @@ const AddFood = () => {
                     id="amount"
                     type="number"
                     value={servingAmount}
-                    onChange={(e) => setServingAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setServingAmount(0);
+                      } else {
+                        setServingAmount(Math.max(0, parseFloat(val)));
+                      }
+                    }}
                     min={0}
                   />
                 </div>
@@ -341,7 +348,10 @@ const AddFood = () => {
                     <Input
                       type="number"
                       value={manualFood.calories}
-                      onChange={(e) => setManualFood({ ...manualFood, calories: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setManualFood({ ...manualFood, calories: val === '' ? 0 : parseFloat(val) });
+                      }}
                     />
                   </div>
                   <div>
@@ -349,7 +359,10 @@ const AddFood = () => {
                     <Input
                       type="number"
                       value={manualFood.protein}
-                      onChange={(e) => setManualFood({ ...manualFood, protein: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setManualFood({ ...manualFood, protein: val === '' ? 0 : parseFloat(val) });
+                      }}
                     />
                   </div>
                   <div>
@@ -357,7 +370,10 @@ const AddFood = () => {
                     <Input
                       type="number"
                       value={manualFood.fat}
-                      onChange={(e) => setManualFood({ ...manualFood, fat: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setManualFood({ ...manualFood, fat: val === '' ? 0 : parseFloat(val) });
+                      }}
                     />
                   </div>
                   <div>
@@ -365,7 +381,10 @@ const AddFood = () => {
                     <Input
                       type="number"
                       value={manualFood.carbs}
-                      onChange={(e) => setManualFood({ ...manualFood, carbs: parseFloat(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setManualFood({ ...manualFood, carbs: val === '' ? 0 : parseFloat(val) });
+                      }}
                     />
                   </div>
                 </div>

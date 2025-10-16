@@ -351,26 +351,38 @@ const Gimnasio = () => {
                     <Input
                       type="number"
                       value={set.weight || ''}
-                      onChange={(e) => updateSet(exercise.id, set.id, 'weight', Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSet(exercise.id, set.id, 'weight', val === '' ? 0 : Number(val));
+                      }}
                       className="h-8 text-center text-sm"
                     />
                     <Input
                       type="number"
                       value={set.reps || ''}
-                      onChange={(e) => updateSet(exercise.id, set.id, 'reps', Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSet(exercise.id, set.id, 'reps', val === '' ? 0 : Number(val));
+                      }}
                       className="h-8 text-center text-sm"
                     />
                     <Input
                       type="number"
                       value={set.rpe || ''}
-                      onChange={(e) => updateSet(exercise.id, set.id, 'rpe', Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSet(exercise.id, set.id, 'rpe', val === '' ? undefined : Number(val));
+                      }}
                       className="h-8 text-center text-sm"
                       placeholder="-"
                     />
                     <Input
                       type="number"
                       value={set.rest || ''}
-                      onChange={(e) => updateSet(exercise.id, set.id, 'rest', Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateSet(exercise.id, set.id, 'rest', val === '' ? undefined : Number(val));
+                      }}
                       className="h-8 text-center text-sm"
                       placeholder="-"
                     />
