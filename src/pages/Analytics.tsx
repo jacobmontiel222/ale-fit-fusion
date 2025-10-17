@@ -233,9 +233,9 @@ const Analytics = () => {
     const rangeMin = Math.floor(minWeight - 5);
     const rangeMax = Math.ceil(maxWeight + 5);
     
-    // Use 2.5kg increments for cleaner display
+    // Use 2kg increments for cleaner display
     const ticks: number[] = [];
-    for (let i = rangeMin; i <= rangeMax; i += 2.5) {
+    for (let i = rangeMin; i <= rangeMax; i += 2) {
       ticks.push(i);
     }
     
