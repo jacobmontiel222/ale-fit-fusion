@@ -229,9 +229,9 @@ const Analytics = () => {
     const minWeight = Math.min(...validData.map(d => d.kg));
     const maxWeight = Math.max(...validData.map(d => d.kg));
     
-    // Add 5kg margin above and below
-    const rangeMin = Math.floor(minWeight - 5);
-    const rangeMax = Math.ceil(maxWeight + 5);
+    // Add 2kg margin above and below
+    const rangeMin = Math.floor(minWeight - 2);
+    const rangeMax = Math.ceil(maxWeight + 2);
     
     // Use 2kg increments for cleaner display
     const ticks: number[] = [];
