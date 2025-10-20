@@ -98,13 +98,14 @@ const Analytics = () => {
 
     switch (range) {
       case 'thisWeek':
-        startDate = startOfWeek(today, { weekStartsOn: 1 });
-        endDate = endOfWeek(today, { weekStartsOn: 1 });
+        // Asegurar que la semana va de lunes a domingo
+        startDate = startOfWeek(today, { weekStartsOn: 1, locale: es });
+        endDate = endOfWeek(today, { weekStartsOn: 1, locale: es });
         break;
       case 'lastWeek':
         const lastWeekStart = subWeeks(today, 1);
-        startDate = startOfWeek(lastWeekStart, { weekStartsOn: 1 });
-        endDate = endOfWeek(lastWeekStart, { weekStartsOn: 1 });
+        startDate = startOfWeek(lastWeekStart, { weekStartsOn: 1, locale: es });
+        endDate = endOfWeek(lastWeekStart, { weekStartsOn: 1, locale: es });
         break;
       case 'thisMonth':
         startDate = startOfMonth(today);
