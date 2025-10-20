@@ -25,7 +25,8 @@ export const ProfileAvatar = ({ icon, color, size = 'lg', className = '' }: Prof
       <IconComponent 
         className={sizes.icon}
         style={{ color }}
-        fill={color}
+        strokeWidth={2}
+        fill="none"
       />
     </div>
   );

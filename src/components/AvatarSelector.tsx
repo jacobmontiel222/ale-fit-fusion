@@ -107,7 +107,8 @@ export const AvatarSelector = ({
                     <IconComponent 
                       className="w-16 h-16" 
                       style={{ color: selectedColor }}
-                      fill={selectedColor}
+                      strokeWidth={2}
+                      fill="none"
                     />
                   </div>
                 );
