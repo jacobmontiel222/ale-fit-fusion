@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NutritionProvider } from "@/contexts/NutritionContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Comidas from "./pages/Comidas";
 import AddFood from "./pages/AddFood";
@@ -64,13 +65,14 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <NutritionProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <BrowserRouter>
+          <AuthProvider>
+            <NutritionProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
                 {/* Protected Routes */}
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/comidas" element={<ProtectedRoute><Comidas /></ProtectedRoute>} />
@@ -95,6 +97,7 @@ const App = () => {
           </NutritionProvider>
         </AuthProvider>
       </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

@@ -1,8 +1,7 @@
-import { X, ChevronRight, Download, Upload, Camera } from "lucide-react";
+import { X, ChevronRight, Download, Upload, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,13 +10,17 @@ import { getState, exportJSON, importJSON } from "@/lib/storage";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AvatarSelector } from "@/components/AvatarSelector";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { useTheme } from "next-themes";
 
 interface ProfileData {
   name: string;
   height: number | null;
   current_weight: number | null;
   target_weight: number | null;
-  avatar_url: string | null;
+  avatar_icon: string;
+  avatar_color: string;
 }
 
 const Profile = () => {
@@ -31,20 +34,28 @@ const Profile = () => {
     height: null,
     current_weight: null,
     target_weight: null,
-    avatar_url: null
+    avatar_icon: 'apple',
+    avatar_color: '#10B981'
   });
   const [editData, setEditData] = useState<ProfileData>({
     name: "Usuario",
     height: null,
     current_weight: null,
     target_weight: null,
-    avatar_url: null
+    avatar_icon: 'apple',
+    avatar_color: '#10B981'
   });
-  const [darkMode, setDarkMode] = useState(true);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [smartReminders, setSmartReminders] = useState(false);
   const [biometricAuth, setBiometricAuth] = useState(true);
   const [autoBackup, setAutoBackup] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -61,7 +72,7 @@ const Profile = () => {
       if (uid) {
         const { data } = await supabase
           .from('profiles')
-          .select('name, height, current_weight, target_weight, avatar_url')
+          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color')
           .eq('id', uid)
           .maybeSingle();
 
@@ -71,7 +82,8 @@ const Profile = () => {
             height: data.height ?? null,
             current_weight: data.current_weight ?? null,
             target_weight: data.target_weight ?? null,
-            avatar_url: data.avatar_url ?? null,
+            avatar_icon: data.avatar_icon || 'apple',
+            avatar_color: data.avatar_color || '#10B981',
           };
           setProfileData(profile);
           setEditData(profile);
@@ -101,7 +113,8 @@ const Profile = () => {
         height: editData.height,
         current_weight: editData.current_weight,
         target_weight: editData.target_weight,
-        avatar_url: editData.avatar_url
+        avatar_icon: editData.avatar_icon,
+        avatar_color: editData.avatar_color
       })
       .eq('id', user.id);
 
@@ -115,15 +128,12 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditData({ ...editData, avatar_url: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleAvatarSelect = (icon: string, color: string) => {
+    setEditData({ ...editData, avatar_icon: icon, avatar_color: color });
+  };
+
+  const handleThemeToggle = (checked: boolean) => {
+    setTheme(checked ? 'dark' : 'light');
   };
 
   const handleExport = () => {
@@ -184,26 +194,18 @@ const Profile = () => {
         {/* Avatar and User Info */}
         <div className="flex flex-col items-center mb-6">
           <div className="relative mb-4">
-            <Avatar className="w-28 h-28">
-              <AvatarImage src={isEditing ? editData.avatar_url || "" : profileData.avatar_url || ""} />
-              <AvatarFallback className="bg-muted text-foreground text-3xl">
-                {profileData.name?.[0]?.toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileAvatar 
+              icon={isEditing ? editData.avatar_icon : profileData.avatar_icon}
+              color={isEditing ? editData.avatar_color : profileData.avatar_color}
+              size="lg"
+            />
             {isEditing && (
-              <label 
-                htmlFor="avatar-upload"
-                className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors"
+              <button
+                onClick={() => setShowAvatarSelector(true)}
+                className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors"
               >
-                <Camera className="w-4 h-4 text-primary-foreground" />
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
-                />
-              </label>
+                <Pencil className="w-4 h-4 text-primary-foreground" />
+              </button>
             )}
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-1">
@@ -292,7 +294,12 @@ const Profile = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <Label htmlFor="dark-mode" className="text-foreground cursor-pointer">Modo oscuro</Label>
-              <Switch id="dark-mode" checked={darkMode} onCheckedChange={setDarkMode} />
+              <Switch 
+                id="dark-mode" 
+                checked={mounted ? theme === 'dark' : false} 
+                onCheckedChange={handleThemeToggle}
+                disabled={!mounted}
+              />
             </div>
             <div className="flex justify-between items-center">
               <Label htmlFor="notifications" className="text-foreground cursor-pointer">Notificaciones</Label>
@@ -397,6 +404,14 @@ const Profile = () => {
           Cerrar sesión
         </Button>
       </div>
+
+      <AvatarSelector
+        open={showAvatarSelector}
+        onOpenChange={setShowAvatarSelector}
+        currentIcon={editData.avatar_icon}
+        currentColor={editData.avatar_color}
+        onSelect={handleAvatarSelect}
+      />
     </div>
   );
 };
