@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Scale, Footprints } from "lucide-react";
+import { Plus, Scale, Footprints, Droplet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, eachDayOfInterval, format } from "date-fns";
@@ -23,6 +23,11 @@ interface StepsEntry {
   steps: number;
 }
 
+interface WaterEntry {
+  date: string;
+  ml: number;
+}
+
 const Analytics = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -32,6 +37,7 @@ const Analytics = () => {
   type DateRange = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last6Months';
   const [weightRange, setWeightRange] = useState<DateRange>('thisWeek');
   const [stepsRange, setStepsRange] = useState<DateRange>('thisWeek');
+  const [waterRange, setWaterRange] = useState<DateRange>('thisWeek');
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newWeightDate, setNewWeightDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -40,11 +46,13 @@ const Analytics = () => {
   const COLORS = {
     weight: "hsl(var(--chart-1))",
     steps: "hsl(var(--chart-2))",
+    water: "#60a5fa",
   };
 
   // Load data from Supabase
   const [weightData, setWeightData] = useState<WeightEntry[]>([]);
   const [stepsData, setStepsData] = useState<StepsEntry[]>([]);
+  const [waterData, setWaterData] = useState<WaterEntry[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -70,6 +78,17 @@ const Analytics = () => {
 
       if (steps) {
         setStepsData(steps.map(s => ({ date: s.date, steps: s.steps })));
+      }
+
+      // Load water data
+      const { data: water } = await supabase
+        .from('daily_water_intake')
+        .select('date, ml_consumed')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
+
+      if (water) {
+        setWaterData(water.map(w => ({ date: w.date, ml: w.ml_consumed })));
       }
     };
 
@@ -183,6 +202,23 @@ const Analytics = () => {
     return null;
   };
 
+  const WaterTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload as WaterEntry & { day: string };
+      return (
+        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-semibold text-foreground mb-1">
+            {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+          </p>
+          <p className="text-base font-bold" style={{ color: COLORS.water }}>
+            {data.ml.toLocaleString('es-ES')} ml
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const addWeight = async () => {
     if (!newWeight || isNaN(Number(newWeight)) || !user) return;
     
@@ -215,8 +251,9 @@ const Analytics = () => {
 
   const filteredWeightData = getFilteredDataWithAllDays(weightData, weightRange, { kg: null as any });
   const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
+  const filteredWaterData = getFilteredDataWithAllDays(waterData, waterRange, { ml: 0 });
 
-  const formatChartData = (data: WeightEntry[] | StepsEntry[]) => {
+  const formatChartData = (data: WeightEntry[] | StepsEntry[] | WaterEntry[]) => {
     return data.map(entry => ({
       ...entry,
       day: format(new Date(entry.date), 'd', { locale: es })
@@ -245,6 +282,7 @@ const Analytics = () => {
 
   const weightChartData = formatChartData(filteredWeightData);
   const stepsChartData = formatChartData(filteredStepsData);
+  const waterChartData = formatChartData(filteredWaterData);
   const weightYAxisTicks = calculateNiceYAxisTicks(filteredWeightData);
 
   const validWeightData = filteredWeightData.filter(d => d.kg !== null);
@@ -262,6 +300,11 @@ const Analytics = () => {
 
   const stepsMax = filteredStepsData.length > 0
     ? Math.max(...filteredStepsData.map(entry => entry.steps))
+    : 0;
+
+  const waterTotal = filteredWaterData.reduce((sum, entry) => sum + entry.ml, 0);
+  const waterAverage = filteredWaterData.length > 0
+    ? Math.round(waterTotal / filteredWaterData.length)
     : 0;
 
   return (
@@ -471,6 +514,95 @@ const Analytics = () => {
               <p className="text-sm text-muted-foreground mb-1">Máximo</p>
               <p className="text-lg font-semibold text-foreground">
                 {stepsMax.toLocaleString('es-ES')}
+              </p>
+              <p className="text-xs text-muted-foreground">En el periodo</p>
+            </div>
+          </div>
+        </StatsCard>
+
+        {/* Water Card */}
+        <StatsCard id="water">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Droplet className="w-5 h-5" style={{ color: COLORS.water }} />
+              <h2 className="text-xl font-semibold text-foreground">Agua</h2>
+            </div>
+          </div>
+
+          {/* Range Selector */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button
+              variant={waterRange === 'thisWeek' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWaterRange('thisWeek')}
+            >
+              Esta semana
+            </Button>
+            <Button
+              variant={waterRange === 'lastWeek' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWaterRange('lastWeek')}
+            >
+              La semana pasada
+            </Button>
+            <Button
+              variant={waterRange === 'thisMonth' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWaterRange('thisMonth')}
+            >
+              Este mes
+            </Button>
+            <Button
+              variant={waterRange === 'lastMonth' ? "default" : "outline"}
+              size="sm"
+              onClick={() => setWaterRange('lastMonth')}
+            >
+              El mes pasado
+            </Button>
+          </div>
+
+          {/* Chart */}
+          <div className="h-48 mb-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={waterChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="day" 
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis 
+                  stroke="hsl(var(--muted-foreground))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tickFormatter={(value) => `${value} ml`}
+                />
+                <Tooltip content={<WaterTooltip />} />
+                <Bar 
+                  dataKey="ml" 
+                  fill={COLORS.water}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Promedio diario</p>
+              <p className="text-lg font-semibold text-foreground">
+                {waterAverage.toLocaleString('es-ES')} ml
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {waterRange === 'thisWeek' ? 'Esta semana' : 
+                 waterRange === 'lastWeek' ? 'La semana pasada' :
+                 waterRange === 'thisMonth' ? 'Este mes' : 'El mes pasado'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Total</p>
+              <p className="text-lg font-semibold text-foreground">
+                {waterTotal.toLocaleString('es-ES')} ml
               </p>
               <p className="text-xs text-muted-foreground">En el periodo</p>
             </div>
