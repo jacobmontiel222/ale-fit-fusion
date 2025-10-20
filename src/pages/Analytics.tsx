@@ -34,7 +34,7 @@ const Analytics = () => {
   const [stepsRange, setStepsRange] = useState<DateRange>('thisWeek');
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [newWeight, setNewWeight] = useState("");
-  const [newWeightDate, setNewWeightDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newWeightDate, setNewWeightDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   // Color scheme
   const COLORS = {
@@ -131,7 +131,7 @@ const Analytics = () => {
 
   const getAllDaysInRange = (startDate: Date, endDate: Date): string[] => {
     const days = eachDayOfInterval({ start: startDate, end: endDate });
-    return days.map(day => day.toISOString().split('T')[0]);
+  return days.map(day => format(day, 'yyyy-MM-dd'));
   };
 
   const getFilteredDataWithAllDays = <T extends { date: string }>(
@@ -209,7 +209,7 @@ const Analytics = () => {
       setWeightData(updatedData);
       setShowAddWeight(false);
       setNewWeight("");
-      setNewWeightDate(new Date().toISOString().split('T')[0]);
+      setNewWeightDate(format(new Date(), 'yyyy-MM-dd'));
     }
   };
 
