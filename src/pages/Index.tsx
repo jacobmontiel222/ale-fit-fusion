@@ -3,9 +3,6 @@ import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNutrition } from "@/contexts/NutritionContext";
@@ -34,8 +31,6 @@ const Index = () => {
   const [todaySteps, setTodaySteps] = useState<number>(0);
   const [kcalPerStep, setKcalPerStep] = useState<number>(0.045);
   const [todayWater, setTodayWater] = useState<number>(0);
-  const [showAddWater, setShowAddWater] = useState(false);
-  const [waterAmount, setWaterAmount] = useState("");
   const [todayNutrition, setTodayNutrition] = useState({
     kcalConsumed: 0,
     kcalTarget: 2000,
@@ -113,28 +108,6 @@ const Index = () => {
     loadData();
   }, [today, user]);
 
-  const addWater = async () => {
-    if (!waterAmount || isNaN(Number(waterAmount)) || !user) return;
-    
-    const newTotal = todayWater + Number(waterAmount);
-    
-    const { error } = await supabase
-      .from('daily_water_intake')
-      .upsert({
-        user_id: user.id,
-        date: today,
-        ml_consumed: newTotal
-      }, {
-        onConflict: 'user_id,date'
-      });
-
-    if (!error) {
-      setTodayWater(newTotal);
-      setShowAddWater(false);
-      setWaterAmount("");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
@@ -185,12 +158,8 @@ const Index = () => {
             >
               <div className="flex items-center gap-2 mb-1">
                 <Droplet 
-                  className="w-4 h-4 cursor-pointer hover:scale-110 transition-transform" 
+                  className="w-4 h-4" 
                   style={{ color: '#60a5fa' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowAddWater(true);
-                  }}
                 />
                 <p className="text-sm text-muted-foreground">Agua Consumida</p>
               </div>
@@ -310,33 +279,6 @@ const Index = () => {
           </div>
         </StatsCard>
       </div>
-
-      {/* Add Water Dialog */}
-      <Dialog open={showAddWater} onOpenChange={setShowAddWater}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Añadir Agua</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="water-amount">Cantidad (ml)</Label>
-              <Input
-                id="water-amount"
-                type="number"
-                placeholder="250"
-                value={waterAmount}
-                onChange={(e) => setWaterAmount(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddWater(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={addWater}>Añadir</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <BottomNav />
     </div>

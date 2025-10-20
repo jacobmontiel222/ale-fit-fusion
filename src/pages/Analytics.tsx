@@ -41,6 +41,9 @@ const Analytics = () => {
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [newWeight, setNewWeight] = useState("");
   const [newWeightDate, setNewWeightDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [showAddWater, setShowAddWater] = useState(false);
+  const [newWaterAmount, setNewWaterAmount] = useState("");
+  const [newWaterDate, setNewWaterDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   // Color scheme
   const COLORS = {
@@ -95,7 +98,7 @@ const Analytics = () => {
     loadData();
   }, [user]);
 
-  // Scroll to focused section and open add weight dialog if needed
+  // Scroll to focused section and open add dialogs if needed
   useEffect(() => {
     if (focusSection) {
       setTimeout(() => {
@@ -107,6 +110,9 @@ const Analytics = () => {
     }
     if (shouldAddWeight && focusSection === 'weight') {
       setShowAddWeight(true);
+    }
+    if (focusSection === 'water') {
+      // Could add auto-open for water dialog here if needed
     }
   }, [focusSection, shouldAddWeight]);
 
@@ -249,6 +255,47 @@ const Analytics = () => {
     }
   };
 
+  const addWater = async () => {
+    if (!newWaterAmount || isNaN(Number(newWaterAmount)) || !user) return;
+    
+    // Get existing water data for the selected date
+    const { data: existingWater } = await supabase
+      .from('daily_water_intake')
+      .select('ml_consumed')
+      .eq('user_id', user.id)
+      .eq('date', newWaterDate)
+      .maybeSingle();
+
+    const currentAmount = existingWater?.ml_consumed || 0;
+    const newTotal = currentAmount + Number(newWaterAmount);
+
+    const { error } = await supabase
+      .from('daily_water_intake')
+      .upsert({
+        user_id: user.id,
+        date: newWaterDate,
+        ml_consumed: newTotal
+      }, {
+        onConflict: 'user_id,date'
+      });
+
+    if (!error) {
+      const newEntry: WaterEntry = {
+        date: newWaterDate,
+        ml: newTotal
+      };
+      
+      const updatedData = [...waterData.filter(w => w.date !== newWaterDate), newEntry].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      setWaterData(updatedData);
+      setShowAddWater(false);
+      setNewWaterAmount("");
+      setNewWaterDate(format(new Date(), 'yyyy-MM-dd'));
+    }
+  };
+
   const filteredWeightData = getFilteredDataWithAllDays(weightData, weightRange, { kg: null as any });
   const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
   const filteredWaterData = getFilteredDataWithAllDays(waterData, waterRange, { ml: 0 });
@@ -306,6 +353,23 @@ const Analytics = () => {
   const waterAverage = filteredWaterData.length > 0
     ? Math.round(waterTotal / filteredWaterData.length)
     : 0;
+
+  // Calculate nice Y-axis ticks for water (1000ml intervals)
+  const calculateWaterYAxisTicks = (data: WaterEntry[]): number[] => {
+    if (data.length === 0) return [0, 1000, 2000, 3000];
+    
+    const maxWater = Math.max(...data.map(d => d.ml));
+    const maxTick = Math.ceil(maxWater / 1000) * 1000 + 1000; // Round up to next 1000 and add one more
+    
+    const ticks: number[] = [];
+    for (let i = 0; i <= maxTick; i += 1000) {
+      ticks.push(i);
+    }
+    
+    return ticks;
+  };
+
+  const waterYAxisTicks = calculateWaterYAxisTicks(filteredWaterData);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -527,6 +591,10 @@ const Analytics = () => {
               <Droplet className="w-5 h-5" style={{ color: COLORS.water }} />
               <h2 className="text-xl font-semibold text-foreground">Agua</h2>
             </div>
+            <Button size="sm" onClick={() => setShowAddWater(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Añadir
+            </Button>
           </div>
 
           {/* Range Selector */}
@@ -575,6 +643,8 @@ const Analytics = () => {
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   tickFormatter={(value) => `${value} ml`}
+                  ticks={waterYAxisTicks}
+                  domain={[0, waterYAxisTicks[waterYAxisTicks.length - 1]]}
                 />
                 <Tooltip content={<WaterTooltip />} />
                 <Bar 
@@ -609,6 +679,42 @@ const Analytics = () => {
           </div>
         </StatsCard>
       </div>
+
+      {/* Add Water Dialog */}
+      <Dialog open={showAddWater} onOpenChange={setShowAddWater}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Añadir Agua</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="water-amount">Cantidad (ml)</Label>
+              <Input
+                id="water-amount"
+                type="number"
+                placeholder="250"
+                value={newWaterAmount}
+                onChange={(e) => setNewWaterAmount(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="water-date">Fecha</Label>
+              <Input
+                id="water-date"
+                type="date"
+                value={newWaterDate}
+                onChange={(e) => setNewWaterDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddWater(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={addWater}>Añadir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Weight Dialog */}
       <Dialog open={showAddWeight} onOpenChange={setShowAddWeight}>
