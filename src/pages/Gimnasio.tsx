@@ -94,13 +94,15 @@ const Gimnasio = () => {
     loadRoutines();
   }, [user]);
 
-  // Generate calendar days (current week)
+  // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
     const days = [];
     const current = new Date(selectedDate);
     const dayOfWeek = current.getDay();
+    // Adjust so Monday = 0, Tuesday = 1, ..., Sunday = 6
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const startOfWeek = new Date(current);
-    startOfWeek.setDate(current.getDate() - dayOfWeek);
+    startOfWeek.setDate(current.getDate() - mondayOffset);
 
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
