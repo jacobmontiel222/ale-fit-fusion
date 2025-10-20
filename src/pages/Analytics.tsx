@@ -239,6 +239,14 @@ const Analytics = () => {
       });
 
     if (!error) {
+      // Update current_weight in profiles table
+      await supabase
+        .from('profiles')
+        .update({
+          current_weight: Number(newWeight)
+        })
+        .eq('id', user.id);
+
       const newEntry: WeightEntry = {
         date: newWeightDate,
         kg: Number(newWeight)
