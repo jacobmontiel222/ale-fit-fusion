@@ -127,29 +127,30 @@ const AnimatedSplash = () => {
         }}
       />
 
-      {/* Lottie animation with FY logo */}
-      <div className="relative z-10 w-64 h-64 flex items-center justify-center">
+      {/* Animated FY logo */}
+      <div className="relative z-10 flex items-center justify-center">
         <Lottie
           animationData={animationData}
           loop={false}
           autoplay={true}
           onComplete={handleAnimationComplete}
           style={{
-            width: "100%",
-            height: "100%",
-            position: "absolute",
+            width: "280px",
+            height: "280px",
           }}
           rendererSettings={{
             preserveAspectRatio: "xMidYMid meet",
           }}
         />
-        {/* FY logo overlay */}
+        {/* FY logo positioned absolutely to sync with Lottie animation */}
         <img
           src="/fy-logo.png"
           alt="FY"
-          className="relative z-20 w-32 h-32 object-contain"
+          className="absolute"
           style={{
-            filter: "brightness(0) invert(1)",
+            width: "200px",
+            height: "200px",
+            objectFit: "contain",
           }}
         />
       </div>
