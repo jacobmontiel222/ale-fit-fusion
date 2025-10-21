@@ -18,6 +18,8 @@ const FityAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -41,7 +43,7 @@ const FityAI = () => {
   useEffect(() => {
     // Auto-scroll to bottom
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, streamingMessage]);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -76,15 +78,36 @@ const FityAI = () => {
       }
 
       const data = await response.json();
+      const fullMessage = data.reply || "Lo siento, no pude procesar tu solicitud.";
       
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.reply || "Lo siento, no pude procesar tu solicitud.",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
+      // Iniciar el efecto de escritura
+      setIsStreaming(true);
+      setStreamingMessage("");
+      
+      // Simular escritura progresiva
+      let currentIndex = 0;
+      const typingSpeed = 15; // milisegundos por carácter
+      
+      const typeInterval = setInterval(() => {
+        if (currentIndex < fullMessage.length) {
+          setStreamingMessage(fullMessage.substring(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+          setIsStreaming(false);
+          
+          // Agregar el mensaje completo a la lista
+          const aiMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "assistant",
+            content: fullMessage,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, aiMessage]);
+          setStreamingMessage("");
+        }
+      }, typingSpeed);
+      
     } catch (error) {
       console.error("Error al conectar con FityAI:", error);
       toast({
@@ -157,7 +180,17 @@ const FityAI = () => {
                   </div>
                 </div>
               ))}
-              {isLoading && (
+              {isStreaming && streamingMessage && (
+                <div className="flex justify-start">
+                  <div
+                    className="max-w-[80%] rounded-2xl rounded-bl-sm px-4 py-3"
+                    style={{ backgroundColor: "#2C2C2C", color: "#F1F1F1" }}
+                  >
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{streamingMessage}</p>
+                  </div>
+                </div>
+              )}
+              {isLoading && !isStreaming && (
                 <div className="flex justify-start">
                   <div
                     className="max-w-[80%] rounded-2xl rounded-bl-sm px-4 py-3"
@@ -194,11 +227,11 @@ const FityAI = () => {
               placeholder="Pregúntame sobre tu entrenamiento o nutrición…"
               className="flex-1 border-white/20 text-white placeholder:text-white/50"
               style={{ backgroundColor: "#2C2C2C" }}
-              disabled={isLoading}
+              disabled={isLoading || isStreaming}
             />
             <Button
               onClick={sendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={!inputValue.trim() || isLoading || isStreaming}
               size="icon"
               className="shrink-0"
             >
