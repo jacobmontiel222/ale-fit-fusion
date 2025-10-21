@@ -3,7 +3,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Bot } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,6 +28,12 @@ const FityAI = () => {
     if (savedMessages) {
       const parsed = JSON.parse(savedMessages);
       setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      // Scroll to bottom after loading messages
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
     }
   }, []);
 
@@ -112,7 +118,7 @@ const FityAI = () => {
       <div className="sticky top-0 z-10 border-b border-white/10" style={{ backgroundColor: "#1A1A1A" }}>
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
+            <Bot className="w-6 h-6 text-primary" />
             <h1 className="text-xl font-semibold text-white">FityAI</h1>
           </div>
         </div>
@@ -123,7 +129,7 @@ const FityAI = () => {
         <div ref={scrollRef} className="max-w-md mx-auto px-4 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
-              <Sparkles className="w-16 h-16 text-primary mb-4 opacity-50" />
+              <Bot className="w-16 h-16 text-primary mb-4 opacity-50" />
               <p className="text-lg" style={{ color: "#F1F1F1" }}>
                 💬 Habla con FityAI para obtener rutinas, ajustar tus macros o consejos de entrenamiento.
               </p>
