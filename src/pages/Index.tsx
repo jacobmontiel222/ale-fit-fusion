@@ -1,14 +1,11 @@
-import { Bell, Utensils, ArrowRight, Scale, Footprints, Flame, MessageCircle, Dumbbell, User, Droplet } from "lucide-react";
+import { Bell, ArrowRight, Scale, Footprints, Flame, Dumbbell, User, Droplet } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useNutrition } from "@/contexts/NutritionContext";
-import { getState } from "@/lib/storage";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 interface WeightEntry {
   date: string;
@@ -22,91 +19,23 @@ interface StepsEntry {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { getTotals } = useNutrition();
-  const { user } = useAuth();
-  const today = new Date().toISOString().split('T')[0];
+  const { data, isLoading } = useDashboardData();
   
-  const [userName, setUserName] = useState<string>("Usuario");
-  const [todayWeight, setTodayWeight] = useState<number | null>(null);
-  const [todaySteps, setTodaySteps] = useState<number>(0);
-  const [kcalPerStep, setKcalPerStep] = useState<number>(0.045);
-  const [todayWater, setTodayWater] = useState<number>(0);
-  const [todayNutrition, setTodayNutrition] = useState({
+  const kcalPerStep = 0.045;
+  
+  // Use data from hook with defaults
+  const userName = data?.userName || "Usuario";
+  const todayWeight = data?.todayWeight ?? null;
+  const todaySteps = data?.todaySteps || 0;
+  const todayWater = data?.todayWater || 0;
+  const todayNutrition = data?.todayNutrition || {
     kcalConsumed: 0,
     kcalTarget: 2000,
     macrosG: { protein: 0, fat: 0, carbs: 0 }
-  });
+  };
 
   // Calculate exercise calories
   const exerciseKcal = Math.round(todaySteps * kcalPerStep);
-
-  useEffect(() => {
-    const loadDisplayName = async () => {
-      if (!user?.id) return;
-
-      // Load profile from Supabase
-      const { data } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      if (data?.name) {
-        setUserName(data.name);
-      }
-    };
-
-    loadDisplayName();
-  }, [user?.id]);
-
-  useEffect(() => {
-    // Load today's weight and steps from Supabase
-    const loadData = async () => {
-      if (!user) return;
-
-      // Load weight
-      const { data: weightData } = await supabase
-        .from('daily_weight')
-        .select('weight')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .maybeSingle();
-      
-      if (weightData) {
-        setTodayWeight(Number(weightData.weight));
-      }
-
-      // Load steps
-      const { data: stepsData } = await supabase
-        .from('daily_steps')
-        .select('steps')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .maybeSingle();
-      
-      if (stepsData) {
-        setTodaySteps(stepsData.steps);
-      }
-
-      // Load nutrition data
-      const nutrition = await getTotals(today);
-      setTodayNutrition(nutrition);
-
-      // Load water intake
-      const { data: waterData } = await supabase
-        .from('daily_water_intake')
-        .select('ml_consumed')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .maybeSingle();
-      
-      if (waterData) {
-        setTodayWater(waterData.ml_consumed);
-      }
-    };
-
-    loadData();
-  }, [today, user]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -114,8 +43,17 @@ const Index = () => {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Hola, {userName}</h1>
-            <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello!</p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-9 w-48 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold text-foreground">Hola, {userName}</h1>
+                <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello!</p>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 hover:bg-card rounded-full transition-colors">
@@ -132,54 +70,82 @@ const Index = () => {
 
         {/* Main Calories Card */}
         <StatsCard className="relative overflow-hidden">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex-1">
-              <CircularProgress value={todayNutrition.kcalConsumed} max={todayNutrition.kcalTarget} />
+          {isLoading ? (
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex-1">
+                <Skeleton className="w-[140px] h-[140px] rounded-full" />
+              </div>
+              <div className="flex-1 p-2 -mr-2">
+                <Skeleton className="h-6 w-20 mb-2" />
+                <Skeleton className="h-9 w-32 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </div>
             </div>
-            <div 
-              className="flex-1 cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-2 -mr-2"
-              onClick={() => navigate('/comidas')}
-            >
-              <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
-              <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget.toLocaleString('es-ES')} Kcal</p>
-              <p className="text-sm font-normal text-muted-foreground mt-1">
-                {Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed).toLocaleString('es-ES')} kcal restantes
-              </p>
+          ) : (
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex-1">
+                <CircularProgress value={todayNutrition.kcalConsumed} max={todayNutrition.kcalTarget} />
+              </div>
+              <div 
+                className="flex-1 cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-2 -mr-2"
+                onClick={() => navigate('/comidas')}
+              >
+                <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
+                <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget.toLocaleString('es-ES')} Kcal</p>
+                <p className="text-sm font-normal text-muted-foreground mt-1">
+                  {Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed).toLocaleString('es-ES')} kcal restantes
+                </p>
+              </div>
             </div>
-          </div>
+          )}
           
-          <div className="grid grid-cols-2 gap-2">
-            <div 
-              className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
-              onClick={() => navigate('/analytics?focus=water')}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Droplet 
-                  className="w-4 h-4" 
-                  style={{ color: '#60a5fa' }}
-                />
-                <p className="text-sm text-muted-foreground">Agua Consumida</p>
+          {isLoading ? (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-2xl p-4">
+                <Skeleton className="h-4 w-32 mb-2" />
+                <Skeleton className="h-8 w-20 mb-1" />
+                <Skeleton className="h-3 w-8" />
               </div>
-              <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
-                {todayWater.toLocaleString('es-ES')}
-              </p>
-              <p className="text-xs text-muted-foreground">ml</p>
-            </div>
-            
-            <div 
-              className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
-              onClick={() => navigate('/analytics?focus=steps')}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
-                <p className="text-sm text-muted-foreground">Quemadas</p>
+              <div className="rounded-2xl p-4">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-16 mb-1" />
+                <Skeleton className="h-3 w-12" />
               </div>
-              <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
-                {exerciseKcal.toLocaleString('es-ES')}
-              </p>
-              <p className="text-xs text-muted-foreground">kcal</p>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <div 
+                className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
+                onClick={() => navigate('/analytics?focus=water')}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Droplet 
+                    className="w-4 h-4" 
+                    style={{ color: '#60a5fa' }}
+                  />
+                  <p className="text-sm text-muted-foreground">Agua Consumida</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
+                  {todayWater.toLocaleString('es-ES')}
+                </p>
+                <p className="text-xs text-muted-foreground">ml</p>
+              </div>
+              
+              <div 
+                className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
+                onClick={() => navigate('/analytics?focus=steps')}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
+                  <p className="text-sm text-muted-foreground">Quemadas</p>
+                </div>
+                <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
+                  {exerciseKcal.toLocaleString('es-ES')}
+                </p>
+                <p className="text-xs text-muted-foreground">kcal</p>
+              </div>
+            </div>
+          )}
         </StatsCard>
 
         {/* Grid of Stats Cards */}
@@ -189,21 +155,34 @@ const Index = () => {
             className="cursor-pointer hover:bg-secondary/50 transition-colors"
             onClick={() => navigate('/comidas')}
           >
-            <h3 className="text-lg font-semibold text-foreground mb-4">Macros</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground text-sm">Proteínas (P)</span>
-                <span className="text-foreground font-semibold">{todayNutrition.macrosG.protein} g</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground text-sm">Grasas (F)</span>
-                <span className="text-foreground font-semibold">{todayNutrition.macrosG.fat} g</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground text-sm">Carbs (C)</span>
-                <span className="text-foreground font-semibold">{todayNutrition.macrosG.carbs} g</span>
-              </div>
-            </div>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-6 w-16 mb-4" />
+                <div className="space-y-3">
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-full" />
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Macros</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-sm">Proteínas (P)</span>
+                    <span className="text-foreground font-semibold">{todayNutrition.macrosG.protein} g</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-sm">Grasas (F)</span>
+                    <span className="text-foreground font-semibold">{todayNutrition.macrosG.fat} g</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-sm">Carbs (C)</span>
+                    <span className="text-foreground font-semibold">{todayNutrition.macrosG.carbs} g</span>
+                  </div>
+                </div>
+              </>
+            )}
           </StatsCard>
 
           {/* Steps Card */}
@@ -211,12 +190,22 @@ const Index = () => {
             className="cursor-pointer hover:bg-secondary/50 transition-colors"
             onClick={() => navigate('/analytics?focus=steps')}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Footprints className="w-5 h-5 text-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">Pasos</h3>
-            </div>
-            <p className="text-4xl font-bold text-foreground mb-2">{todaySteps.toLocaleString('es-ES')}</p>
-            <p className="text-sm text-muted-foreground">Objetivo: 20000</p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-6 w-20 mb-4" />
+                <Skeleton className="h-10 w-32 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <Footprints className="w-5 h-5 text-foreground" />
+                  <h3 className="text-lg font-semibold text-foreground">Pasos</h3>
+                </div>
+                <p className="text-4xl font-bold text-foreground mb-2">{todaySteps.toLocaleString('es-ES')}</p>
+                <p className="text-sm text-muted-foreground">Objetivo: 20000</p>
+              </>
+            )}
           </StatsCard>
 
           {/* Weight Card */}
@@ -224,27 +213,37 @@ const Index = () => {
             className="py-4 cursor-pointer hover:bg-secondary/50 transition-colors"
             onClick={() => navigate('/analytics?focus=weight')}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <Scale className="w-4 h-4 text-foreground" />
-              <h3 className="text-base font-semibold text-foreground">Peso</h3>
-            </div>
-            {todayWeight !== null ? (
+            {isLoading ? (
               <>
-                <p className="text-3xl font-bold text-foreground mb-1.5">{todayWeight.toFixed(1)} Kg</p>
-                <p className="text-xs text-muted-foreground">Hoy</p>
+                <Skeleton className="h-5 w-16 mb-3" />
+                <Skeleton className="h-9 w-24 mb-2" />
+                <Skeleton className="h-3 w-12" />
               </>
             ) : (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/analytics?focus=weight&add=true');
-                }}
-                className="mt-2"
-              >
-                Añadir peso
-              </Button>
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <Scale className="w-4 h-4 text-foreground" />
+                  <h3 className="text-base font-semibold text-foreground">Peso</h3>
+                </div>
+                {todayWeight !== null ? (
+                  <>
+                    <p className="text-3xl font-bold text-foreground mb-1.5">{todayWeight.toFixed(1)} Kg</p>
+                    <p className="text-xs text-muted-foreground">Hoy</p>
+                  </>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/analytics?focus=weight&add=true');
+                    }}
+                    className="mt-2"
+                  >
+                    Añadir peso
+                  </Button>
+                )}
+              </>
             )}
           </StatsCard>
 
