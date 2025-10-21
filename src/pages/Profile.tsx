@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { useTheme } from "next-themes";
+import { useProfile } from "@/hooks/useProfile";
 
 interface ProfileData {
   name: string;
@@ -29,14 +30,6 @@ const Profile = () => {
   const state = getState();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData>({
-    name: "Usuario",
-    height: null,
-    current_weight: null,
-    target_weight: null,
-    avatar_icon: 'apple',
-    avatar_color: '#10B981'
-  });
   const [editData, setEditData] = useState<ProfileData>({
     name: "Usuario",
     height: null,
@@ -52,79 +45,42 @@ const Profile = () => {
   const [autoBackup, setAutoBackup] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { profile, updateProfile, isUpdating } = useProfile();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      // 1) Read name from session metadata first
-      const { data: authData } = await supabase.auth.getUser();
-      const metaName = authData.user?.user_metadata?.name as string | undefined;
-      if (metaName && metaName.trim().length > 0) {
-        setProfileData((p) => ({ ...p, name: metaName }));
-        setEditData((p) => ({ ...p, name: metaName }));
-      }
-
-      // 2) Try profiles table for persisted fields (and name override if present)
-      const uid = authData.user?.id || user?.id;
-      if (uid) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color')
-          .eq('id', uid)
-          .maybeSingle();
-
-        if (data) {
-          const profile = {
-            name: data.name || metaName || 'Usuario',
-            height: data.height ?? null,
-            current_weight: data.current_weight ?? null,
-            target_weight: data.target_weight ?? null,
-            avatar_icon: data.avatar_icon || 'apple',
-            avatar_color: data.avatar_color || '#10B981',
-          };
-          setProfileData(profile);
-          setEditData(profile);
-        }
-      }
-    };
-
-    loadProfile();
-  }, [user?.id]);
+    if (profile) {
+      setEditData(profile);
+    }
+  }, [profile]);
 
   const handleEditProfile = () => {
     setIsEditing(true);
-    setEditData(profileData);
+    if (profile) {
+      setEditData(profile);
+    }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditData(profileData);
+    if (profile) {
+      setEditData(profile);
+    }
   };
 
   const handleSaveProfile = async () => {
     if (!user?.id) return;
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        height: editData.height,
-        current_weight: editData.current_weight,
-        target_weight: editData.target_weight,
-        avatar_icon: editData.avatar_icon,
-        avatar_color: editData.avatar_color
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      toast.error('Error al guardar los cambios');
-      console.error(error);
-    } else {
-      setProfileData(editData);
+    try {
+      await updateProfile(editData);
       setIsEditing(false);
       toast.success('Perfil actualizado correctamente');
+    } catch (error) {
+      toast.error('Error al guardar los cambios');
+      console.error(error);
     }
   };
 
@@ -195,8 +151,8 @@ const Profile = () => {
         <div className="flex flex-col items-center mb-6">
           <div className="relative mb-4">
             <ProfileAvatar 
-              icon={isEditing ? editData.avatar_icon : profileData.avatar_icon}
-              color={isEditing ? editData.avatar_color : profileData.avatar_color}
+              icon={isEditing ? editData.avatar_icon : (profile?.avatar_icon || 'apple')}
+              color={isEditing ? editData.avatar_color : (profile?.avatar_color || '#10B981')}
               size="lg"
             />
             {isEditing && (
@@ -209,7 +165,7 @@ const Profile = () => {
             )}
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-1">
-            {profileData.name}
+            {profile?.name || 'Usuario'}
           </h2>
           <p className="text-muted-foreground mb-4">Vamos a por ello</p>
           {!isEditing ? (
@@ -221,8 +177,8 @@ const Profile = () => {
               <Button variant="secondary" className="w-24" onClick={handleCancelEdit}>
                 Cancelar
               </Button>
-              <Button variant="default" className="w-24" onClick={handleSaveProfile}>
-                Guardar
+              <Button variant="default" className="w-24" onClick={handleSaveProfile} disabled={isUpdating}>
+                {isUpdating ? 'Guardando...' : 'Guardar'}
               </Button>
             </div>
           )}
@@ -245,8 +201,8 @@ const Profile = () => {
                   />
                   <span className="text-muted-foreground">cm</span>
                 </div>
-              ) : (
-                <span className="text-muted-foreground">{profileData.height || 0} cm</span>
+               ) : (
+                <span className="text-muted-foreground">{profile?.height || 0} cm</span>
               )}
             </div>
             <div className="flex justify-between items-center">
@@ -264,7 +220,7 @@ const Profile = () => {
                   <span className="text-muted-foreground">kg</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">{profileData.current_weight || 0} kg</span>
+                <span className="text-muted-foreground">{profile?.current_weight || 0} kg</span>
               )}
             </div>
             <div className="flex justify-between items-center">
@@ -282,7 +238,7 @@ const Profile = () => {
                   <span className="text-muted-foreground">kg</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">{profileData.target_weight || 0} kg</span>
+                <span className="text-muted-foreground">{profile?.target_weight || 0} kg</span>
               )}
             </div>
           </div>

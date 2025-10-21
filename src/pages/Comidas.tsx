@@ -14,11 +14,15 @@ import { useNutrition } from "@/contexts/NutritionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useNutritionGoals } from "@/hooks/useNutritionGoals";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Comidas = () => {
   const navigate = useNavigate();
   const { getTotals, refreshTotals } = useNutrition();
   const { user } = useAuth();
+  const { goals: nutritionGoals, updateGoals } = useNutritionGoals();
+  const queryClient = useQueryClient();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
@@ -31,12 +35,6 @@ const Comidas = () => {
     breakfast: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
     lunch: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
     dinner: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } }
-  });
-  const [goals, setGoals] = useState({
-    dailyCalories: 2000,
-    protein: 150,
-    fat: 65,
-    carbs: 250,
   });
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
@@ -59,26 +57,10 @@ const Comidas = () => {
       // Load nutrition totals
       const totals = await getTotals(dateISO);
       setDayTotals(totals);
-
-      // Load goals
-      const { data: goalsData } = await supabase
-        .from('nutrition_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (goalsData) {
-        setGoals({
-          dailyCalories: goalsData.calories_goal,
-          protein: goalsData.protein_goal,
-          fat: goalsData.fat_goal,
-          carbs: goalsData.carbs_goal,
-        });
-      }
     };
 
     loadData();
-  }, [dateISO, user]);
+  }, [dateISO, user, getTotals]);
   
   // Listen to meals updates to refresh in real-time
   useEffect(() => {
@@ -127,29 +109,17 @@ const Comidas = () => {
   };
 
   const handleSaveGoals = async (newGoals: any) => {
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('nutrition_goals')
-      .upsert({
-        user_id: user.id,
+    try {
+      await updateGoals({
         calories_goal: newGoals.calories,
         protein_goal: newGoals.protein,
         fat_goal: newGoals.fat,
         carbs_goal: newGoals.carbs,
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (!error) {
-      setGoals({
-        dailyCalories: newGoals.calories,
-        protein: newGoals.protein,
-        fat: newGoals.fat,
-        carbs: newGoals.carbs,
       });
       const totals = await getTotals(dateISO);
       setDayTotals(totals);
+    } catch (error) {
+      console.error('Error updating goals:', error);
     }
   };
 
@@ -307,7 +277,7 @@ const Comidas = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">Objetivo: {dayTotals.kcalTarget} Kcal</p>
-                  <CircularProgress 
+                   <CircularProgress 
                     value={dayTotals.kcalConsumed} 
                     max={dayTotals.kcalTarget} 
                     size={110} 
@@ -315,9 +285,9 @@ const Comidas = () => {
                   protein={dayTotals.macrosG.protein}
                     fat={dayTotals.macrosG.fat}
                     carbs={dayTotals.macrosG.carbs}
-                    proteinGoal={goals.protein}
-                    fatGoal={goals.fat}
-                    carbsGoal={goals.carbs}
+                    proteinGoal={nutritionGoals?.protein_goal || 150}
+                    fatGoal={nutritionGoals?.fat_goal || 65}
+                    carbsGoal={nutritionGoals?.carbs_goal || 250}
                     showMacroColors={true}
                   />
                 </div>
@@ -339,10 +309,10 @@ const Comidas = () => {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--protein))' }}></span>
                         Proteínas
                       </span>
-                      <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {goals.protein}g</span>
+                       <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {nutritionGoals?.protein_goal || 150}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / goals.protein) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / (nutritionGoals?.protein_goal || 150)) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
@@ -350,10 +320,10 @@ const Comidas = () => {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--fat))' }}></span>
                         Grasas
                       </span>
-                      <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {goals.fat}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {nutritionGoals?.fat_goal || 65}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / goals.fat) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / (nutritionGoals?.fat_goal || 65)) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
                     </div>
                     
                     <div className="flex justify-between items-center">
@@ -361,10 +331,10 @@ const Comidas = () => {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--carbs))' }}></span>
                         Carbohidratos
                       </span>
-                      <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {goals.carbs}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {nutritionGoals?.carbs_goal || 250}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / goals.carbs) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / (nutritionGoals?.carbs_goal || 250)) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
                     </div>
                   </div>
                 </div>
@@ -461,10 +431,10 @@ const Comidas = () => {
         open={showEditModal}
         onOpenChange={setShowEditModal}
         currentGoals={{
-          calories: goals.dailyCalories,
-          protein: goals.protein,
-          fat: goals.fat,
-          carbs: goals.carbs,
+          calories: nutritionGoals?.calories_goal || 2000,
+          protein: nutritionGoals?.protein_goal || 150,
+          fat: nutritionGoals?.fat_goal || 65,
+          carbs: nutritionGoals?.carbs_goal || 250,
           useGrams: false,
         }}
         onSave={handleSaveGoals}
