@@ -119,9 +119,6 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 hover:bg-card rounded-full transition-colors">
-              <MessageCircle className="w-6 h-6 text-foreground" />
-            </button>
-            <button className="p-2 hover:bg-card rounded-full transition-colors">
               <Bell className="w-6 h-6 text-foreground" />
             </button>
             <button 
