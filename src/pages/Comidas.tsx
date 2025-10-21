@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight, Trash2, CalendarIcon } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -8,9 +8,12 @@ import { MicronutrientsList } from "@/components/MicronutrientsList";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useNutrition } from "@/contexts/NutritionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const Comidas = () => {
   const navigate = useNavigate();
@@ -20,6 +23,7 @@ const Comidas = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
   const [dailyMeals, setDailyMeals] = useState<any[]>([]);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [dayTotals, setDayTotals] = useState({
     kcalTarget: 2000,
     kcalConsumed: 0,
@@ -171,6 +175,25 @@ const Comidas = () => {
     return days;
   };
 
+  const goToPreviousWeek = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 7);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextWeek = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 7);
+    setSelectedDate(newDate);
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setCalendarOpen(false);
+    }
+  };
+
   const weekDays = getWeekDays();
 
   const meals = [
@@ -202,13 +225,27 @@ const Comidas = () => {
         {/* Mini Calendar */}
         <StatsCard className="mb-4">
           <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={goToPreviousWeek}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h2 className="text-lg font-semibold text-foreground">
-              {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-            </h2>
-            <Button variant="ghost" size="icon">
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="font-semibold text-lg">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="icon" onClick={goToNextWeek}>
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>

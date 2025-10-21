@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, Search, Copy, Trash2, Play, Save, FileText } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Search, Copy, Trash2, Play, Save, FileText, CalendarIcon } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface Set {
   id: string;
@@ -55,6 +58,7 @@ const Gimnasio = () => {
   const [showExerciseSearch, setShowExerciseSearch] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Load routines from Supabase
   useEffect(() => {
@@ -110,6 +114,25 @@ const Gimnasio = () => {
       days.push(day);
     }
     return days;
+  };
+
+  const goToPreviousWeek = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 7);
+    setSelectedDate(newDate);
+  };
+
+  const goToNextWeek = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 7);
+    setSelectedDate(newDate);
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setCalendarOpen(false);
+    }
   };
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
@@ -509,13 +532,27 @@ const Gimnasio = () => {
         {/* Mini Calendar */}
         <StatsCard className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={goToPreviousWeek}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <h2 className="text-lg font-semibold text-foreground">
-              {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-            </h2>
-            <Button variant="ghost" size="icon">
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" className="font-semibold text-lg">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="icon" onClick={goToNextWeek}>
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
