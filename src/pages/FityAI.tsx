@@ -18,7 +18,7 @@ const FityAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -28,12 +28,6 @@ const FityAI = () => {
     if (savedMessages) {
       const parsed = JSON.parse(savedMessages);
       setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      // Scroll to bottom after loading messages
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 100);
     }
   }, []);
 
@@ -46,9 +40,7 @@ const FityAI = () => {
 
   useEffect(() => {
     // Auto-scroll to bottom
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   const sendMessage = async () => {
@@ -126,7 +118,7 @@ const FityAI = () => {
 
       {/* Messages */}
       <ScrollArea className="h-[calc(100vh-180px)]">
-        <div ref={scrollRef} className="max-w-md mx-auto px-4 py-4 space-y-4">
+        <div className="max-w-md mx-auto px-4 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
               <Bot className="w-16 h-16 text-primary mb-4 opacity-50" />
@@ -184,6 +176,7 @@ const FityAI = () => {
               )}
             </>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
