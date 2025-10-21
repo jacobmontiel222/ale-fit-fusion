@@ -98,7 +98,7 @@ const AddFood = () => {
         setScannerOpen(false);
         
         try {
-          const url = import.meta.env.VITE_N8N_BARCODE_URL ?? "https://jacobfityourself.app.n8n.cloud/webhook-test/barcode";
+          const url = import.meta.env.VITE_N8N_BARCODE_URL ?? "https://jacobfityourself.app.n8n.cloud/webhook/barcode";
           const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
