@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import { useAuth } from "@/contexts/AuthContext";
+import splashLogo from "@/assets/fy-logo.png";
 
 const AnimatedSplash = () => {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
   const [animationComplete, setAnimationComplete] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const navDelayRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     // Fallback timeout to ensure navigation happens even if animation fails
@@ -16,15 +18,16 @@ const AnimatedSplash = () => {
     }, 3000);
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (navDelayRef.current) clearTimeout(navDelayRef.current);
     };
   }, []);
 
   useEffect(() => {
     if (animationComplete && !loading) {
-      handleNavigation();
+      navDelayRef.current = setTimeout(() => {
+        handleNavigation();
+      }, 650);
     }
   }, [animationComplete, loading, session]);
 
@@ -203,7 +206,7 @@ const AnimatedSplash = () => {
         />
         {/* FY logo positioned absolutely to sync with Lottie animation */}
         <img
-          src="/fy-logo.png"
+          src={splashLogo}
           alt="FY"
           className="absolute transition-all duration-700"
           style={{
