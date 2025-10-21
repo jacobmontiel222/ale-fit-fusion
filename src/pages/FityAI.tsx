@@ -82,7 +82,7 @@ const FityAI = () => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.response || data.message || "Lo siento, no pude procesar tu solicitud.",
+        content: data.reply || "Lo siento, no pude procesar tu solicitud.",
         timestamp: new Date(),
       };
 
