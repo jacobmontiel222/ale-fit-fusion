@@ -6,8 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NutritionProvider } from "@/contexts/NutritionContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
-import SplashScreenHandler from "@/components/SplashScreenHandler";
-import AnimatedSplash from "./pages/AnimatedSplash";
 import Index from "./pages/Index";
 import Comidas from "./pages/Comidas";
 import AddFood from "./pages/AddFood";
@@ -71,14 +69,10 @@ const App = () => {
         <BrowserRouter>
           <AuthProvider>
             <NutritionProvider>
-              <SplashScreenHandler>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <Routes>
-                  {/* Splash Screen */}
-                  <Route path="/splash" element={<AnimatedSplash />} />
-                  
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
                   {/* Protected Routes */}
                   <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                   <Route path="/comidas" element={<ProtectedRoute><Comidas /></ProtectedRoute>} />
@@ -100,7 +94,6 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </TooltipProvider>
-            </SplashScreenHandler>
           </NutritionProvider>
         </AuthProvider>
       </BrowserRouter>
