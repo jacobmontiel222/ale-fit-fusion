@@ -60,7 +60,7 @@ const FityAI = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://jacobfityourself.app.n8n.cloud/webhook-test/fity-chatbot", {
+      const response = await fetch("https://jacobfityourself.app.n8n.cloud/webhook/fity-chatbot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
