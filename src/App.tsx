@@ -14,7 +14,7 @@ import AddFood from "./pages/AddFood";
 import CreateRecipe from "./pages/CreateRecipe";
 import Recipes from "./pages/Recipes";
 import Gimnasio from "./pages/Gimnasio";
-import Comunidad from "./pages/Comunidad";
+import FityAI from "./pages/FityAI";
 import Analytics from "./pages/Analytics";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
@@ -86,7 +86,7 @@ const App = () => {
                   <Route path="/recipes" element={<ProtectedRoute><Recipes /></ProtectedRoute>} />
                   <Route path="/create-recipe" element={<ProtectedRoute><CreateRecipe /></ProtectedRoute>} />
                   <Route path="/gimnasio" element={<ProtectedRoute><Gimnasio /></ProtectedRoute>} />
-                  <Route path="/comunidad" element={<ProtectedRoute><Comunidad /></ProtectedRoute>} />
+                  <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   

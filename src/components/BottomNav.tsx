@@ -1,4 +1,4 @@
-import { Home, BarChart3, Utensils, Dumbbell, Users } from "lucide-react";
+import { Home, BarChart3, Utensils, Dumbbell, MessageSquare } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export const BottomNav = () => {
@@ -10,7 +10,7 @@ export const BottomNav = () => {
     { icon: BarChart3, label: "Analytics", path: "/analytics" },
     { icon: Utensils, label: "Comidas", path: "/comidas" },
     { icon: Dumbbell, label: "Gimnasio", path: "/gimnasio" },
-    { icon: Users, label: "Comunidad", path: "/comunidad" },
+    { icon: MessageSquare, label: "FityAI", path: "/fityai" },
   ];
 
   return (
