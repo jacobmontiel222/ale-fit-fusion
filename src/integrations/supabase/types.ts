@@ -104,6 +104,69 @@ export type Database = {
         }
         Relationships: []
       }
+      foods: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          calories: number
+          carbs: number
+          category: string
+          created_at: string | null
+          fat: number
+          fiber: number | null
+          id: string
+          last_updated: string | null
+          micronutrients: Json | null
+          name: string
+          protein: number
+          search_terms: string[] | null
+          serving_size: number
+          serving_unit: string
+          sugar: number | null
+          tags: Json | null
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          calories: number
+          carbs: number
+          category: string
+          created_at?: string | null
+          fat: number
+          fiber?: number | null
+          id: string
+          last_updated?: string | null
+          micronutrients?: Json | null
+          name: string
+          protein: number
+          search_terms?: string[] | null
+          serving_size?: number
+          serving_unit?: string
+          sugar?: number | null
+          tags?: Json | null
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          calories?: number
+          carbs?: number
+          category?: string
+          created_at?: string | null
+          fat?: number
+          fiber?: number | null
+          id?: string
+          last_updated?: string | null
+          micronutrients?: Json | null
+          name?: string
+          protein?: number
+          search_terms?: string[] | null
+          serving_size?: number
+          serving_unit?: string
+          sugar?: number | null
+          tags?: Json | null
+        }
+        Relationships: []
+      }
       gym_routines: {
         Row: {
           created_at: string
