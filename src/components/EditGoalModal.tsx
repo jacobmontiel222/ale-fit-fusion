@@ -155,11 +155,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <Input
               id="calories"
               type="number"
-              inputMode="none"
               value={caloriesInput}
               onChange={(e) => setCaloriesInput(e.target.value)}
-              onFocus={(e) => e.target.blur()}
-              onClick={(e) => (e.target as HTMLInputElement).focus()}
               min={100}
               max={10000}
               step={50}
@@ -198,11 +195,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="protein"
                     type="number"
-                    inputMode="none"
                     value={proteinPctInput}
                     onChange={(e) => handleProteinChange(e.target.value)}
-                    onFocus={(e) => e.target.blur()}
-                    onClick={(e) => (e.target as HTMLInputElement).focus()}
                     min={0}
                     max={100}
                     step={1}
@@ -228,11 +222,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="fat"
                     type="number"
-                    inputMode="none"
                     value={fatPctInput}
                     onChange={(e) => handleFatChange(e.target.value)}
-                    onFocus={(e) => e.target.blur()}
-                    onClick={(e) => (e.target as HTMLInputElement).focus()}
                     min={0}
                     max={100}
                     step={1}
@@ -258,11 +249,8 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="carbs"
                     type="number"
-                    inputMode="none"
                     value={carbsPctInput}
                     onChange={(e) => handleCarbsChange(e.target.value)}
-                    onFocus={(e) => e.target.blur()}
-                    onClick={(e) => (e.target as HTMLInputElement).focus()}
                     min={0}
                     max={100}
                     step={1}
