@@ -10,7 +10,7 @@ import { BrowserMultiFormatReader } from "@zxing/browser";
 import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { FoodSearchModal } from "@/components/FoodSearchModal";
+// import { FoodSearchModal } from "@/components/FoodSearchModal";
 import { FoodDetailsModal } from "@/components/FoodDetailsModal";
 import { FoodItem as FoodItemType } from "@/types/food";
 import { foodDatabase } from "@/lib/foodDatabase";
@@ -64,8 +64,6 @@ const AddFood = () => {
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<any>(null);
   
-  // Nuevos estados para el sistema de búsqueda avanzada
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedDatabaseFood, setSelectedDatabaseFood] = useState<FoodItemType | null>(null);
   const [databaseFoods, setDatabaseFoods] = useState<FoodItemType[]>([]);
@@ -396,9 +394,6 @@ const AddFood = () => {
           <Button onClick={startScanner} size="icon" title="Escanear código de barras">
             <Barcode className="w-4 h-4" />
           </Button>
-          <Button onClick={() => setShowSearchModal(true)} variant="outline" size="icon" title="Búsqueda avanzada">
-            <Search className="w-4 h-4" />
-          </Button>
         </div>
 
         {/* Selected or Manual Food */}
@@ -639,12 +634,6 @@ const AddFood = () => {
         </div>
       )}
       
-      {/* Modales de búsqueda avanzada */}
-      <FoodSearchModal
-        open={showSearchModal}
-        onOpenChange={setShowSearchModal}
-        onSelectFood={handleSelectFromDatabase}
-      />
       
       <FoodDetailsModal
         food={selectedDatabaseFood}
