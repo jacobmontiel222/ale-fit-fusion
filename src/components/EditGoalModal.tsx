@@ -138,7 +138,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar objetivo de macros</DialogTitle>
           <DialogDescription>
