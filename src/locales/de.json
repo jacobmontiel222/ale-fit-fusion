@@ -45,35 +45,28 @@
     "editMacros": "Makros bearbeiten"
   },
   "addFood": {
-    "title": "Hinzufügen zu {{meal}}",
+    "title": "Zu {{meal}} hinzufügen",
     "searchPlaceholder": "Lebensmittel suchen...",
     "scanBarcode": "Barcode scannen",
     "productName": "Produktname",
     "brand": "Marke",
     "amount": "Menge",
     "unit": "Einheit",
-    "addButton": "Zu {{meal}} hinzufügen",
+    "calories": "Kalorien (kcal)",
+    "protein": "Protein (g)",
+    "fat": "Fett (g)",
+    "carbs": "Kohlenhydrate (g)",
+    "addTo": "Zu {{meal}} hinzufügen",
     "manualEntry": "Manuelle Eingabe",
-    "quickAdd": "Schnell hinzufügen",
-    "recentFoods": "Kürzliche Lebensmittel",
-    "searchResults": "Suchergebnisse",
-    "noResults": "Keine Ergebnisse gefunden",
-    "calories": "Kalorien",
-    "protein": "Protein",
-    "fat": "Fett",
-    "carbs": "Kohlenhydrate",
-    "errors": {
-      "loginRequired": "Sie müssen sich anmelden, um Mahlzeiten hinzuzufügen",
-      "invalidAmount": "Geben Sie eine gültige Menge größer als 0 ein",
-      "addError": "Fehler beim Hinzufügen des Lebensmittels",
-      "barcodeNotFound": "Keine Übereinstimmungen für diesen Code.",
-      "barcodeError": "Produktabfrage fehlgeschlagen.",
-      "cameraError": "Autorisieren Sie die Kamera oder verwenden Sie HTTPS."
-    },
-    "success": {
-      "foodAdded": "{{food}} zu {{meal}} hinzugefügt",
-      "barcodeDetected": "{{food}} erkannt"
-    }
+    "results": "Ergebnisse",
+    "noResults": "Keine Ergebnisse für \"{{query}}\"",
+    "tryOther": "Versuchen Sie andere Begriffe oder verwenden Sie den Scanner",
+    "recentHistory": "Verlauf",
+    "add": "Hinzufügen",
+    "scanBarcodeLabel": "Barcode scannen",
+    "close": "Schließen",
+    "pointToCode": "Auf den Code zeigen…",
+    "preparingCamera": "Kamera wird vorbereitet…"
   },
   "navigation": {
     "home": "Startseite",

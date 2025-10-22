@@ -10,12 +10,12 @@ import { BrowserMultiFormatReader } from "@zxing/browser";
 import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-// import { FoodSearchModal } from "@/components/FoodSearchModal";
 import { FoodDetailsModal } from "@/components/FoodDetailsModal";
 import { FoodItem as FoodItemType } from "@/types/food";
 import { foodDatabase } from "@/lib/foodDatabase";
 import { searchFoods } from "@/lib/foodSearch";
 import { useTranslation } from "react-i18next";
+import { initializeFoodDatabase } from "@/lib/initFoodDatabase";
 
 interface FoodItem {
   name: string;
@@ -42,7 +42,7 @@ const AddFood = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const meal = searchParams.get("meal") || t('meals.breakfast');
   const selectedDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
   
@@ -72,21 +72,37 @@ const AddFood = () => {
   const [databaseFoods, setDatabaseFoods] = useState<FoodItemType[]>([]);
   const [searchResults, setSearchResults] = useState<FoodItemType[]>([]);
   
+  // Helper para obtener el nombre del alimento en el idioma actual
+  const getFoodName = (food: FoodItemType): string => {
+    if (food.names) {
+      const langKey = i18n.language as keyof typeof food.names;
+      return food.names[langKey] || food.name;
+    }
+    return food.name;
+  };
+  
   useEffect(() => {
     setFoodHistory(getFoodHistory());
-    
-    // Cargar base de datos de alimentos
+  }, []);
+  
+  // Cargar base de datos de alimentos y recargar cuando cambie el idioma
+  useEffect(() => {
     const loadFoodDatabase = async () => {
       try {
+        // Limpiar y recargar con el idioma actual
+        await foodDatabase.clearAll();
+        await initializeFoodDatabase(i18n.language);
+        
         const foods = await foodDatabase.getAllFoods();
         setDatabaseFoods(foods);
+        console.log(`Loaded ${foods.length} foods in ${i18n.language}`);
       } catch (error) {
         console.error('Error cargando base de datos de alimentos:', error);
       }
     };
     
     loadFoodDatabase();
-  }, []);
+  }, [i18n.language]);
 
   // Buscar en la base de datos cuando cambia el query
   useEffect(() => {
@@ -434,7 +450,7 @@ const AddFood = () => {
           <StatsCard>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="foodName">Nombre del producto</Label>
+                <Label htmlFor="foodName">{t('addFood.productName')}</Label>
                 <Input
                   id="foodName"
                   value={selectedFood?.name || manualFood.name}
@@ -450,7 +466,7 @@ const AddFood = () => {
 
               {selectedFood && selectedFood.brand && (
                 <div>
-                  <Label htmlFor="brand">Marca</Label>
+                  <Label htmlFor="brand">{t('addFood.brand')}</Label>
                   <Input
                     id="brand"
                     value={selectedFood.brand}
@@ -461,7 +477,7 @@ const AddFood = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="amount">Cantidad</Label>
+                  <Label htmlFor="amount">{t('addFood.amount')}</Label>
                   <Input
                     id="amount"
                     type="text"
@@ -486,7 +502,7 @@ const AddFood = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="unit">Unidad</Label>
+                  <Label htmlFor="unit">{t('addFood.unit')}</Label>
                   <Input
                     id="unit"
                     value={selectedFood?.servingUnit || manualFood.servingUnit}
@@ -504,7 +520,7 @@ const AddFood = () => {
               {manualEntry && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Calorías (kcal)</Label>
+                    <Label>{t('addFood.calories')}</Label>
                     <Input
                       type="number"
                       value={manualFood.calories}
@@ -515,7 +531,7 @@ const AddFood = () => {
                     />
                   </div>
                   <div>
-                    <Label>Proteínas (g)</Label>
+                    <Label>{t('addFood.protein')}</Label>
                     <Input
                       type="number"
                       value={manualFood.protein}
@@ -526,7 +542,7 @@ const AddFood = () => {
                     />
                   </div>
                   <div>
-                    <Label>Grasas (g)</Label>
+                    <Label>{t('addFood.fat')}</Label>
                     <Input
                       type="number"
                       value={manualFood.fat}
@@ -537,7 +553,7 @@ const AddFood = () => {
                     />
                   </div>
                   <div>
-                    <Label>Carbohidratos (g)</Label>
+                    <Label>{t('addFood.carbs')}</Label>
                     <Input
                       type="number"
                       value={manualFood.carbs}
@@ -553,26 +569,26 @@ const AddFood = () => {
               {selectedFood && (
                 <div className="bg-muted/30 rounded-lg p-3 space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Calorías:</span>
+                    <span className="text-muted-foreground">{t('addFood.calories')}:</span>
                     <span className="font-semibold">{calculateAdjustedMacros(selectedFood, servingAmount).calories} kcal</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Proteínas:</span>
+                    <span className="text-muted-foreground">{t('addFood.protein')}:</span>
                     <span className="font-semibold">{calculateAdjustedMacros(selectedFood, servingAmount).protein} g</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Grasas:</span>
+                    <span className="text-muted-foreground">{t('addFood.fat')}:</span>
                     <span className="font-semibold">{calculateAdjustedMacros(selectedFood, servingAmount).fat} g</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Carbohidratos:</span>
+                    <span className="text-muted-foreground">{t('addFood.carbs')}:</span>
                     <span className="font-semibold">{calculateAdjustedMacros(selectedFood, servingAmount).carbs} g</span>
                   </div>
                 </div>
               )}
 
               <Button onClick={handleAddFood} className="w-full">
-                Añadir a {meal}
+                {t('addFood.addTo', { meal })}
               </Button>
             </div>
           </StatsCard>
@@ -585,7 +601,7 @@ const AddFood = () => {
             onClick={() => setManualEntry(true)}
             className="w-full"
           >
-            Entrada manual
+            {t('addFood.manualEntry')}
           </Button>
         )}
 
@@ -593,7 +609,7 @@ const AddFood = () => {
         {!selectedFood && !manualEntry && searchQuery && searchResults.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-muted-foreground">
-              Resultados ({searchResults.length})
+              {t('addFood.results')} ({searchResults.length})
             </h3>
             {searchResults.map((food) => (
               <StatsCard 
@@ -603,12 +619,12 @@ const AddFood = () => {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="font-semibold text-foreground">{food.name}</h4>
+                    <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
                     {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
                     <p className="text-sm text-muted-foreground mt-1">
                       {food.calories} kcal · P: {food.protein}g · G: {food.fat}g · C: {food.carbs}g
                     </p>
-                    <p className="text-xs text-muted-foreground">por {food.servingSize} {food.servingUnit}</p>
+                    <p className="text-xs text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
                   </div>
                 </div>
               </StatsCard>
@@ -618,8 +634,8 @@ const AddFood = () => {
 
         {!selectedFood && !manualEntry && searchQuery && searchResults.length === 0 && databaseFoods.length > 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <p>No se encontraron resultados para "{searchQuery}"</p>
-            <p className="text-sm mt-1">Intenta con otros términos o usa el escáner</p>
+            <p>{t('addFood.noResults', { query: searchQuery })}</p>
+            <p className="text-sm mt-1">{t('addFood.tryOther')}</p>
           </div>
         )}
         
@@ -628,7 +644,7 @@ const AddFood = () => {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <Clock className="w-4 h-4" />
-              <h3>Historial reciente</h3>
+              <h3>{t('addFood.recentHistory')}</h3>
             </div>
             {foodHistory.slice(0, 10).map((item) => (
               <StatsCard 
@@ -647,7 +663,7 @@ const AddFood = () => {
                       {item.servingSize} {item.servingUnit} · {item.meal}
                     </p>
                   </div>
-                  <Button size="sm" variant="ghost">Añadir</Button>
+                  <Button size="sm" variant="ghost">{t('addFood.add')}</Button>
                 </div>
               </StatsCard>
             ))}
@@ -659,7 +675,7 @@ const AddFood = () => {
       {scannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
           <div className="flex items-center justify-between p-4 text-white">
-            <span className="font-semibold">Escanea el código de barras</span>
+            <span className="font-semibold">{t('addFood.scanBarcodeLabel')}</span>
             <Button
               variant="secondary"
               onClick={() => {
@@ -667,14 +683,14 @@ const AddFood = () => {
                 setScannerOpen(false);
               }}
             >
-              Cerrar
+              {t('addFood.close')}
             </Button>
           </div>
           <div className="flex-1 flex items-center justify-center">
             <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
           </div>
           <div className="p-4 text-center text-white">
-            {scanning ? "Apunta al código…" : "Preparando cámara…"}
+            {scanning ? t('addFood.pointToCode') : t('addFood.preparingCamera')}
           </div>
         </div>
       )}
