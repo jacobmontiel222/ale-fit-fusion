@@ -1,4 +1,87 @@
 {
+  "common": {
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "search": "Suchen",
+    "loading": "Laden...",
+    "today": "Heute",
+    "goal": "Ziel",
+    "consumed": "Konsumiert",
+    "remaining": "Übrig"
+  },
+  "dashboard": {
+    "title": "Hallo, {name}",
+    "motto": "Los geht's!",
+    "goal": "Ziel",
+    "remaining": "übrig",
+    "waterConsumed": "Wasser konsumiert",
+    "burned": "Verbrannt",
+    "macros": "Makros",
+    "proteins": "Proteine (P)",
+    "fats": "Fette (F)",
+    "carbs": "Kohlenhydrate (K)",
+    "steps": "Schritte",
+    "stepsGoal": "Ziel: 20000",
+    "weight": "Gewicht",
+    "addWeight": "Gewicht hinzufügen",
+    "trainers": "Trainer",
+    "findTrainer": "Finde deinen idealen Trainer.",
+    "gymSession": "Gym-Session",
+    "trackWorkout": "Verfolge dein Training"
+  },
+  "meals": {
+    "title": "Mahlzeiten",
+    "breakfast": "Frühstück",
+    "lunch": "Mittagessen",
+    "dinner": "Abendessen",
+    "noFoodsAdded": "Keine Lebensmittel hinzugefügt",
+    "macrosTab": "Makros",
+    "micronutrientsTab": "Mikronährstoffe",
+    "recipes": "Rezepte",
+    "recipesDescription": "Erstelle und speichere deine eigenen Rezepte.",
+    "editMacros": "Makros bearbeiten"
+  },
+  "addFood": {
+    "title": "Hinzufügen zu {meal}",
+    "searchPlaceholder": "Lebensmittel suchen...",
+    "scanBarcode": "Barcode scannen",
+    "productName": "Produktname",
+    "brand": "Marke",
+    "amount": "Menge",
+    "unit": "Einheit",
+    "addButton": "Zu {meal} hinzufügen",
+    "manualEntry": "Manuelle Eingabe",
+    "quickAdd": "Schnell hinzufügen",
+    "recentFoods": "Kürzliche Lebensmittel",
+    "searchResults": "Suchergebnisse",
+    "noResults": "Keine Ergebnisse gefunden",
+    "calories": "Kalorien",
+    "protein": "Protein",
+    "fat": "Fett",
+    "carbs": "Kohlenhydrate",
+    "errors": {
+      "loginRequired": "Sie müssen sich anmelden, um Mahlzeiten hinzuzufügen",
+      "invalidAmount": "Geben Sie eine gültige Menge größer als 0 ein",
+      "addError": "Fehler beim Hinzufügen des Lebensmittels",
+      "barcodeNotFound": "Keine Übereinstimmungen für diesen Code.",
+      "barcodeError": "Produktabfrage fehlgeschlagen.",
+      "cameraError": "Autorisieren Sie die Kamera oder verwenden Sie HTTPS."
+    },
+    "success": {
+      "foodAdded": "{food} zu {meal} hinzugefügt",
+      "barcodeDetected": "{food} erkannt"
+    }
+  },
+  "navigation": {
+    "home": "Startseite",
+    "analytics": "Analytics",
+    "meals": "Mahlzeiten",
+    "gym": "Fitnessstudio",
+    "ai": "FityAI"
+  },
   "profile": {
     "title": "Profil",
     "editProfile": "Profil bearbeiten",

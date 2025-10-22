@@ -15,6 +15,7 @@ import { FoodDetailsModal } from "@/components/FoodDetailsModal";
 import { FoodItem as FoodItemType } from "@/types/food";
 import { foodDatabase } from "@/lib/foodDatabase";
 import { searchFoods } from "@/lib/foodSearch";
+import { useTranslation } from "react-i18next";
 
 interface FoodItem {
   name: string;
@@ -41,7 +42,8 @@ const AddFood = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const meal = searchParams.get("meal") || "Desayuno";
+  const { t } = useTranslation();
+  const meal = searchParams.get("meal") || t('meals.breakfast');
   const selectedDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -407,7 +409,7 @@ const AddFood = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold text-foreground">
-            Añadir a {meal}
+            {t('addFood.title', { meal })}
           </h1>
         </div>
 
@@ -416,13 +418,13 @@ const AddFood = () => {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar alimentos..."
+              placeholder={t('addFood.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
             />
           </div>
-          <Button onClick={startScanner} size="icon" title="Escanear código de barras">
+          <Button onClick={startScanner} size="icon" title={t('addFood.scanBarcode')}>
             <Barcode className="w-4 h-4" />
           </Button>
         </div>

@@ -1,4 +1,87 @@
 {
+  "common": {
+    "add": "Dodaj",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "search": "Szukaj",
+    "loading": "Ładowanie...",
+    "today": "Dzisiaj",
+    "goal": "Cel",
+    "consumed": "Spożyte",
+    "remaining": "Pozostałe"
+  },
+  "dashboard": {
+    "title": "Cześć, {name}",
+    "motto": "Do dzieła!",
+    "goal": "Cel",
+    "remaining": "pozostałe",
+    "waterConsumed": "Woda spożyta",
+    "burned": "Spalone",
+    "macros": "Makro",
+    "proteins": "Białka (B)",
+    "fats": "Tłuszcze (T)",
+    "carbs": "Węglowodany (W)",
+    "steps": "Kroki",
+    "stepsGoal": "Cel: 20000",
+    "weight": "Waga",
+    "addWeight": "Dodaj wagę",
+    "trainers": "Trenerzy",
+    "findTrainer": "Znajdź swojego idealnego trenera.",
+    "gymSession": "Sesja na siłowni",
+    "trackWorkout": "Śledź swój trening"
+  },
+  "meals": {
+    "title": "Posiłki",
+    "breakfast": "Śniadanie",
+    "lunch": "Obiad",
+    "dinner": "Kolacja",
+    "noFoodsAdded": "Nie dodano żadnych produktów",
+    "macrosTab": "Makro",
+    "micronutrientsTab": "Mikroskładniki",
+    "recipes": "Przepisy",
+    "recipesDescription": "Twórz i zapisuj swoje własne przepisy.",
+    "editMacros": "Edytuj makro"
+  },
+  "addFood": {
+    "title": "Dodaj do {meal}",
+    "searchPlaceholder": "Szukaj produktów...",
+    "scanBarcode": "Skanuj kod kreskowy",
+    "productName": "Nazwa produktu",
+    "brand": "Marka",
+    "amount": "Ilość",
+    "unit": "Jednostka",
+    "addButton": "Dodaj do {meal}",
+    "manualEntry": "Ręczne wprowadzenie",
+    "quickAdd": "Szybkie dodanie",
+    "recentFoods": "Ostatnie produkty",
+    "searchResults": "Wyniki wyszukiwania",
+    "noResults": "Nie znaleziono wyników",
+    "calories": "Kalorie",
+    "protein": "Białko",
+    "fat": "Tłuszcz",
+    "carbs": "Węglowodany",
+    "errors": {
+      "loginRequired": "Musisz się zalogować, aby dodawać posiłki",
+      "invalidAmount": "Wprowadź prawidłową ilość większą niż 0",
+      "addError": "Błąd podczas dodawania produktu",
+      "barcodeNotFound": "Brak wyników dla tego kodu.",
+      "barcodeError": "Nie udało się zapytać o produkt.",
+      "cameraError": "Zezwól na dostęp do kamery lub użyj HTTPS."
+    },
+    "success": {
+      "foodAdded": "{food} dodany do {meal}",
+      "barcodeDetected": "{food} wykryty"
+    }
+  },
+  "navigation": {
+    "home": "Strona główna",
+    "analytics": "Analytics",
+    "meals": "Posiłki",
+    "gym": "Siłownia",
+    "ai": "FityAI"
+  },
   "profile": {
     "title": "Profil",
     "editProfile": "Edytuj profil",

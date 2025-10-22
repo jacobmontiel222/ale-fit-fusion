@@ -1,4 +1,87 @@
 {
+  "common": {
+    "add": "Aggiungi",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "search": "Cerca",
+    "loading": "Caricamento...",
+    "today": "Oggi",
+    "goal": "Obiettivo",
+    "consumed": "Consumate",
+    "remaining": "Rimanenti"
+  },
+  "dashboard": {
+    "title": "Ciao, {name}",
+    "motto": "Andiamo!",
+    "goal": "Obiettivo",
+    "remaining": "rimanenti",
+    "waterConsumed": "Acqua consumata",
+    "burned": "Bruciate",
+    "macros": "Macro",
+    "proteins": "Proteine (P)",
+    "fats": "Grassi (G)",
+    "carbs": "Carboidrati (C)",
+    "steps": "Passi",
+    "stepsGoal": "Obiettivo: 20000",
+    "weight": "Peso",
+    "addWeight": "Aggiungi peso",
+    "trainers": "Allenatori",
+    "findTrainer": "Trova il tuo allenatore ideale.",
+    "gymSession": "Sessione Palestra",
+    "trackWorkout": "Monitora il tuo allenamento"
+  },
+  "meals": {
+    "title": "Pasti",
+    "breakfast": "Colazione",
+    "lunch": "Pranzo",
+    "dinner": "Cena",
+    "noFoodsAdded": "Nessun alimento aggiunto",
+    "macrosTab": "Macro",
+    "micronutrientsTab": "Micronutrienti",
+    "recipes": "Ricette",
+    "recipesDescription": "Crea e salva le tue ricette personalizzate.",
+    "editMacros": "Modifica macro"
+  },
+  "addFood": {
+    "title": "Aggiungi a {meal}",
+    "searchPlaceholder": "Cerca alimenti...",
+    "scanBarcode": "Scansiona codice a barre",
+    "productName": "Nome prodotto",
+    "brand": "Marca",
+    "amount": "Quantità",
+    "unit": "Unità",
+    "addButton": "Aggiungi a {meal}",
+    "manualEntry": "Inserimento manuale",
+    "quickAdd": "Aggiunta rapida",
+    "recentFoods": "Alimenti recenti",
+    "searchResults": "Risultati ricerca",
+    "noResults": "Nessun risultato trovato",
+    "calories": "Calorie",
+    "protein": "Proteine",
+    "fat": "Grassi",
+    "carbs": "Carboidrati",
+    "errors": {
+      "loginRequired": "Devi accedere per aggiungere pasti",
+      "invalidAmount": "Inserisci una quantità valida maggiore di 0",
+      "addError": "Errore nell'aggiunta dell'alimento",
+      "barcodeNotFound": "Nessuna corrispondenza per questo codice.",
+      "barcodeError": "Consultazione prodotto fallita.",
+      "cameraError": "Autorizza la fotocamera o usa HTTPS."
+    },
+    "success": {
+      "foodAdded": "{food} aggiunto a {meal}",
+      "barcodeDetected": "{food} rilevato"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "analytics": "Analytics",
+    "meals": "Pasti",
+    "gym": "Palestra",
+    "ai": "FityAI"
+  },
   "profile": {
     "title": "Profilo",
     "editProfile": "Modifica profilo",

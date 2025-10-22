@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useTranslation } from "react-i18next";
 
 interface WeightEntry {
   date: string;
@@ -20,6 +21,7 @@ interface StepsEntry {
 const Index = () => {
   const navigate = useNavigate();
   const { data, isLoading } = useDashboardData();
+  const { t } = useTranslation();
   
   const kcalPerStep = 0.045;
   
@@ -50,8 +52,8 @@ const Index = () => {
               </>
             ) : (
               <>
-                <h1 className="text-3xl font-bold text-foreground">Hola, {userName}</h1>
-                <p className="text-muted-foreground text-sm mt-1">¡Vamos a por ello!</p>
+                <h1 className="text-3xl font-bold text-foreground">{t('dashboard.title', { name: userName })}</h1>
+                <p className="text-muted-foreground text-sm mt-1">{t('dashboard.motto')}</p>
               </>
             )}
           </div>
@@ -90,10 +92,10 @@ const Index = () => {
                 className="flex-1 cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-2 -mr-2"
                 onClick={() => navigate('/comidas')}
               >
-                <h2 className="text-xl font-semibold text-foreground mb-2">Objetivo</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-2">{t('dashboard.goal')}</h2>
                 <p className="text-3xl font-bold text-foreground">{todayNutrition.kcalTarget.toLocaleString('es-ES')} Kcal</p>
                 <p className="text-sm font-normal text-muted-foreground mt-1">
-                  {Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed).toLocaleString('es-ES')} kcal restantes
+                  {Math.max(0, todayNutrition.kcalTarget - todayNutrition.kcalConsumed).toLocaleString('es-ES')} kcal {t('dashboard.remaining')}
                 </p>
               </div>
             </div>
@@ -123,7 +125,7 @@ const Index = () => {
                     className="w-4 h-4" 
                     style={{ color: '#60a5fa' }}
                   />
-                  <p className="text-sm text-muted-foreground">Agua Consumida</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.waterConsumed')}</p>
                 </div>
                 <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
                   {todayWater.toLocaleString('es-ES')}
@@ -137,7 +139,7 @@ const Index = () => {
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
-                  <p className="text-sm text-muted-foreground">Quemadas</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard.burned')}</p>
                 </div>
                 <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
                   {exerciseKcal.toLocaleString('es-ES')}
@@ -166,18 +168,18 @@ const Index = () => {
               </>
             ) : (
               <>
-                <h3 className="text-lg font-semibold text-foreground mb-4">Macros</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">{t('dashboard.macros')}</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Proteínas (P)</span>
+                    <span className="text-muted-foreground text-sm">{t('dashboard.proteins')}</span>
                     <span className="text-foreground font-semibold">{todayNutrition.macrosG.protein} g</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Grasas (F)</span>
+                    <span className="text-muted-foreground text-sm">{t('dashboard.fats')}</span>
                     <span className="text-foreground font-semibold">{todayNutrition.macrosG.fat} g</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">Carbs (C)</span>
+                    <span className="text-muted-foreground text-sm">{t('dashboard.carbs')}</span>
                     <span className="text-foreground font-semibold">{todayNutrition.macrosG.carbs} g</span>
                   </div>
                 </div>
@@ -200,10 +202,10 @@ const Index = () => {
               <>
                 <div className="flex items-center gap-2 mb-4">
                   <Footprints className="w-5 h-5 text-foreground" />
-                  <h3 className="text-lg font-semibold text-foreground">Pasos</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{t('dashboard.steps')}</h3>
                 </div>
                 <p className="text-4xl font-bold text-foreground mb-2">{todaySteps.toLocaleString('es-ES')}</p>
-                <p className="text-sm text-muted-foreground">Objetivo: 20000</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.stepsGoal')}</p>
               </>
             )}
           </StatsCard>
@@ -223,12 +225,12 @@ const Index = () => {
               <>
                 <div className="flex items-center gap-2 mb-3">
                   <Scale className="w-4 h-4 text-foreground" />
-                  <h3 className="text-base font-semibold text-foreground">Peso</h3>
+                  <h3 className="text-base font-semibold text-foreground">{t('dashboard.weight')}</h3>
                 </div>
                 {todayWeight !== null ? (
                   <>
                     <p className="text-3xl font-bold text-foreground mb-1.5">{todayWeight.toFixed(1)} Kg</p>
-                    <p className="text-xs text-muted-foreground">Hoy</p>
+                    <p className="text-xs text-muted-foreground">{t('common.today')}</p>
                   </>
                 ) : (
                   <Button 
@@ -240,7 +242,7 @@ const Index = () => {
                     }}
                     className="mt-2"
                   >
-                    Añadir peso
+                    {t('dashboard.addWeight')}
                   </Button>
                 )}
               </>
@@ -251,10 +253,10 @@ const Index = () => {
           <StatsCard>
             <div className="flex items-center gap-2 mb-3">
               <Dumbbell className="w-5 h-5 text-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">Entrenadores</h3>
+              <h3 className="text-lg font-semibold text-foreground">{t('dashboard.trainers')}</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Encuentra tu entrenador ideal.
+              {t('dashboard.findTrainer')}
             </p>
           </StatsCard>
         </div>
@@ -266,8 +268,8 @@ const Index = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl font-semibold text-foreground mb-1">Gym Session</h3>
-              <p className="text-sm text-muted-foreground">Trackea tu entrenamiento</p>
+              <h3 className="text-xl font-semibold text-foreground mb-1">{t('dashboard.gymSession')}</h3>
+              <p className="text-sm text-muted-foreground">{t('dashboard.trackWorkout')}</p>
             </div>
             <button className="w-12 h-12 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform">
               <ArrowRight className="w-6 h-6 text-primary-foreground" />

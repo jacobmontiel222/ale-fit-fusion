@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 const Comidas = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const Comidas = () => {
   const { user } = useAuth();
   const { goals: nutritionGoals, updateGoals } = useNutritionGoals();
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
@@ -168,17 +170,17 @@ const Comidas = () => {
 
   const meals = [
     { 
-      name: "Desayuno", 
+      name: t('meals.breakfast'), 
       calories: dayTotals.breakfast.calories,
       macros: dayTotals.breakfast.macros,
     },
     { 
-      name: "Comida", 
+      name: t('meals.lunch'), 
       calories: dayTotals.lunch.calories,
       macros: dayTotals.lunch.macros,
     },
     { 
-      name: "Cena", 
+      name: t('meals.dinner'), 
       calories: dayTotals.dinner.calories,
       macros: dayTotals.dinner.macros,
     },
@@ -189,7 +191,7 @@ const Comidas = () => {
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Comidas</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('meals.title')}</h1>
         </div>
 
         {/* Mini Calendar */}
@@ -202,7 +204,7 @@ const Comidas = () => {
               <PopoverTrigger asChild>
                 <Button variant="ghost" className="font-semibold text-lg">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                  {selectedDate.toLocaleDateString(i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language, { month: 'long', year: 'numeric' })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="center">
@@ -250,15 +252,15 @@ const Comidas = () => {
             {/* Header with Edit Button */}
             <div className="flex items-center justify-between mb-3 pr-1">
               <TabsList className="grid w-full grid-cols-2 flex-1">
-                <TabsTrigger value="macros" className="text-sm truncate">Macros</TabsTrigger>
-                <TabsTrigger value="micronutrients" className="text-sm truncate">Micronutrientes</TabsTrigger>
+                <TabsTrigger value="macros" className="text-sm truncate">{t('meals.macrosTab')}</TabsTrigger>
+                <TabsTrigger value="micronutrients" className="text-sm truncate">{t('meals.micronutrientsTab')}</TabsTrigger>
               </TabsList>
               <Button
                 variant="ghost"
                 size="icon"
                 className="ml-2 rounded-full min-w-[44px] min-h-[44px] flex-shrink-0"
                 onClick={() => setShowEditModal(true)}
-                aria-label="Editar macros"
+                aria-label={t('meals.editMacros')}
               >
                 <Settings className="w-5 h-5" />
               </Button>
@@ -267,7 +269,7 @@ const Comidas = () => {
             <TabsContent value="macros" className="mt-0">
               <div className="flex flex-col items-center gap-2">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">Objetivo: {dayTotals.kcalTarget} Kcal</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t('dashboard.goal')}: {dayTotals.kcalTarget} Kcal</p>
                    <CircularProgress 
                     value={dayTotals.kcalConsumed} 
                     max={dayTotals.kcalTarget} 
@@ -285,11 +287,11 @@ const Comidas = () => {
                 
                 <div className="w-full space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground text-sm">Consumidas</span>
+                    <span className="text-muted-foreground text-sm">{t('common.consumed')}</span>
                     <span className="text-foreground font-semibold">{dayTotals.kcalConsumed} Kcal</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground text-sm">Restantes</span>
+                    <span className="text-muted-foreground text-sm">{t('common.remaining')}</span>
                     <span className="text-foreground font-semibold">{Math.max(0, dayTotals.kcalTarget - dayTotals.kcalConsumed)} Kcal</span>
                   </div>
                   
@@ -298,7 +300,7 @@ const Comidas = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--protein))' }}></span>
-                        Proteínas
+                        {t('dashboard.proteins')}
                       </span>
                        <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {nutritionGoals?.protein_goal || 150}g</span>
                     </div>
@@ -309,7 +311,7 @@ const Comidas = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--fat))' }}></span>
-                        Grasas
+                        {t('dashboard.fats')}
                       </span>
                       <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {nutritionGoals?.fat_goal || 65}g</span>
                     </div>
@@ -320,7 +322,7 @@ const Comidas = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--carbs))' }}></span>
-                        Carbohidratos
+                        {t('dashboard.carbs')}
                       </span>
                       <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {nutritionGoals?.carbs_goal || 250}g</span>
                     </div>
@@ -341,11 +343,18 @@ const Comidas = () => {
         {/* Meal Cards */}
         <div className="space-y-2.5">
           {[
-            { name: "Desayuno", data: dayTotals.breakfast },
-            { name: "Comida", data: dayTotals.lunch },
-            { name: "Cena", data: dayTotals.dinner }
+            { name: t('meals.breakfast'), data: dayTotals.breakfast },
+            { name: t('meals.lunch'), data: dayTotals.lunch },
+            { name: t('meals.dinner'), data: dayTotals.dinner }
           ].map((meal, index) => {
-            const mealItems = dailyMeals.filter((m: any) => m.meal_type === meal.name);
+            const mealItems = dailyMeals.filter((m: any) => {
+              const mealTypeMap: Record<string, string> = {
+                [t('meals.breakfast')]: 'Desayuno',
+                [t('meals.lunch')]: 'Comida',
+                [t('meals.dinner')]: 'Cena'
+              };
+              return m.meal_type === mealTypeMap[meal.name];
+            });
             
             return (
               <StatsCard key={index} className="py-4">
@@ -360,7 +369,7 @@ const Comidas = () => {
                         </p>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground text-sm">Sin alimentos añadidos</p>
+                      <p className="text-muted-foreground text-sm">{t('meals.noFoodsAdded')}</p>
                     )}
                   </div>
                   <button 
@@ -406,9 +415,9 @@ const Comidas = () => {
               <ChefHat className="w-6 h-6 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-foreground mb-2">Recetas</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('meals.recipes')}</h3>
               <p className="text-sm text-muted-foreground">
-                Crea y guarda tus recetas personalizadas.
+                {t('meals.recipesDescription')}
               </p>
             </div>
             <Button size="icon" variant="ghost" className="rounded-full">

@@ -1,16 +1,18 @@
 import { Home, BarChart3, Utensils, Dumbbell, Bot } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const navItems = [
-    { icon: Home, label: "Inicio", path: "/" },
-    { icon: BarChart3, label: "Analytics", path: "/analytics" },
-    { icon: Utensils, label: "Comidas", path: "/comidas" },
-    { icon: Dumbbell, label: "Gimnasio", path: "/gimnasio" },
-    { icon: Bot, label: "FityAI", path: "/fityai" },
+    { icon: Home, label: t('navigation.home'), path: "/" },
+    { icon: BarChart3, label: t('navigation.analytics'), path: "/analytics" },
+    { icon: Utensils, label: t('navigation.meals'), path: "/comidas" },
+    { icon: Dumbbell, label: t('navigation.gym'), path: "/gimnasio" },
+    { icon: Bot, label: t('navigation.ai'), path: "/fityai" },
   ];
 
   return (
