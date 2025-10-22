@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Camera, Search, Clock, Database } from "lucide-react";
+import { ArrowLeft, Barcode, Search, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -393,14 +393,12 @@ const AddFood = () => {
               className="pl-9"
             />
           </div>
-          <Button onClick={startScanner} size="icon">
-            <Camera className="w-4 h-4" />
+          <Button onClick={startScanner} size="icon" title="Escanear código de barras">
+            <Barcode className="w-4 h-4" />
           </Button>
-          {databaseFoods.length > 0 && (
-            <Button onClick={() => setShowSearchModal(true)} variant="outline" size="icon">
-              <Database className="w-4 h-4" />
-            </Button>
-          )}
+          <Button onClick={() => setShowSearchModal(true)} variant="outline" size="icon" title="Búsqueda avanzada">
+            <Search className="w-4 h-4" />
+          </Button>
         </div>
 
         {/* Selected or Manual Food */}
