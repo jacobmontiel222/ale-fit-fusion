@@ -155,6 +155,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <Input
               id="calories"
               type="number"
+              inputMode="none"
               value={caloriesInput}
               onChange={(e) => setCaloriesInput(e.target.value)}
               min={100}
@@ -195,6 +196,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="protein"
                     type="number"
+                    inputMode="none"
                     value={proteinPctInput}
                     onChange={(e) => handleProteinChange(e.target.value)}
                     min={0}
@@ -222,6 +224,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="fat"
                     type="number"
+                    inputMode="none"
                     value={fatPctInput}
                     onChange={(e) => handleFatChange(e.target.value)}
                     min={0}
@@ -249,6 +252,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                   <Input
                     id="carbs"
                     type="number"
+                    inputMode="none"
                     value={carbsPctInput}
                     onChange={(e) => handleCarbsChange(e.target.value)}
                     min={0}
