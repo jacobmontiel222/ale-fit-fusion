@@ -54,6 +54,8 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [foodCount, setFoodCount] = useState(0);
+  const [availableCategories, setAvailableCategories] = useState<FoodCategory[]>([]);
+  const [availableTags, setAvailableTags] = useState<FoodTag[]>([]);
 
   // Cargar alimentos de la base de datos local
   useEffect(() => {
@@ -64,7 +66,17 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
         const count = await foodDatabase.getCount();
         setAllFoods(foods);
         setFoodCount(count);
-        setFilteredResults(foods.slice(0, 50)); // Mostrar primeros 50 por defecto
+        setFilteredResults([]); // No mostrar nada hasta que se busque
+        
+        // Obtener categorías y tags disponibles
+        const categories = new Set<FoodCategory>();
+        const tags = new Set<FoodTag>();
+        foods.forEach(food => {
+          categories.add(food.category);
+          food.tags.forEach(tag => tags.add(tag));
+        });
+        setAvailableCategories(Array.from(categories));
+        setAvailableTags(Array.from(tags));
       } catch (error) {
         console.error('Error cargando alimentos:', error);
       } finally {
@@ -175,7 +187,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
               
               <TabsContent value="categories" className="mt-4">
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map((cat) => (
+                  {CATEGORIES.filter(cat => availableCategories.includes(cat.value)).map((cat) => (
                     <Badge
                       key={cat.value}
                       variant={filters.categories.includes(cat.value) ? 'default' : 'outline'}
@@ -190,7 +202,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
               
               <TabsContent value="tags" className="mt-4">
                 <div className="flex flex-wrap gap-2">
-                  {TAGS.map((tag) => (
+                  {TAGS.filter(tag => availableTags.includes(tag.value)).map((tag) => (
                     <Badge
                       key={tag.value}
                       variant={filters.tags.includes(tag.value) ? 'default' : 'outline'}
@@ -216,6 +228,11 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
             <div className="text-center py-12 text-muted-foreground">
               <p className="mb-2">La base de datos está vacía</p>
               <p className="text-sm">Importa alimentos para comenzar a buscar</p>
+            </div>
+          ) : !searchQuery && filters.categories.length === 0 && filters.tags.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="mb-2">Busca un alimento</p>
+              <p className="text-sm">Escribe el nombre del alimento que buscas</p>
             </div>
           ) : filteredResults.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">

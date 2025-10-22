@@ -14,6 +14,7 @@ import { FoodSearchModal } from "@/components/FoodSearchModal";
 import { FoodDetailsModal } from "@/components/FoodDetailsModal";
 import { FoodItem as FoodItemType } from "@/types/food";
 import { foodDatabase } from "@/lib/foodDatabase";
+import { searchFoods } from "@/lib/foodSearch";
 
 interface FoodItem {
   name: string;
@@ -67,27 +68,40 @@ const AddFood = () => {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedDatabaseFood, setSelectedDatabaseFood] = useState<FoodItemType | null>(null);
-  const [foodDatabaseCount, setFoodDatabaseCount] = useState(0);
+  const [databaseFoods, setDatabaseFoods] = useState<FoodItemType[]>([]);
+  const [searchResults, setSearchResults] = useState<FoodItemType[]>([]);
   
   useEffect(() => {
     setFoodHistory(getFoodHistory());
     
-    // Cargar conteo de base de datos de alimentos
-    const loadFoodCount = async () => {
+    // Cargar base de datos de alimentos
+    const loadFoodDatabase = async () => {
       try {
-        const count = await foodDatabase.getCount();
-        setFoodDatabaseCount(count);
+        const foods = await foodDatabase.getAllFoods();
+        setDatabaseFoods(foods);
       } catch (error) {
-        console.error('Error cargando conteo de alimentos:', error);
+        console.error('Error cargando base de datos de alimentos:', error);
       }
     };
     
-    loadFoodCount();
+    loadFoodDatabase();
   }, []);
 
-  const filteredFoods = mockFoods.filter(food =>
-    food.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Buscar en la base de datos cuando cambia el query
+  useEffect(() => {
+    if (!searchQuery.trim() || databaseFoods.length === 0) {
+      setSearchResults([]);
+      return;
+    }
+
+    const results = searchFoods(databaseFoods, {
+      query: searchQuery,
+      categories: [],
+      tags: [],
+    }, 0.3);
+
+    setSearchResults(results.map(r => r.item).slice(0, 20));
+  }, [searchQuery, databaseFoods]);
 
   const stopScanner = () => {
     try {
@@ -368,24 +382,12 @@ const AddFood = () => {
           </h1>
         </div>
 
-        {/* Búsqueda avanzada en base de datos */}
-        {foodDatabaseCount > 0 && (
-          <Button 
-            onClick={() => setShowSearchModal(true)}
-            className="w-full gap-2"
-            size="lg"
-          >
-            <Database className="w-5 h-5" />
-            Buscar en base de datos ({foodDatabaseCount} alimentos)
-          </Button>
-        )}
-
         {/* Search and Scan */}
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar alimentos básicos..."
+              placeholder="Buscar alimentos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -394,6 +396,11 @@ const AddFood = () => {
           <Button onClick={startScanner} size="icon">
             <Camera className="w-4 h-4" />
           </Button>
+          {databaseFoods.length > 0 && (
+            <Button onClick={() => setShowSearchModal(true)} variant="outline" size="icon">
+              <Database className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Selected or Manual Food */}
@@ -544,15 +551,18 @@ const AddFood = () => {
           </Button>
         )}
 
-        {/* Search Results */}
-        {!selectedFood && !manualEntry && searchQuery && (
+        {/* Search Results - mostrar resultados de la base de datos */}
+        {!selectedFood && !manualEntry && searchQuery && searchResults.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground">Resultados</h3>
-            {filteredFoods.map((food, index) => (
-              <StatsCard key={index} className="cursor-pointer" onClick={() => {
-                setSelectedFood(food);
-                setServingAmount(food.servingSize);
-              }}>
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Resultados ({searchResults.length})
+            </h3>
+            {searchResults.map((food) => (
+              <StatsCard 
+                key={food.id} 
+                className="cursor-pointer hover:border-primary transition-colors" 
+                onClick={() => handleSelectFromDatabase(food)}
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <h4 className="font-semibold text-foreground">{food.name}</h4>
@@ -562,10 +572,16 @@ const AddFood = () => {
                     </p>
                     <p className="text-xs text-muted-foreground">por {food.servingSize} {food.servingUnit}</p>
                   </div>
-                  <Button size="sm">Añadir</Button>
                 </div>
               </StatsCard>
             ))}
+          </div>
+        )}
+
+        {!selectedFood && !manualEntry && searchQuery && searchResults.length === 0 && databaseFoods.length > 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No se encontraron resultados para "{searchQuery}"</p>
+            <p className="text-sm mt-1">Intenta con otros términos o usa el escáner</p>
           </div>
         )}
         

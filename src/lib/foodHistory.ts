@@ -28,6 +28,17 @@ export function getFoodHistory(): HistoryItem[] {
 export function addToHistory(item: Omit<HistoryItem, 'id' | 'addedAt'>): void {
   const history = getFoodHistory();
   
+  // Check if item already exists (by name and brand)
+  const existingIndex = history.findIndex(
+    h => h.name.toLowerCase() === item.name.toLowerCase() && 
+         (h.brand || '').toLowerCase() === (item.brand || '').toLowerCase()
+  );
+  
+  // If exists, remove it first (we'll add it back at the top)
+  if (existingIndex !== -1) {
+    history.splice(existingIndex, 1);
+  }
+  
   const newItem: HistoryItem = {
     ...item,
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
