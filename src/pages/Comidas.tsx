@@ -342,7 +342,7 @@ const Comidas = () => {
             </TabsContent>
             
             <TabsContent value="micronutrients" className="mt-0">
-              <MicronutrientsList />
+              <MicronutrientsList date={dateISO} />
             </TabsContent>
           </Tabs>
         </StatsCard>

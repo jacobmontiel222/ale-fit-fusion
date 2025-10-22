@@ -297,6 +297,22 @@ const AddFood = () => {
       carbs: Math.round(food.carbs * multiplier * 10) / 10,
     };
     
+    // Calcular micronutrientes ajustados
+    const adjustedMicronutrients = {
+      vitamins: food.micronutrients.vitamins.map(v => ({
+        name: v.name,
+        amount: Math.round(v.amount * multiplier * 100) / 100,
+        unit: v.unit,
+        dailyValue: v.dailyValue
+      })),
+      minerals: food.micronutrients.minerals.map(m => ({
+        name: m.name,
+        amount: Math.round(m.amount * multiplier * 100) / 100,
+        unit: m.unit,
+        dailyValue: m.dailyValue
+      }))
+    };
+    
     // Check if adding to recipe
     if (meal === "recipe") {
       const recipeItem = {
@@ -346,7 +362,8 @@ const AddFood = () => {
         fat: adjustedMacros.fat,
         carbs: adjustedMacros.carbs,
         barcode: food.barcode || null,
-        entry_method: 'database'
+        entry_method: 'database',
+        micronutrients: adjustedMicronutrients
       });
 
     if (error) {
