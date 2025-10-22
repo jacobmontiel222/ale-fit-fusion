@@ -246,31 +246,22 @@ const Comidas = () => {
 
         {/* Main Calories Summary with Tabs */}
         <StatsCard className="overflow-hidden py-3">
-          {/* Header with Edit Button - Fixed positioning */}
-          <div className="flex items-center justify-between mb-3 pr-1">
-            <Tabs defaultValue="macros" className="flex-1">
-              <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="macros" className="w-full">
+            {/* Header with Edit Button */}
+            <div className="flex items-center justify-between mb-3 pr-1">
+              <TabsList className="grid w-full grid-cols-2 flex-1">
                 <TabsTrigger value="macros" className="text-sm truncate">Macros</TabsTrigger>
                 <TabsTrigger value="micronutrients" className="text-sm truncate">Micronutrientes</TabsTrigger>
               </TabsList>
-            </Tabs>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-2 rounded-full min-w-[44px] min-h-[44px] flex-shrink-0"
-              onClick={() => setShowEditModal(true)}
-              aria-label="Editar macros"
-            >
-              <Settings className="w-5 h-5" />
-            </Button>
-          </div>
-          
-          <Tabs defaultValue="macros" className="w-full">
-            <div className="hidden">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="macros">Macros</TabsTrigger>
-                <TabsTrigger value="micronutrients">Micronutrientes</TabsTrigger>
-              </TabsList>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="ml-2 rounded-full min-w-[44px] min-h-[44px] flex-shrink-0"
+                onClick={() => setShowEditModal(true)}
+                aria-label="Editar macros"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
             </div>
             
             <TabsContent value="macros" className="mt-0">

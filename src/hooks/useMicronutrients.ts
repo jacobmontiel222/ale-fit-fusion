@@ -75,8 +75,11 @@ export function useMicronutrients(date: string) {
         // Sumar todos los micronutrientes del día
         const totals: Record<string, number> = {};
 
+        console.log('📊 Procesando micronutrientes de', meals.length, 'comidas');
+
         meals.forEach(meal => {
           if (meal.micronutrients && typeof meal.micronutrients === 'object') {
+            console.log('🍽️ Micronutrientes de comida:', meal.micronutrients);
             const micros = meal.micronutrients as {
               vitamins?: Array<{ name: string; amount: number; unit: string }>;
               minerals?: Array<{ name: string; amount: number; unit: string }>;
@@ -113,6 +116,7 @@ export function useMicronutrients(date: string) {
           .filter(m => m.current > 0) // Solo mostrar los que tienen algún valor
           .sort((a, b) => (b.current / b.goal) - (a.current / a.goal)); // Ordenar por % completado descendente
 
+        console.log('✅ Micronutrientes calculados:', micronutrientsData.length, 'items');
         setMicronutrients(micronutrientsData);
       } catch (error) {
         console.error('Error calculating micronutrients:', error);
