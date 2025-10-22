@@ -13,7 +13,7 @@
     "remaining": "Restantes"
   },
   "dashboard": {
-    "title": "Hola, {name}",
+    "title": "Hola, {{name}}",
     "motto": "¡Vamos a por ello!",
     "goal": "Objetivo",
     "remaining": "restantes",
@@ -45,14 +45,14 @@
     "editMacros": "Editar macros"
   },
   "addFood": {
-    "title": "Añadir a {meal}",
+    "title": "Añadir a {{meal}}",
     "searchPlaceholder": "Buscar alimentos...",
     "scanBarcode": "Escanear código de barras",
     "productName": "Nombre del producto",
     "brand": "Marca",
     "amount": "Cantidad",
     "unit": "Unidad",
-    "addButton": "Añadir a {meal}",
+    "addButton": "Añadir a {{meal}}",
     "manualEntry": "Entrada manual",
     "quickAdd": "Añadido rápido",
     "recentFoods": "Alimentos recientes",
@@ -71,8 +71,8 @@
       "cameraError": "Autoriza la cámara o usa HTTPS."
     },
     "success": {
-      "foodAdded": "{food} añadido a {meal}",
-      "barcodeDetected": "{food} detectado"
+      "foodAdded": "{{food}} añadido a {{meal}}",
+      "barcodeDetected": "{{food}} detectado"
     }
   },
   "navigation": {

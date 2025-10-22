@@ -13,7 +13,7 @@
     "remaining": "Übrig"
   },
   "dashboard": {
-    "title": "Hallo, {name}",
+    "title": "Hallo, {{name}}",
     "motto": "Los geht's!",
     "goal": "Ziel",
     "remaining": "übrig",
@@ -45,14 +45,14 @@
     "editMacros": "Makros bearbeiten"
   },
   "addFood": {
-    "title": "Hinzufügen zu {meal}",
+    "title": "Hinzufügen zu {{meal}}",
     "searchPlaceholder": "Lebensmittel suchen...",
     "scanBarcode": "Barcode scannen",
     "productName": "Produktname",
     "brand": "Marke",
     "amount": "Menge",
     "unit": "Einheit",
-    "addButton": "Zu {meal} hinzufügen",
+    "addButton": "Zu {{meal}} hinzufügen",
     "manualEntry": "Manuelle Eingabe",
     "quickAdd": "Schnell hinzufügen",
     "recentFoods": "Kürzliche Lebensmittel",
@@ -71,8 +71,8 @@
       "cameraError": "Autorisieren Sie die Kamera oder verwenden Sie HTTPS."
     },
     "success": {
-      "foodAdded": "{food} zu {meal} hinzugefügt",
-      "barcodeDetected": "{food} erkannt"
+      "foodAdded": "{{food}} zu {{meal}} hinzugefügt",
+      "barcodeDetected": "{{food}} erkannt"
     }
   },
   "navigation": {

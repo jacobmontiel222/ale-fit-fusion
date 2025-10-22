@@ -13,7 +13,7 @@
     "remaining": "Remaining"
   },
   "dashboard": {
-    "title": "Hello, {name}",
+    "title": "Hello, {{name}}",
     "motto": "Let's do this!",
     "goal": "Goal",
     "remaining": "remaining",
@@ -45,14 +45,14 @@
     "editMacros": "Edit macros"
   },
   "addFood": {
-    "title": "Add to {meal}",
+    "title": "Add to {{meal}}",
     "searchPlaceholder": "Search foods...",
     "scanBarcode": "Scan barcode",
     "productName": "Product name",
     "brand": "Brand",
     "amount": "Amount",
     "unit": "Unit",
-    "addButton": "Add to {meal}",
+    "addButton": "Add to {{meal}}",
     "manualEntry": "Manual entry",
     "quickAdd": "Quick add",
     "recentFoods": "Recent foods",
@@ -71,8 +71,8 @@
       "cameraError": "Authorize camera or use HTTPS."
     },
     "success": {
-      "foodAdded": "{food} added to {meal}",
-      "barcodeDetected": "{food} detected"
+      "foodAdded": "{{food}} added to {{meal}}",
+      "barcodeDetected": "{{food}} detected"
     }
   },
   "navigation": {

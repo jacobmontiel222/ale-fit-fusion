@@ -13,7 +13,7 @@
     "remaining": "Pozostałe"
   },
   "dashboard": {
-    "title": "Cześć, {name}",
+    "title": "Cześć, {{name}}",
     "motto": "Do dzieła!",
     "goal": "Cel",
     "remaining": "pozostałe",
@@ -45,14 +45,14 @@
     "editMacros": "Edytuj makro"
   },
   "addFood": {
-    "title": "Dodaj do {meal}",
+    "title": "Dodaj do {{meal}}",
     "searchPlaceholder": "Szukaj produktów...",
     "scanBarcode": "Skanuj kod kreskowy",
     "productName": "Nazwa produktu",
     "brand": "Marka",
     "amount": "Ilość",
     "unit": "Jednostka",
-    "addButton": "Dodaj do {meal}",
+    "addButton": "Dodaj do {{meal}}",
     "manualEntry": "Ręczne wprowadzenie",
     "quickAdd": "Szybkie dodanie",
     "recentFoods": "Ostatnie produkty",
@@ -71,8 +71,8 @@
       "cameraError": "Zezwól na dostęp do kamery lub użyj HTTPS."
     },
     "success": {
-      "foodAdded": "{food} dodany do {meal}",
-      "barcodeDetected": "{food} wykryty"
+      "foodAdded": "{{food}} dodany do {{meal}}",
+      "barcodeDetected": "{{food}} wykryty"
     }
   },
   "navigation": {
