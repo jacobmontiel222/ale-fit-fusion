@@ -125,6 +125,11 @@ async function parseCSVToFoodItems(csvText: string): Promise<FoodItem[]> {
         lastUpdated: row.updated_at,
       };
 
+      // Log para debug de micronutrientes
+      if (food.name === 'Manzana' || food.name === 'Naranja' || food.name === 'Pechuga de pollo') {
+        console.log(`🍎 ${food.name} - Vitaminas:`, food.micronutrients.vitamins.length, 'Minerales:', food.micronutrients.minerals.length);
+      }
+
       foods.push(food);
     } catch (error) {
       console.error(`Error parsing line ${i}:`, error);
