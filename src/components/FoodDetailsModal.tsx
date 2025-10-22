@@ -43,10 +43,11 @@ const TAGS: { value: FoodTag; label: string }[] = [
 ];
 
 export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDetailsModalProps) {
-  const [amount, setAmount] = useState(100);
+  const [amountInput, setAmountInput] = useState('100');
 
   if (!food) return null;
 
+  const amount = Math.max(0, parseFloat(amountInput.replace(',', '.')) || 0);
   const multiplier = amount / 100;
 
   const adjustedMacros = {
@@ -96,11 +97,21 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDe
             <div className="flex items-center gap-3">
               <Input
                 id="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]*[.,]?[0-9]*"
+                value={amountInput}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
+                    const cleaned = raw.replace(/^0+(?=\d)/, '');
+                    setAmountInput(cleaned);
+                  }
+                }}
+                onBlur={() => {
+                  if (amountInput === '') setAmountInput('0');
+                }}
                 className="w-32"
-                min={0}
               />
               <span className="text-muted-foreground">{food.servingUnit}</span>
             </div>
@@ -220,7 +231,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDe
 
         {/* Footer con botón de añadir */}
         <div className="px-6 py-4 border-t border-border">
-          <Button onClick={handleAdd} className="w-full" size="lg">
+          <Button onClick={handleAdd} className="w-full" size="lg" disabled={amount <= 0}>
             Añadir {amount} {food.servingUnit}
           </Button>
         </div>

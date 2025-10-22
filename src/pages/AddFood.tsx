@@ -47,6 +47,7 @@ const AddFood = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [servingAmount, setServingAmount] = useState(100);
+  const [servingAmountInput, setServingAmountInput] = useState('100');
   const [manualEntry, setManualEntry] = useState(false);
   const [manualFood, setManualFood] = useState<FoodItem>({
     name: "",
@@ -193,6 +194,10 @@ const AddFood = () => {
     }
 
     const foodToAdd = selectedFood || manualFood;
+    if (!Number.isFinite(servingAmount) || servingAmount <= 0) {
+      toast.error("Introduce una cantidad válida mayor que 0");
+      return;
+    }
     const adjustedMacros = calculateAdjustedMacros(foodToAdd, servingAmount);
     
     // Check if adding to recipe
@@ -273,7 +278,7 @@ const AddFood = () => {
       servingUnit: item.servingUnit,
     });
     setServingAmount(item.servingSize);
-    setManualEntry(false);
+    setServingAmountInput(String(item.servingSize));
   };
   
   // Manejar selección de alimento desde la base de datos
@@ -286,6 +291,10 @@ const AddFood = () => {
   const handleAddFromDatabase = async (food: FoodItemType, amount: number) => {
     if (!user) {
       toast.error("Debes iniciar sesión para añadir comidas");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Introduce una cantidad válida mayor que 0");
       return;
     }
 
@@ -453,13 +462,25 @@ const AddFood = () => {
                   <Label htmlFor="amount">Cantidad</Label>
                   <Input
                     id="amount"
-                    type="number"
-                    value={servingAmount || ''}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    value={servingAmountInput}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      setServingAmount(val === '' ? 0 : Math.max(0, parseFloat(val)));
+                      const raw = e.target.value;
+                      if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
+                        const cleaned = raw.replace(/^0+(?=\d)/, '');
+                        setServingAmountInput(cleaned);
+                        const parsed = parseFloat(cleaned.replace(',', '.'));
+                        if (!isNaN(parsed)) setServingAmount(parsed);
+                      }
                     }}
-                    min={0}
+                    onBlur={() => {
+                      if (servingAmountInput === '') {
+                        setServingAmountInput('0');
+                        setServingAmount(0);
+                      }
+                    }}
                   />
                 </div>
                 <div>
