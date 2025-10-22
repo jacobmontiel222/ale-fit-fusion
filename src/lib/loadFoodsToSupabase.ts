@@ -157,25 +157,19 @@ export async function loadFoodsToSupabase(): Promise<void> {
     console.log('🔄 Procesando CSV...');
     const foods = await parseCSVToFoodItems(csvText);
     
-    console.log(`📤 Subiendo ${foods.length} alimentos a Supabase...`);
+    console.log(`📤 Subiendo ${foods.length} alimentos a Supabase vía edge function...`);
     
-    // Insertar en lotes de 100 para evitar timeouts
-    const batchSize = 100;
-    for (let i = 0; i < foods.length; i += batchSize) {
-      const batch = foods.slice(i, i + batchSize);
-      const { error } = await supabase
-        .from('foods')
-        .insert(batch);
-      
-      if (error) {
-        console.error(`Error insertando lote ${i / batchSize + 1}:`, error);
-        throw error;
-      }
-      
-      console.log(`✅ Lote ${i / batchSize + 1}/${Math.ceil(foods.length / batchSize)} completado`);
+    // Usar edge function para insertar con service role
+    const { data, error } = await supabase.functions.invoke('load-foods', {
+      body: { foods }
+    });
+    
+    if (error) {
+      console.error('Error llamando a la función:', error);
+      throw error;
     }
     
-    console.log('🎉 Base de datos de alimentos cargada exitosamente en Supabase!');
+    console.log('🎉', data.message);
   } catch (error) {
     console.error('❌ Error cargando alimentos a Supabase:', error);
     throw error;

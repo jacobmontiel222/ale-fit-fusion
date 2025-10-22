@@ -92,7 +92,7 @@ export function useFoodsDatabase() {
         .from('foods')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (queryError) throw queryError;
       if (!data) return null;
