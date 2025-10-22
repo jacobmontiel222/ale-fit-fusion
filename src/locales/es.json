@@ -135,5 +135,56 @@
     "pt": "Portugués",
     "pl": "Polaco",
     "selectLanguage": "Seleccionar idioma"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "weight": "Peso",
+    "steps": "Pasos",
+    "water": "Agua",
+    "addWeight": "Añadir peso",
+    "addWater": "Añadir agua",
+    "date": "Fecha",
+    "amount": "Cantidad",
+    "thisWeek": "Esta semana",
+    "lastWeek": "Semana pasada",
+    "thisMonth": "Este mes",
+    "lastMonth": "Mes pasado",
+    "last3Months": "Últimos 3 meses",
+    "last6Months": "Últimos 6 meses"
+  },
+  "gym": {
+    "title": "Gimnasio",
+    "newRoutine": "Nueva Rutina",
+    "addExercise": "Añadir ejercicio",
+    "searchExercise": "Buscar ejercicio...",
+    "sets": "Series",
+    "reps": "Reps",
+    "weight": "Peso",
+    "rest": "Descanso",
+    "notes": "Notas",
+    "saveRoutine": "Guardar rutina",
+    "deleteRoutine": "Eliminar rutina",
+    "duplicateSet": "Duplicar serie",
+    "exercises": {
+      "squat": "Sentadilla",
+      "legPress": "Prensa",
+      "legExtension": "Extensión de cuádriceps",
+      "legCurl": "Curl femoral",
+      "calves": "Gemelos",
+      "benchPress": "Press banca",
+      "inclinePress": "Press inclinado",
+      "flyes": "Aperturas",
+      "pullups": "Dominadas",
+      "barbellRow": "Remo con barra",
+      "deadlift": "Peso muerto",
+      "hipThrust": "Hip thrust"
+    }
+  },
+  "fityai": {
+    "title": "FityAI",
+    "placeholder": "Pregúntame sobre tu entrenamiento o nutrición…",
+    "welcome": "💬 Habla con FityAI para obtener rutinas, ajustar tus macros o consejos de entrenamiento.",
+    "typing": "FityAI está escribiendo...",
+    "error": "Error al conectar con FityAI. Intenta de nuevo."
   }
 }

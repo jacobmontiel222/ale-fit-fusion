@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 type Message = {
   id: string;
@@ -23,6 +24,7 @@ const FityAI = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     // Load chat history from localStorage
@@ -112,7 +114,7 @@ const FityAI = () => {
       console.error("Error al conectar con FityAI:", error);
       toast({
         title: "Error",
-        description: "Error al conectar con FityAI. Intenta de nuevo.",
+        description: t('fityai.error'),
         variant: "destructive",
       });
     } finally {
@@ -134,7 +136,7 @@ const FityAI = () => {
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
             <Bot className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-semibold text-white">FityAI</h1>
+            <h1 className="text-xl font-semibold text-white">{t('fityai.title')}</h1>
           </div>
         </div>
       </div>
@@ -146,7 +148,7 @@ const FityAI = () => {
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
               <Bot className="w-16 h-16 text-primary mb-4 opacity-50" />
               <p className="text-lg" style={{ color: "#F1F1F1" }}>
-                💬 Habla con FityAI para obtener rutinas, ajustar tus macros o consejos de entrenamiento.
+                {t('fityai.welcome')}
               </p>
             </div>
           ) : (
@@ -172,7 +174,7 @@ const FityAI = () => {
                       className="text-xs mt-1 opacity-60"
                       style={{ color: message.role === "user" ? "#FFFFFF" : "#F1F1F1" }}
                     >
-                      {message.timestamp.toLocaleTimeString("es-ES", {
+                      {message.timestamp.toLocaleTimeString(i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language, {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -202,7 +204,7 @@ const FityAI = () => {
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.2s" }} />
                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: "0.4s" }} />
                       </div>
-                      <span className="text-sm">FityAI está escribiendo...</span>
+                      <span className="text-sm">{t('fityai.typing')}</span>
                     </div>
                   </div>
                 </div>
@@ -224,7 +226,7 @@ const FityAI = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Pregúntame sobre tu entrenamiento o nutrición…"
+              placeholder={t('fityai.placeholder')}
               className="flex-1 border-white/20 text-white placeholder:text-white/50"
               style={{ backgroundColor: "#2C2C2C" }}
               disabled={isLoading || isStreaming}

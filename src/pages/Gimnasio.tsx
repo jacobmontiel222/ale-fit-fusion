@@ -11,6 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Set {
   id: string;
@@ -52,6 +53,7 @@ const exerciseLibrary = [
 
 const Gimnasio = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);

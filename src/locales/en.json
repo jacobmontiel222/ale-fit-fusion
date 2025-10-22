@@ -135,5 +135,56 @@
     "pt": "Portuguese",
     "pl": "Polish",
     "selectLanguage": "Select language"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "weight": "Weight",
+    "steps": "Steps",
+    "water": "Water",
+    "addWeight": "Add weight",
+    "addWater": "Add water",
+    "date": "Date",
+    "amount": "Amount",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last3Months": "Last 3 months",
+    "last6Months": "Last 6 months"
+  },
+  "gym": {
+    "title": "Gym",
+    "newRoutine": "New Routine",
+    "addExercise": "Add exercise",
+    "searchExercise": "Search exercise...",
+    "sets": "Sets",
+    "reps": "Reps",
+    "weight": "Weight",
+    "rest": "Rest",
+    "notes": "Notes",
+    "saveRoutine": "Save routine",
+    "deleteRoutine": "Delete routine",
+    "duplicateSet": "Duplicate set",
+    "exercises": {
+      "squat": "Squat",
+      "legPress": "Leg Press",
+      "legExtension": "Leg Extension",
+      "legCurl": "Leg Curl",
+      "calves": "Calves",
+      "benchPress": "Bench Press",
+      "inclinePress": "Incline Press",
+      "flyes": "Flyes",
+      "pullups": "Pull-ups",
+      "barbellRow": "Barbell Row",
+      "deadlift": "Deadlift",
+      "hipThrust": "Hip Thrust"
+    }
+  },
+  "fityai": {
+    "title": "FityAI",
+    "placeholder": "Ask me about your training or nutrition…",
+    "welcome": "💬 Talk to FityAI to get routines, adjust your macros, or training advice.",
+    "typing": "FityAI is typing...",
+    "error": "Error connecting to FityAI. Try again."
   }
 }

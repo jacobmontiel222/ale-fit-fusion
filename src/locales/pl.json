@@ -135,5 +135,42 @@
     "pt": "Portugalski",
     "pl": "Polski",
     "selectLanguage": "Wybierz język"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "weight": "Waga",
+    "steps": "Kroki",
+    "water": "Woda",
+    "addWeight": "Dodaj wagę",
+    "addWater": "Dodaj wodę",
+    "date": "Data",
+    "amount": "Ilość",
+    "thisWeek": "Ten tydzień",
+    "lastWeek": "Poprzedni tydzień",
+    "thisMonth": "Ten miesiąc",
+    "lastMonth": "Poprzedni miesiąc",
+    "last3Months": "Ostatnie 3 miesiące",
+    "last6Months": "Ostatnie 6 miesięcy"
+  },
+  "gym": {
+    "title": "Siłownia",
+    "newRoutine": "Nowa Rutyna",
+    "addExercise": "Dodaj ćwiczenie",
+    "searchExercise": "Szukaj ćwiczenia...",
+    "sets": "Serie",
+    "reps": "Pow",
+    "weight": "Ciężar",
+    "rest": "Odpoczynek",
+    "notes": "Notatki",
+    "saveRoutine": "Zapisz rutynę",
+    "deleteRoutine": "Usuń rutynę",
+    "duplicateSet": "Duplikuj serię"
+  },
+  "fityai": {
+    "title": "FityAI",
+    "placeholder": "Zapytaj o swój trening lub dietę…",
+    "welcome": "💬 Rozmawiaj z FityAI, aby uzyskać rutyny, dostosować makro lub porady treningowe.",
+    "typing": "FityAI pisze...",
+    "error": "Błąd połączenia z FityAI. Spróbuj ponownie."
   }
 }

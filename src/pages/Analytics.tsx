@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from "recharts";
+import { useTranslation } from "react-i18next";
 
 interface WeightEntry {
   date: string;
@@ -31,6 +32,7 @@ interface WaterEntry {
 const Analytics = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
 
