@@ -83,6 +83,7 @@ const App = () => {
                   <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/food-database" element={<ProtectedRoute><FoodDatabaseManager /></ProtectedRoute>} />
                   
                   {/* Public Routes (redirect to home if logged in) */}
                   <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />

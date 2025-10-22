@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Camera, Search, Clock } from "lucide-react";
+import { ArrowLeft, Camera, Search, Clock, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,10 @@ import { BrowserMultiFormatReader } from "@zxing/browser";
 import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { FoodSearchModal } from "@/components/FoodSearchModal";
+import { FoodDetailsModal } from "@/components/FoodDetailsModal";
+import { FoodItem as FoodItemType } from "@/types/food";
+import { foodDatabase } from "@/lib/foodDatabase";
 
 interface FoodItem {
   name: string;
@@ -59,8 +63,26 @@ const AddFood = () => {
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<any>(null);
   
+  // Nuevos estados para el sistema de búsqueda avanzada
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedDatabaseFood, setSelectedDatabaseFood] = useState<FoodItemType | null>(null);
+  const [foodDatabaseCount, setFoodDatabaseCount] = useState(0);
+  
   useEffect(() => {
     setFoodHistory(getFoodHistory());
+    
+    // Cargar conteo de base de datos de alimentos
+    const loadFoodCount = async () => {
+      try {
+        const count = await foodDatabase.getCount();
+        setFoodDatabaseCount(count);
+      } catch (error) {
+        console.error('Error cargando conteo de alimentos:', error);
+      }
+    };
+    
+    loadFoodCount();
   }, []);
 
   const filteredFoods = mockFoods.filter(food =>
@@ -241,6 +263,92 @@ const AddFood = () => {
     setServingAmount(item.servingSize);
     setManualEntry(false);
   };
+  
+  // Manejar selección de alimento desde la base de datos
+  const handleSelectFromDatabase = (food: FoodItemType) => {
+    setSelectedDatabaseFood(food);
+    setShowDetailsModal(true);
+  };
+  
+  // Añadir alimento desde la base de datos
+  const handleAddFromDatabase = async (food: FoodItemType, amount: number) => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para añadir comidas");
+      return;
+    }
+
+    const multiplier = amount / 100; // La base de datos tiene valores por 100g
+    const adjustedMacros = {
+      calories: Math.round(food.calories * multiplier),
+      protein: Math.round(food.protein * multiplier * 10) / 10,
+      fat: Math.round(food.fat * multiplier * 10) / 10,
+      carbs: Math.round(food.carbs * multiplier * 10) / 10,
+    };
+    
+    // Check if adding to recipe
+    if (meal === "recipe") {
+      const recipeItem = {
+        name: food.name,
+        amount: amount,
+        unit: food.servingUnit,
+        calories: adjustedMacros.calories,
+        protein: adjustedMacros.protein,
+        fat: adjustedMacros.fat,
+        carbs: adjustedMacros.carbs,
+      };
+      
+      const pendingRecipeItems = JSON.parse(sessionStorage.getItem("pendingRecipeItems") || "[]");
+      pendingRecipeItems.push(recipeItem);
+      sessionStorage.setItem("pendingRecipeItems", JSON.stringify(pendingRecipeItems));
+      
+      navigate("/create-recipe");
+      return;
+    }
+    
+    // Add to food history
+    addToHistory({
+      name: food.name,
+      brand: food.brand,
+      calories: food.calories,
+      protein: food.protein,
+      fat: food.fat,
+      carbs: food.carbs,
+      servingSize: food.servingSize,
+      servingUnit: food.servingUnit,
+      meal: meal,
+    });
+    
+    // Add to Supabase meal_entries
+    const { error } = await supabase
+      .from('meal_entries')
+      .insert({
+        user_id: user.id,
+        date: selectedDate,
+        meal_type: meal,
+        food_name: food.name,
+        brand: food.brand || null,
+        amount: amount,
+        unit: food.servingUnit,
+        calories: adjustedMacros.calories,
+        protein: adjustedMacros.protein,
+        fat: adjustedMacros.fat,
+        carbs: adjustedMacros.carbs,
+        barcode: food.barcode || null,
+        entry_method: 'database'
+      });
+
+    if (error) {
+      toast.error("Error al añadir el alimento");
+      console.error(error);
+      return;
+    }
+    
+    // Trigger meals update event
+    window.dispatchEvent(new CustomEvent('mealsUpdated'));
+    
+    toast.success(`${food.name} añadido a ${meal}`);
+    navigate("/comidas");
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -260,12 +368,24 @@ const AddFood = () => {
           </h1>
         </div>
 
+        {/* Búsqueda avanzada en base de datos */}
+        {foodDatabaseCount > 0 && (
+          <Button 
+            onClick={() => setShowSearchModal(true)}
+            className="w-full gap-2"
+            size="lg"
+          >
+            <Database className="w-5 h-5" />
+            Buscar en base de datos ({foodDatabaseCount} alimentos)
+          </Button>
+        )}
+
         {/* Search and Scan */}
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar alimentos..."
+              placeholder="Buscar alimentos básicos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -504,6 +624,20 @@ const AddFood = () => {
           </div>
         </div>
       )}
+      
+      {/* Modales de búsqueda avanzada */}
+      <FoodSearchModal
+        open={showSearchModal}
+        onOpenChange={setShowSearchModal}
+        onSelectFood={handleSelectFromDatabase}
+      />
+      
+      <FoodDetailsModal
+        food={selectedDatabaseFood}
+        open={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        onAddFood={handleAddFromDatabase}
+      />
     </div>
   );
 };
