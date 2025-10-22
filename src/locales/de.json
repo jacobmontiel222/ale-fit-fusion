@@ -150,7 +150,12 @@
     "thisMonth": "Dieser Monat",
     "lastMonth": "Letzter Monat",
     "last3Months": "Letzte 3 Monate",
-    "last6Months": "Letzte 6 Monate"
+    "last6Months": "Letzte 6 Monate",
+    "lastMeasurement": "Letzte Messung",
+    "variation": "Variation",
+    "average": "Durchschnitt",
+    "max": "Maximum",
+    "total": "Gesamt"
   },
   "gym": {
     "title": "Fitnessstudio",
@@ -164,7 +169,64 @@
     "notes": "Notizen",
     "saveRoutine": "Routine speichern",
     "deleteRoutine": "Routine löschen",
-    "duplicateSet": "Satz duplizieren"
+    "duplicateSet": "Satz duplizieren",
+    "series": "Satz",
+    "rpe": "RPE",
+    "start": "Starten",
+    "exercises": {
+      "squat": "Kniebeuge",
+      "legPress": "Beinpresse",
+      "legExtension": "Beinstrecker",
+      "legCurl": "Beinbeuger",
+      "calves": "Waden",
+      "benchPress": "Bankdrücken",
+      "inclinePress": "Schrägbankdrücken",
+      "flyes": "Fliegende",
+      "pullups": "Klimmzüge",
+      "barbellRow": "Langhantelrudern",
+      "deadlift": "Kreuzheben",
+      "hipThrust": "Hip Thrust"
+    }
+  },
+  "foodSearch": {
+    "title": "Lebensmittel suchen",
+    "availableOffline": "{{count}} Lebensmittel offline verfügbar",
+    "emptyDatabase": "Leere Datenbank",
+    "searchPlaceholder": "Nach Name suchen... (z.B.: Wassermelone, Apfel)",
+    "filters": "Filter",
+    "clearFilters": "Filter löschen",
+    "categories": "Kategorien",
+    "tags": "Tags",
+    "loading": "Lebensmittel werden geladen...",
+    "noResults": "Keine Ergebnisse gefunden",
+    "tryOtherTerms": "Versuchen Sie andere Begriffe oder Filter",
+    "searchFood": "Lebensmittel suchen",
+    "typeToSearch": "Geben Sie den Namen des gesuchten Lebensmittels ein",
+    "per": "pro",
+    "categoryLabels": {
+      "frutas": "Obst",
+      "verduras": "Gemüse",
+      "carnes": "Fleisch",
+      "pescados": "Fisch",
+      "lacteos": "Milchprodukte",
+      "legumbres": "Hülsenfrüchte",
+      "cereales": "Getreide",
+      "frutos-secos": "Nüsse",
+      "bebidas": "Getränke",
+      "aceites": "Öle",
+      "huevos": "Eier",
+      "otros": "Andere"
+    },
+    "tagLabels": {
+      "alto-proteina": "Proteinreich",
+      "bajo-grasa": "Fettarm",
+      "alto-fibra": "Ballaststoffreich",
+      "bajo-calorias": "Kalorienarm",
+      "vegano": "Vegan",
+      "vegetariano": "Vegetarisch",
+      "sin-gluten": "Glutenfrei",
+      "sin-lactosa": "Laktosefrei"
+    }
   },
   "fityai": {
     "title": "FityAI",

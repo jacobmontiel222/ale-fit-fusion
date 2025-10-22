@@ -150,7 +150,12 @@
     "thisMonth": "Questo mese",
     "lastMonth": "Mese scorso",
     "last3Months": "Ultimi 3 mesi",
-    "last6Months": "Ultimi 6 mesi"
+    "last6Months": "Ultimi 6 mesi",
+    "lastMeasurement": "Ultima misurazione",
+    "variation": "Variazione",
+    "average": "Media",
+    "max": "Massimo",
+    "total": "Totale"
   },
   "gym": {
     "title": "Palestra",
@@ -164,7 +169,64 @@
     "notes": "Note",
     "saveRoutine": "Salva routine",
     "deleteRoutine": "Elimina routine",
-    "duplicateSet": "Duplica serie"
+    "duplicateSet": "Duplica serie",
+    "series": "Serie",
+    "rpe": "RPE",
+    "start": "Inizia",
+    "exercises": {
+      "squat": "Squat",
+      "legPress": "Leg press",
+      "legExtension": "Estensioni gambe",
+      "legCurl": "Leg curl",
+      "calves": "Polpacci",
+      "benchPress": "Panca piana",
+      "inclinePress": "Panca inclinata",
+      "flyes": "Croci",
+      "pullups": "Trazioni",
+      "barbellRow": "Rematore con bilanciere",
+      "deadlift": "Stacco da terra",
+      "hipThrust": "Hip thrust"
+    }
+  },
+  "foodSearch": {
+    "title": "Cerca alimenti",
+    "availableOffline": "{{count}} alimenti disponibili offline",
+    "emptyDatabase": "Database vuoto",
+    "searchPlaceholder": "Cerca per nome... (es: anguria, mela)",
+    "filters": "Filtri",
+    "clearFilters": "Cancella filtri",
+    "categories": "Categorie",
+    "tags": "Tag",
+    "loading": "Caricamento alimenti...",
+    "noResults": "Nessun risultato trovato",
+    "tryOtherTerms": "Prova altri termini o filtri",
+    "searchFood": "Cerca un alimento",
+    "typeToSearch": "Digita il nome dell'alimento che stai cercando",
+    "per": "per",
+    "categoryLabels": {
+      "frutas": "Frutta",
+      "verduras": "Verdure",
+      "carnes": "Carne",
+      "pescados": "Pesce",
+      "lacteos": "Latticini",
+      "legumbres": "Legumi",
+      "cereales": "Cereali",
+      "frutos-secos": "Frutta secca",
+      "bebidas": "Bevande",
+      "aceites": "Oli",
+      "huevos": "Uova",
+      "otros": "Altri"
+    },
+    "tagLabels": {
+      "alto-proteina": "Alto contenuto proteico",
+      "bajo-grasa": "Basso contenuto di grassi",
+      "alto-fibra": "Alto contenuto di fibre",
+      "bajo-calorias": "Basso contenuto calorico",
+      "vegano": "Vegano",
+      "vegetariano": "Vegetariano",
+      "sin-gluten": "Senza glutine",
+      "sin-lactosa": "Senza lattosio"
+    }
   },
   "fityai": {
     "title": "FityAI",

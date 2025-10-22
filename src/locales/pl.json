@@ -150,7 +150,12 @@
     "thisMonth": "Ten miesiąc",
     "lastMonth": "Poprzedni miesiąc",
     "last3Months": "Ostatnie 3 miesiące",
-    "last6Months": "Ostatnie 6 miesięcy"
+    "last6Months": "Ostatnie 6 miesięcy",
+    "lastMeasurement": "Ostatni pomiar",
+    "variation": "Zmiana",
+    "average": "Średnia",
+    "max": "Maksimum",
+    "total": "Łącznie"
   },
   "gym": {
     "title": "Siłownia",
@@ -164,7 +169,64 @@
     "notes": "Notatki",
     "saveRoutine": "Zapisz rutynę",
     "deleteRoutine": "Usuń rutynę",
-    "duplicateSet": "Duplikuj serię"
+    "duplicateSet": "Duplikuj serię",
+    "series": "Seria",
+    "rpe": "RPE",
+    "start": "Rozpocznij",
+    "exercises": {
+      "squat": "Przysiad",
+      "legPress": "Prasa nożna",
+      "legExtension": "Wyprost nóg",
+      "legCurl": "Uginanie nóg",
+      "calves": "Łydki",
+      "benchPress": "Wyciskanie sztangi",
+      "inclinePress": "Wyciskanie na ławce skośnej",
+      "flyes": "Rozpiętki",
+      "pullups": "Podciąganie",
+      "barbellRow": "Wiosłowanie sztangą",
+      "deadlift": "Martwy ciąg",
+      "hipThrust": "Wypychanie bioder"
+    }
+  },
+  "foodSearch": {
+    "title": "Szukaj produktów",
+    "availableOffline": "{{count}} produktów dostępnych offline",
+    "emptyDatabase": "Pusta baza danych",
+    "searchPlaceholder": "Szukaj po nazwie... (np: arbuz, jabłko)",
+    "filters": "Filtry",
+    "clearFilters": "Wyczyść filtry",
+    "categories": "Kategorie",
+    "tags": "Tagi",
+    "loading": "Ładowanie produktów...",
+    "noResults": "Nie znaleziono wyników",
+    "tryOtherTerms": "Spróbuj innych słów lub filtrów",
+    "searchFood": "Szukaj produktu",
+    "typeToSearch": "Wpisz nazwę produktu, którego szukasz",
+    "per": "na",
+    "categoryLabels": {
+      "frutas": "Owoce",
+      "verduras": "Warzywa",
+      "carnes": "Mięso",
+      "pescados": "Ryby",
+      "lacteos": "Nabiał",
+      "legumbres": "Rośliny strączkowe",
+      "cereales": "Zboża",
+      "frutos-secos": "Orzechy",
+      "bebidas": "Napoje",
+      "aceites": "Oleje",
+      "huevos": "Jaja",
+      "otros": "Inne"
+    },
+    "tagLabels": {
+      "alto-proteina": "Wysokobiałkowe",
+      "bajo-grasa": "Niskotłuszczowe",
+      "alto-fibra": "Wysokobłonnikowe",
+      "bajo-calorias": "Niskokaloryczne",
+      "vegano": "Wegańskie",
+      "vegetariano": "Wegetariańskie",
+      "sin-gluten": "Bezglutenowe",
+      "sin-lactosa": "Bez laktozy"
+    }
   },
   "fityai": {
     "title": "FityAI",

@@ -32,7 +32,7 @@ interface WaterEntry {
 const Analytics = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
 
@@ -182,7 +182,7 @@ const Analytics = () => {
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-1">
-            {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+            {new Date(data.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
           </p>
           <p className="text-base font-bold" style={{ color: COLORS.weight }}>
             {data.kg.toFixed(2)} kg
@@ -199,10 +199,10 @@ const Analytics = () => {
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-1">
-            {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+            {new Date(data.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
           </p>
           <p className="text-base font-bold" style={{ color: COLORS.steps }}>
-            {data.steps.toLocaleString('es-ES')} pasos
+            {data.steps.toLocaleString(i18n.language)} {t('analytics.steps').toLowerCase()}
           </p>
         </div>
       );
@@ -216,10 +216,10 @@ const Analytics = () => {
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-1">
-            {new Date(data.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+            {new Date(data.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
           </p>
           <p className="text-base font-bold" style={{ color: COLORS.water }}>
-            {data.ml.toLocaleString('es-ES')} ml
+            {data.ml.toLocaleString(i18n.language)} ml
           </p>
         </div>
       );
@@ -384,18 +384,18 @@ const Analytics = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        <h1 className="text-3xl font-bold text-foreground mb-6">Analytics</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-6">{t('analytics.title')}</h1>
 
         {/* Weight Card */}
         <StatsCard id="weight">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Scale className="w-5 h-5" style={{ color: COLORS.weight }} />
-              <h2 className="text-xl font-semibold text-foreground">Peso</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t('analytics.weight')}</h2>
             </div>
             <Button size="sm" onClick={() => setShowAddWeight(true)}>
               <Plus className="w-4 h-4 mr-1" />
-              Añadir
+              {t('common.add')}
             </Button>
           </div>
 
@@ -406,42 +406,42 @@ const Analytics = () => {
               size="sm"
               onClick={() => setWeightRange('thisWeek')}
             >
-              Esta semana
+              {t('analytics.thisWeek')}
             </Button>
             <Button
               variant={weightRange === 'lastWeek' ? "default" : "outline"}
               size="sm"
               onClick={() => setWeightRange('lastWeek')}
             >
-              La semana pasada
+              {t('analytics.lastWeek')}
             </Button>
             <Button
               variant={weightRange === 'thisMonth' ? "default" : "outline"}
               size="sm"
               onClick={() => setWeightRange('thisMonth')}
             >
-              Este mes
+              {t('analytics.thisMonth')}
             </Button>
             <Button
               variant={weightRange === 'lastMonth' ? "default" : "outline"}
               size="sm"
               onClick={() => setWeightRange('lastMonth')}
             >
-              El mes pasado
+              {t('analytics.lastMonth')}
             </Button>
             <Button
               variant={weightRange === 'last3Months' ? "default" : "outline"}
               size="sm"
               onClick={() => setWeightRange('last3Months')}
             >
-              Últimos 3 meses
+              {t('analytics.last3Months')}
             </Button>
             <Button
               variant={weightRange === 'last6Months' ? "default" : "outline"}
               size="sm"
               onClick={() => setWeightRange('last6Months')}
             >
-              Últimos 6 meses
+              {t('analytics.last6Months')}
             </Button>
           </div>
 
@@ -480,27 +480,27 @@ const Analytics = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Última medición</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('analytics.lastMeasurement')}</p>
               <p className="text-lg font-semibold text-foreground">
                 {lastWeight ? `${lastWeight.kg.toFixed(2)} kg` : '-'}
               </p>
               {lastWeight && (
                 <p className="text-xs text-muted-foreground">
-                  {new Date(lastWeight.date).toLocaleDateString('es-ES')}
+                  {new Date(lastWeight.date).toLocaleDateString(i18n.language)}
                 </p>
               )}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Variación</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('analytics.variation')}</p>
               <p className={`text-lg font-semibold ${Number(weightDelta) < 0 ? 'text-accent' : 'text-foreground'}`}>
                 {Number(weightDelta) > 0 ? '+' : ''}{weightDelta} kg
               </p>
               <p className="text-xs text-muted-foreground">
-                {weightRange === 'thisWeek' ? 'Esta semana' : 
-                 weightRange === 'lastWeek' ? 'La semana pasada' :
-                 weightRange === 'thisMonth' ? 'Este mes' :
-                 weightRange === 'lastMonth' ? 'El mes pasado' :
-                 weightRange === 'last3Months' ? 'Últimos 3 meses' : 'Últimos 6 meses'}
+                {weightRange === 'thisWeek' ? t('analytics.thisWeek') : 
+                 weightRange === 'lastWeek' ? t('analytics.lastWeek') :
+                 weightRange === 'thisMonth' ? t('analytics.thisMonth') :
+                 weightRange === 'lastMonth' ? t('analytics.lastMonth') :
+                 weightRange === 'last3Months' ? t('analytics.last3Months') : t('analytics.last6Months')}
               </p>
             </div>
           </div>
@@ -511,7 +511,7 @@ const Analytics = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Footprints className="w-5 h-5" style={{ color: COLORS.steps }} />
-              <h2 className="text-xl font-semibold text-foreground">Pasos</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t('analytics.steps')}</h2>
             </div>
           </div>
 
@@ -522,28 +522,28 @@ const Analytics = () => {
               size="sm"
               onClick={() => setStepsRange('thisWeek')}
             >
-              Esta semana
+              {t('analytics.thisWeek')}
             </Button>
             <Button
               variant={stepsRange === 'lastWeek' ? "default" : "outline"}
               size="sm"
               onClick={() => setStepsRange('lastWeek')}
             >
-              La semana pasada
+              {t('analytics.lastWeek')}
             </Button>
             <Button
               variant={stepsRange === 'thisMonth' ? "default" : "outline"}
               size="sm"
               onClick={() => setStepsRange('thisMonth')}
             >
-              Este mes
+              {t('analytics.thisMonth')}
             </Button>
             <Button
               variant={stepsRange === 'lastMonth' ? "default" : "outline"}
               size="sm"
               onClick={() => setStepsRange('lastMonth')}
             >
-              El mes pasado
+              {t('analytics.lastMonth')}
             </Button>
           </div>
 
@@ -574,22 +574,24 @@ const Analytics = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Promedio diario</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('analytics.average')}</p>
               <p className="text-lg font-semibold text-foreground">
-                {stepsAverage.toLocaleString('es-ES')}
+                {stepsAverage.toLocaleString(i18n.language)}
               </p>
               <p className="text-xs text-muted-foreground">
-                {stepsRange === 'thisWeek' ? 'Esta semana' : 
-                 stepsRange === 'lastWeek' ? 'La semana pasada' :
-                 stepsRange === 'thisMonth' ? 'Este mes' : 'El mes pasado'}
+                {stepsRange === 'thisWeek' ? t('analytics.thisWeek') : 
+                 stepsRange === 'lastWeek' ? t('analytics.lastWeek') :
+                 stepsRange === 'thisMonth' ? t('analytics.thisMonth') : t('analytics.lastMonth')}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Máximo</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('analytics.max')}</p>
               <p className="text-lg font-semibold text-foreground">
-                {stepsMax.toLocaleString('es-ES')}
+                {stepsMax.toLocaleString(i18n.language)}
               </p>
-              <p className="text-xs text-muted-foreground">En el periodo</p>
+              <p className="text-xs text-muted-foreground">{stepsRange === 'thisWeek' ? t('analytics.thisWeek') : 
+                 stepsRange === 'lastWeek' ? t('analytics.lastWeek') :
+                 stepsRange === 'thisMonth' ? t('analytics.thisMonth') : t('analytics.lastMonth')}</p>
             </div>
           </div>
         </StatsCard>
@@ -599,11 +601,11 @@ const Analytics = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Droplet className="w-5 h-5" style={{ color: COLORS.water }} />
-              <h2 className="text-xl font-semibold text-foreground">Agua</h2>
+              <h2 className="text-xl font-semibold text-foreground">{t('analytics.water')}</h2>
             </div>
             <Button size="sm" onClick={() => setShowAddWater(true)}>
               <Plus className="w-4 h-4 mr-1" />
-              Añadir
+              {t('common.add')}
             </Button>
           </div>
 
@@ -614,28 +616,28 @@ const Analytics = () => {
               size="sm"
               onClick={() => setWaterRange('thisWeek')}
             >
-              Esta semana
+              {t('analytics.thisWeek')}
             </Button>
             <Button
               variant={waterRange === 'lastWeek' ? "default" : "outline"}
               size="sm"
               onClick={() => setWaterRange('lastWeek')}
             >
-              La semana pasada
+              {t('analytics.lastWeek')}
             </Button>
             <Button
               variant={waterRange === 'thisMonth' ? "default" : "outline"}
               size="sm"
               onClick={() => setWaterRange('thisMonth')}
             >
-              Este mes
+              {t('analytics.thisMonth')}
             </Button>
             <Button
               variant={waterRange === 'lastMonth' ? "default" : "outline"}
               size="sm"
               onClick={() => setWaterRange('lastMonth')}
             >
-              El mes pasado
+              {t('analytics.lastMonth')}
             </Button>
           </div>
 
@@ -669,22 +671,24 @@ const Analytics = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Promedio diario</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('analytics.average')}</p>
               <p className="text-lg font-semibold text-foreground">
-                {waterAverage.toLocaleString('es-ES')} ml
+                {waterAverage.toLocaleString(i18n.language)} ml
               </p>
               <p className="text-xs text-muted-foreground">
-                {waterRange === 'thisWeek' ? 'Esta semana' : 
-                 waterRange === 'lastWeek' ? 'La semana pasada' :
-                 waterRange === 'thisMonth' ? 'Este mes' : 'El mes pasado'}
+                {waterRange === 'thisWeek' ? t('analytics.thisWeek') : 
+                 waterRange === 'lastWeek' ? t('analytics.lastWeek') :
+                 waterRange === 'thisMonth' ? t('analytics.thisMonth') : t('analytics.lastMonth')}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Total</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('analytics.total')}</p>
               <p className="text-lg font-semibold text-foreground">
-                {waterTotal.toLocaleString('es-ES')} ml
+                {waterTotal.toLocaleString(i18n.language)} ml
               </p>
-              <p className="text-xs text-muted-foreground">En el periodo</p>
+              <p className="text-xs text-muted-foreground">{waterRange === 'thisWeek' ? t('analytics.thisWeek') : 
+                 waterRange === 'lastWeek' ? t('analytics.lastWeek') :
+                 waterRange === 'thisMonth' ? t('analytics.thisMonth') : t('analytics.lastMonth')}</p>
             </div>
           </div>
         </StatsCard>
@@ -694,11 +698,11 @@ const Analytics = () => {
       <Dialog open={showAddWater} onOpenChange={setShowAddWater}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Añadir Agua</DialogTitle>
+            <DialogTitle>{t('analytics.addWater')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="water-amount">Cantidad (ml)</Label>
+              <Label htmlFor="water-amount">{t('analytics.amount')} (ml)</Label>
               <Input
                 id="water-amount"
                 type="number"
@@ -708,7 +712,7 @@ const Analytics = () => {
               />
             </div>
             <div>
-              <Label htmlFor="water-date">Fecha</Label>
+              <Label htmlFor="water-date">{t('analytics.date')}</Label>
               <Input
                 id="water-date"
                 type="date"
@@ -719,9 +723,9 @@ const Analytics = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddWater(false)}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
-            <Button onClick={addWater}>Añadir</Button>
+            <Button onClick={addWater}>{t('common.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -730,11 +734,11 @@ const Analytics = () => {
       <Dialog open={showAddWeight} onOpenChange={setShowAddWeight}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Añadir peso</DialogTitle>
+            <DialogTitle>{t('analytics.addWeight')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="weight">Peso (kg)</Label>
+              <Label htmlFor="weight">{t('analytics.weight')} (kg)</Label>
               <Input
                 id="weight"
                 type="number"
@@ -745,7 +749,7 @@ const Analytics = () => {
               />
             </div>
             <div>
-              <Label htmlFor="date">Fecha</Label>
+              <Label htmlFor="date">{t('analytics.date')}</Label>
               <Input
                 id="date"
                 type="date"
@@ -756,10 +760,10 @@ const Analytics = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddWeight(false)}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button onClick={addWeight}>
-              Guardar
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
