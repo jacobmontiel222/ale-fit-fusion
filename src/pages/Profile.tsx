@@ -14,6 +14,8 @@ import { AvatarSelector } from "@/components/AvatarSelector";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { useTheme } from "next-themes";
 import { useProfile } from "@/hooks/useProfile";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface ProfileData {
   name: string;
@@ -39,6 +41,7 @@ const Profile = () => {
     avatar_color: '#10B981'
   });
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [smartReminders, setSmartReminders] = useState(false);
   const [biometricAuth, setBiometricAuth] = useState(true);
@@ -46,6 +49,7 @@ const Profile = () => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { profile, updateProfile, isUpdating } = useProfile();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     setMounted(true);
@@ -77,9 +81,9 @@ const Profile = () => {
     try {
       await updateProfile(editData);
       setIsEditing(false);
-      toast.success('Perfil actualizado correctamente');
+      toast.success(t('profile.profileUpdated'));
     } catch (error) {
-      toast.error('Error al guardar los cambios');
+      toast.error(t('profile.updateError'));
       console.error(error);
     }
   };
@@ -103,7 +107,7 @@ const Profile = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('Datos exportados correctamente');
+    toast.success(t('profile.dataExported'));
   };
 
   const handleImport = () => {
@@ -118,10 +122,10 @@ const Profile = () => {
           const content = event.target?.result as string;
           const success = importJSON(content);
           if (success) {
-            toast.success('Datos importados correctamente');
+            toast.success(t('profile.dataImported'));
             window.location.reload();
           } else {
-            toast.error('Error al importar datos');
+            toast.error(t('profile.importError'));
           }
         };
         reader.readAsText(file);
@@ -136,7 +140,7 @@ const Profile = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex-1" />
-          <h1 className="text-2xl font-bold text-foreground">Perfil</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('profile.title')}</h1>
           <div className="flex-1 flex justify-end">
             <button
               onClick={() => navigate('/')}
@@ -167,18 +171,18 @@ const Profile = () => {
           <h2 className="text-2xl font-bold text-foreground mb-1">
             {profile?.name || 'Usuario'}
           </h2>
-          <p className="text-muted-foreground mb-4">Vamos a por ello</p>
+          <p className="text-muted-foreground mb-4">{t('profile.motto')}</p>
           {!isEditing ? (
             <Button variant="secondary" className="w-48" onClick={handleEditProfile}>
-              Editar perfil
+              {t('profile.editProfile')}
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button variant="secondary" className="w-24" onClick={handleCancelEdit}>
-                Cancelar
+                {t('profile.cancel')}
               </Button>
               <Button variant="default" className="w-24" onClick={handleSaveProfile} disabled={isUpdating}>
-                {isUpdating ? 'Guardando...' : 'Guardar'}
+                {isUpdating ? t('profile.saving') : t('profile.save')}
               </Button>
             </div>
           )}
@@ -186,10 +190,10 @@ const Profile = () => {
 
         {/* Información personal */}
         <StatsCard>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Información personal</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.personalInfo')}</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-foreground">Altura</span>
+              <span className="text-foreground">{t('profile.height')}</span>
               {isEditing ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -199,14 +203,14 @@ const Profile = () => {
                     className="w-20 h-8 text-right"
                     placeholder="0"
                   />
-                  <span className="text-muted-foreground">cm</span>
+                  <span className="text-muted-foreground">{t('profile.cm')}</span>
                 </div>
                ) : (
-                <span className="text-muted-foreground">{profile?.height || 0} cm</span>
+                <span className="text-muted-foreground">{profile?.height || 0} {t('profile.cm')}</span>
               )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-foreground">Peso actual</span>
+              <span className="text-foreground">{t('profile.currentWeight')}</span>
               {isEditing ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -217,14 +221,14 @@ const Profile = () => {
                     className="w-20 h-8 text-right"
                     placeholder="0"
                   />
-                  <span className="text-muted-foreground">kg</span>
+                  <span className="text-muted-foreground">{t('profile.kg')}</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">{profile?.current_weight || 0} kg</span>
+                <span className="text-muted-foreground">{profile?.current_weight || 0} {t('profile.kg')}</span>
               )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-foreground">Peso objetivo</span>
+              <span className="text-foreground">{t('profile.targetWeight')}</span>
               {isEditing ? (
                 <div className="flex items-center gap-2">
                   <Input
@@ -235,10 +239,10 @@ const Profile = () => {
                     className="w-20 h-8 text-right"
                     placeholder="0"
                   />
-                  <span className="text-muted-foreground">kg</span>
+                  <span className="text-muted-foreground">{t('profile.kg')}</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">{profile?.target_weight || 0} kg</span>
+                <span className="text-muted-foreground">{profile?.target_weight || 0} {t('profile.kg')}</span>
               )}
             </div>
           </div>
@@ -246,10 +250,10 @@ const Profile = () => {
 
         {/* Preferencias de la aplicación */}
         <StatsCard>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Preferencias de la aplicación</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.appPreferences')}</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Label htmlFor="dark-mode" className="text-foreground cursor-pointer">Modo oscuro</Label>
+              <Label htmlFor="dark-mode" className="text-foreground cursor-pointer">{t('profile.darkMode')}</Label>
               <Switch 
                 id="dark-mode" 
                 checked={mounted ? theme === 'dark' : false} 
@@ -258,38 +262,41 @@ const Profile = () => {
               />
             </div>
             <div className="flex justify-between items-center">
-              <Label htmlFor="notifications" className="text-foreground cursor-pointer">Notificaciones</Label>
+              <Label htmlFor="notifications" className="text-foreground cursor-pointer">{t('profile.notifications')}</Label>
               <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
             </div>
             <div className="flex justify-between items-center">
-              <Label htmlFor="smart-reminders" className="text-foreground cursor-pointer">Recordatorios inteligentes</Label>
+              <Label htmlFor="smart-reminders" className="text-foreground cursor-pointer">{t('profile.smartReminders')}</Label>
               <Switch id="smart-reminders" checked={smartReminders} onCheckedChange={setSmartReminders} />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-foreground">Unidades</span>
-              <span className="text-muted-foreground">{state.profile.weightUnit === 'kg' ? 'Métrico' : 'Imperial'}</span>
+              <span className="text-foreground">{t('profile.units')}</span>
+              <span className="text-muted-foreground">{state.profile.weightUnit === 'kg' ? t('profile.metric') : t('profile.imperial')}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-foreground">Idioma</span>
-              <span className="text-muted-foreground">Español</span>
-            </div>
+            <button 
+              className="w-full flex justify-between items-center text-left"
+              onClick={() => setShowLanguageSelector(true)}
+            >
+              <span className="text-foreground">{t('profile.language')}</span>
+              <span className="text-muted-foreground">{t(`languages.${i18n.language}`)}</span>
+            </button>
           </div>
         </StatsCard>
 
         {/* Cuenta y seguridad */}
         <StatsCard>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Cuenta y seguridad</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.accountSecurity')}</h3>
           <div className="space-y-4">
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Cambiar email</span>
+              <span className="text-foreground">{t('profile.changeEmail')}</span>
               <span className="text-muted-foreground text-sm">{user?.email || ''}</span>
             </button>
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Cambiar contraseña</span>
+              <span className="text-foreground">{t('profile.changePassword')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <div className="flex justify-between items-center">
-              <Label htmlFor="biometric" className="text-foreground cursor-pointer">Face ID / Touch ID</Label>
+              <Label htmlFor="biometric" className="text-foreground cursor-pointer">{t('profile.biometric')}</Label>
               <Switch id="biometric" checked={biometricAuth} onCheckedChange={setBiometricAuth} />
             </div>
           </div>
@@ -297,18 +304,18 @@ const Profile = () => {
 
         {/* Sincronización y datos */}
         <StatsCard>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Sincronización y datos</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.syncData')}</h3>
           <div className="space-y-4">
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Conectar con Google Fit / Apple Health</span>
+              <span className="text-foreground">{t('profile.connectHealth')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <button onClick={handleExport} className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Exportar datos</span>
+              <span className="text-foreground">{t('profile.exportData')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <div className="flex justify-between items-center">
-              <Label htmlFor="auto-backup" className="text-foreground cursor-pointer">Copia de seguridad automática</Label>
+              <Label htmlFor="auto-backup" className="text-foreground cursor-pointer">{t('profile.autoBackup')}</Label>
               <Switch id="auto-backup" checked={autoBackup} onCheckedChange={setAutoBackup} />
             </div>
           </div>
@@ -316,18 +323,18 @@ const Profile = () => {
 
         {/* Ayuda y soporte */}
         <StatsCard>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Ayuda y soporte</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.helpSupport')}</h3>
           <div className="space-y-4">
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">FAQ / Centro de ayuda</span>
+              <span className="text-foreground">{t('profile.faq')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Contactar soporte</span>
+              <span className="text-foreground">{t('profile.contactSupport')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Informar de un bug</span>
+              <span className="text-foreground">{t('profile.reportBug')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
@@ -335,14 +342,14 @@ const Profile = () => {
 
         {/* Legal */}
         <StatsCard>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Legal</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.legal')}</h3>
           <div className="space-y-4">
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Política de privacidad</span>
+              <span className="text-foreground">{t('profile.privacyPolicy')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <button className="w-full flex justify-between items-center text-left">
-              <span className="text-foreground">Términos de servicio</span>
+              <span className="text-foreground">{t('profile.terms')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
@@ -354,10 +361,10 @@ const Profile = () => {
           className="w-full mt-6"
           onClick={async () => {
             await signOut();
-            toast.success('Sesión cerrada exitosamente');
+            toast.success(t('profile.logoutSuccess'));
           }}
         >
-          Cerrar sesión
+          {t('profile.logout')}
         </Button>
       </div>
 
@@ -367,6 +374,11 @@ const Profile = () => {
         currentIcon={editData.avatar_icon}
         currentColor={editData.avatar_color}
         onSelect={handleAvatarSelect}
+      />
+      
+      <LanguageSelector
+        open={showLanguageSelector}
+        onOpenChange={setShowLanguageSelector}
       />
     </div>
   );

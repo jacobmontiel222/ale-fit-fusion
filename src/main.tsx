@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from "./App.tsx";
 import "./index.css";
+import "./lib/i18n";
 import { queryClient } from "./lib/queryClient";
 import { initializeFoodDatabase } from "./lib/initFoodDatabase";
 
