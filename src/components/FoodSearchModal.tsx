@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FoodItem, FoodCategory, FoodTag } from '@/types/food';
-import { useFoodsDatabase } from '@/hooks/useFoodsDatabase';
+import { FoodItem, FoodCategory, FoodTag, FoodSearchFilters } from '@/types/food';
+import { foodDatabase } from '@/lib/foodDatabase';
+import { searchFoods } from '@/lib/foodSearch';
 
 interface FoodSearchModalProps {
   open: boolean;
@@ -42,72 +43,83 @@ const TAGS: { value: FoodTag; label: string }[] = [
 ];
 
 export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearchModalProps) {
-  const [query, setQuery] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<FoodCategory[]>([]);
-  const [selectedTags, setSelectedTags] = useState<FoodTag[]>([]);
-  const [results, setResults] = useState<FoodItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allFoods, setAllFoods] = useState<FoodItem[]>([]);
+  const [filteredResults, setFilteredResults] = useState<FoodItem[]>([]);
+  const [filters, setFilters] = useState<FoodSearchFilters>({
+    query: '',
+    categories: [],
+    tags: [],
+  });
   const [showFilters, setShowFilters] = useState(false);
-  const { searchFoods, loading: dbLoading, foods } = useFoodsDatabase();
+  const [loading, setLoading] = useState(true);
+  const [foodCount, setFoodCount] = useState(0);
+  const [availableCategories, setAvailableCategories] = useState<FoodCategory[]>([]);
+  const [availableTags, setAvailableTags] = useState<FoodTag[]>([]);
 
-  // Realizar búsqueda
+  // Cargar alimentos desde IndexedDB (CSV)
   useEffect(() => {
-    const performSearch = async () => {
-      if (!query.trim() && selectedCategories.length === 0) {
-        setResults([]);
-        return;
-      }
-
+    const loadFoods = async () => {
       try {
-        const searchResults = await searchFoods(
-          query, 
-          selectedCategories.length > 0 ? selectedCategories : undefined
-        );
-        
-        // Filtrar por tags si hay seleccionados
-        const filteredResults = selectedTags.length > 0
-          ? searchResults.filter(food => 
-              selectedTags.some(tag => food.tags.includes(tag))
-            )
-          : searchResults;
+        setLoading(true);
+        const foods = await foodDatabase.getAllFoods();
+        const count = await foodDatabase.getCount();
+        setAllFoods(foods);
+        setFoodCount(count);
+        setFilteredResults([]);
 
-        setResults(filteredResults);
+        // Derivar categorías y tags disponibles
+        const categories = new Set<FoodCategory>();
+        const tags = new Set<FoodTag>();
+        foods.forEach(food => {
+          categories.add(food.category);
+          food.tags.forEach(tag => tags.add(tag));
+        });
+        setAvailableCategories(Array.from(categories));
+        setAvailableTags(Array.from(tags));
       } catch (error) {
-        console.error('Error searching foods:', error);
-        setResults([]);
+        console.error('Error cargando alimentos:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    const timeoutId = setTimeout(performSearch, 300);
-    return () => clearTimeout(timeoutId);
-  }, [query, selectedCategories, selectedTags, searchFoods]);
+    if (open) loadFoods();
+  }, [open]);
+
+  // Buscar con filtros locales (fuzzy)
+  useEffect(() => {
+    if (!allFoods.length) return;
+
+    const updatedFilters = { ...filters, query: searchQuery };
+    const results = searchFoods(allFoods, updatedFilters);
+    setFilteredResults(results.map(r => r.item).slice(0, 100));
+  }, [searchQuery, filters, allFoods]);
 
   const toggleCategory = (category: FoodCategory) => {
-    setSelectedCategories(prev =>
-      prev.includes(category)
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
-    );
+    setFilters(prev => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter(c => c !== category)
+        : [...prev.categories, category],
+    }));
   };
 
   const toggleTag = (tag: FoodTag) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
+    setFilters(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag],
+    }));
   };
 
   const clearFilters = () => {
-    setQuery('');
-    setSelectedCategories([]);
-    setSelectedTags([]);
+    setFilters({ query: '', categories: [], tags: [] });
+    setSearchQuery('');
   };
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedTags.length > 0;
-
-  // Obtener categorías y tags disponibles
-  const availableCategories = Array.from(new Set(foods.map(f => f.category)));
-  const availableTags = Array.from(new Set(foods.flatMap(f => f.tags)));
+  const hasActiveFilters = filters.categories.length > 0 || filters.tags.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -115,7 +127,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-2xl">Buscar alimentos</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {dbLoading ? 'Cargando...' : `${foods.length} alimentos disponibles`}
+            {foodCount > 0 ? `${foodCount} alimentos disponibles offline` : 'Base de datos vacía'}
           </p>
         </DialogHeader>
 
@@ -125,13 +137,13 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nombre... (ej: sandía, manzana)"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-10"
             />
-            {query && (
+            {searchQuery && (
               <button
-                onClick={() => setQuery('')}
+                onClick={() => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
@@ -150,7 +162,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
               Filtros
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {selectedCategories.length + selectedTags.length}
+                  {filters.categories.length + filters.tags.length}
                 </Badge>
               )}
             </Button>
@@ -176,7 +188,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
                   {CATEGORIES.filter(cat => availableCategories.includes(cat.value)).map((cat) => (
                     <Badge
                       key={cat.value}
-                      variant={selectedCategories.includes(cat.value) ? 'default' : 'outline'}
+                      variant={filters.categories.includes(cat.value) ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => toggleCategory(cat.value)}
                     >
@@ -191,7 +203,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
                   {TAGS.filter(tag => availableTags.includes(tag.value)).map((tag) => (
                     <Badge
                       key={tag.value}
-                      variant={selectedTags.includes(tag.value) ? 'default' : 'outline'}
+                      variant={filters.tags.includes(tag.value) ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => toggleTag(tag.value)}
                     >
@@ -206,28 +218,28 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
 
         {/* Resultados */}
         <ScrollArea className="flex-1 px-6 pb-6">
-          {dbLoading ? (
+          {loading ? (
             <div className="text-center py-12 text-muted-foreground">
               Cargando alimentos...
             </div>
-          ) : foods.length === 0 ? (
+          ) : foodCount === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <p className="mb-2">La base de datos está vacía</p>
-              <p className="text-sm">Recarga la página para cargar los alimentos</p>
+              <p className="text-sm">Importa alimentos para comenzar a buscar</p>
             </div>
-          ) : !query && selectedCategories.length === 0 && selectedTags.length === 0 ? (
+          ) : !searchQuery && filters.categories.length === 0 && filters.tags.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <p className="mb-2">Busca un alimento</p>
               <p className="text-sm">Escribe el nombre del alimento que buscas</p>
             </div>
-          ) : results.length === 0 ? (
+          ) : filteredResults.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <p className="mb-2">No se encontraron resultados</p>
               <p className="text-sm">Intenta con otros términos o filtros</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {results.map((food) => (
+              {filteredResults.map((food) => (
                 <div
                   key={food.id}
                   onClick={() => {
