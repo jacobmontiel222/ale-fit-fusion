@@ -68,8 +68,9 @@ export function useFoodsDatabase() {
 
       // Búsqueda por texto
       if (query.trim()) {
+        const q = query.trim();
         queryBuilder = queryBuilder.or(
-          `name.ilike.%${query}%,search_terms.cs.{${query.toLowerCase()}}`
+          `name.ilike.%${q}%,brand.ilike.%${q}%`
         );
       }
 
