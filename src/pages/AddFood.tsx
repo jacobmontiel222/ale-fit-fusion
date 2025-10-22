@@ -298,6 +298,9 @@ const AddFood = () => {
     };
     
     // Calcular micronutrientes ajustados
+    console.log('🍎 Alimento desde DB:', food.name);
+    console.log('🔬 Micronutrientes originales:', food.micronutrients);
+    
     const adjustedMicronutrients = {
       vitamins: food.micronutrients.vitamins.map(v => ({
         name: v.name,
@@ -312,6 +315,8 @@ const AddFood = () => {
         dailyValue: m.dailyValue
       }))
     };
+    
+    console.log('📊 Micronutrientes ajustados a guardar:', adjustedMicronutrients);
     
     // Check if adding to recipe
     if (meal === "recipe") {
