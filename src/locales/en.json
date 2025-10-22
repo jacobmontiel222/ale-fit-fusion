@@ -150,7 +150,12 @@
     "thisMonth": "This month",
     "lastMonth": "Last month",
     "last3Months": "Last 3 months",
-    "last6Months": "Last 6 months"
+    "last6Months": "Last 6 months",
+    "lastMeasurement": "Last measurement",
+    "variation": "Variation",
+    "average": "Average",
+    "max": "Maximum",
+    "total": "Total"
   },
   "gym": {
     "title": "Gym",
@@ -165,6 +170,9 @@
     "saveRoutine": "Save routine",
     "deleteRoutine": "Delete routine",
     "duplicateSet": "Duplicate set",
+    "series": "Set",
+    "rpe": "RPE",
+    "start": "Start",
     "exercises": {
       "squat": "Squat",
       "legPress": "Leg Press",
@@ -178,6 +186,46 @@
       "barbellRow": "Barbell Row",
       "deadlift": "Deadlift",
       "hipThrust": "Hip Thrust"
+    }
+  },
+  "foodSearch": {
+    "title": "Search foods",
+    "availableOffline": "{{count}} foods available offline",
+    "emptyDatabase": "Empty database",
+    "searchPlaceholder": "Search by name... (e.g.: watermelon, apple)",
+    "filters": "Filters",
+    "clearFilters": "Clear filters",
+    "categories": "Categories",
+    "tags": "Tags",
+    "loading": "Loading foods...",
+    "noResults": "No results found",
+    "tryOtherTerms": "Try other terms or filters",
+    "searchFood": "Search a food",
+    "typeToSearch": "Type the name of the food you are looking for",
+    "per": "per",
+    "categoryLabels": {
+      "frutas": "Fruits",
+      "verduras": "Vegetables",
+      "carnes": "Meat",
+      "pescados": "Fish",
+      "lacteos": "Dairy",
+      "legumbres": "Legumes",
+      "cereales": "Cereals",
+      "frutos-secos": "Nuts",
+      "bebidas": "Beverages",
+      "aceites": "Oils",
+      "huevos": "Eggs",
+      "otros": "Others"
+    },
+    "tagLabels": {
+      "alto-proteina": "High protein",
+      "bajo-grasa": "Low fat",
+      "alto-fibra": "High fiber",
+      "bajo-calorias": "Low calories",
+      "vegano": "Vegan",
+      "vegetariano": "Vegetarian",
+      "sin-gluten": "Gluten free",
+      "sin-lactosa": "Lactose free"
     }
   },
   "fityai": {

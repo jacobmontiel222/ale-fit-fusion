@@ -150,7 +150,12 @@
     "thisMonth": "Este mes",
     "lastMonth": "Mes pasado",
     "last3Months": "Últimos 3 meses",
-    "last6Months": "Últimos 6 meses"
+    "last6Months": "Últimos 6 meses",
+    "lastMeasurement": "Última medición",
+    "variation": "Variación",
+    "average": "Media",
+    "max": "Máximo",
+    "total": "Total"
   },
   "gym": {
     "title": "Gimnasio",
@@ -165,6 +170,9 @@
     "saveRoutine": "Guardar rutina",
     "deleteRoutine": "Eliminar rutina",
     "duplicateSet": "Duplicar serie",
+    "series": "Serie",
+    "rpe": "RPE",
+    "start": "Iniciar",
     "exercises": {
       "squat": "Sentadilla",
       "legPress": "Prensa",
@@ -178,6 +186,46 @@
       "barbellRow": "Remo con barra",
       "deadlift": "Peso muerto",
       "hipThrust": "Hip thrust"
+    }
+  },
+  "foodSearch": {
+    "title": "Buscar alimentos",
+    "availableOffline": "{{count}} alimentos disponibles offline",
+    "emptyDatabase": "Base de datos vacía",
+    "searchPlaceholder": "Buscar por nombre... (ej: sandía, manzana)",
+    "filters": "Filtros",
+    "clearFilters": "Limpiar filtros",
+    "categories": "Categorías",
+    "tags": "Etiquetas",
+    "loading": "Cargando alimentos...",
+    "noResults": "No se encontraron resultados",
+    "tryOtherTerms": "Intenta con otros términos o filtros",
+    "searchFood": "Busca un alimento",
+    "typeToSearch": "Escribe el nombre del alimento que buscas",
+    "per": "por",
+    "categoryLabels": {
+      "frutas": "Frutas",
+      "verduras": "Verduras",
+      "carnes": "Carnes",
+      "pescados": "Pescados",
+      "lacteos": "Lácteos",
+      "legumbres": "Legumbres",
+      "cereales": "Cereales",
+      "frutos-secos": "Frutos secos",
+      "bebidas": "Bebidas",
+      "aceites": "Aceites",
+      "huevos": "Huevos",
+      "otros": "Otros"
+    },
+    "tagLabels": {
+      "alto-proteina": "Alto en proteína",
+      "bajo-grasa": "Bajo en grasa",
+      "alto-fibra": "Alto en fibra",
+      "bajo-calorias": "Bajo en calorías",
+      "vegano": "Vegano",
+      "vegetariano": "Vegetariano",
+      "sin-gluten": "Sin gluten",
+      "sin-lactosa": "Sin lactosa"
     }
   },
   "fityai": {
