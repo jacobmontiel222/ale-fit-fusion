@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FoodItem, FoodCategory, FoodTag, FoodSearchFilters } from '@/types/food';
 import { foodDatabase } from '@/lib/foodDatabase';
 import { searchFoods } from '@/lib/foodSearch';
+import { useTranslation } from 'react-i18next';
 
 interface FoodSearchModalProps {
   open: boolean;
@@ -56,12 +57,31 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
   const [foodCount, setFoodCount] = useState(0);
   const [availableCategories, setAvailableCategories] = useState<FoodCategory[]>([]);
   const [availableTags, setAvailableTags] = useState<FoodTag[]>([]);
+  const { t, i18n } = useTranslation();
+
+  // Helper para obtener el nombre del alimento en el idioma actual
+  const getFoodName = (food: FoodItem): string => {
+    if (food.names) {
+      const langKey = i18n.language as keyof typeof food.names;
+      return food.names[langKey] || food.name;
+    }
+    return food.name;
+  };
 
   // Cargar alimentos desde IndexedDB (CSV)
   useEffect(() => {
     const loadFoods = async () => {
       try {
         setLoading(true);
+        
+        // Limpiar y recargar con el idioma actual
+        await foodDatabase.clearAll();
+        
+        const response = await fetch('/src/data/foods_database.csv');
+        const csvText = await response.text();
+        const { initializeFoodDatabase } = await import('@/lib/initFoodDatabase');
+        await initializeFoodDatabase(i18n.language);
+        
         const foods = await foodDatabase.getAllFoods();
         const count = await foodDatabase.getCount();
         setAllFoods(foods);
@@ -85,7 +105,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
     };
 
     if (open) loadFoods();
-  }, [open]);
+  }, [open, i18n.language]);
 
   // Buscar con filtros locales (fuzzy)
   useEffect(() => {
@@ -125,9 +145,9 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="text-2xl">Buscar alimentos</DialogTitle>
+          <DialogTitle className="text-2xl">{t('foodSearch.title')}</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {foodCount > 0 ? `${foodCount} alimentos disponibles offline` : 'Base de datos vacía'}
+            {foodCount > 0 ? t('foodSearch.availableOffline', { count: foodCount }) : t('foodSearch.emptyDatabase')}
           </p>
         </DialogHeader>
 
@@ -136,7 +156,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre... (ej: sandía, manzana)"
+              placeholder={t('foodSearch.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-10"
@@ -159,7 +179,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
               className="gap-2"
             >
               <Filter className="w-4 h-4" />
-              Filtros
+              {t('foodSearch.filters')}
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">
                   {filters.categories.length + filters.tags.length}
@@ -168,7 +188,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
             </Button>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Limpiar filtros
+                {t('foodSearch.clearFilters')}
               </Button>
             )}
           </div>
@@ -179,8 +199,8 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
           <div className="px-6 pb-4 border-t border-border">
             <Tabs defaultValue="categories" className="w-full mt-4">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="categories">Categorías</TabsTrigger>
-                <TabsTrigger value="tags">Etiquetas</TabsTrigger>
+                <TabsTrigger value="categories">{t('foodSearch.categories')}</TabsTrigger>
+                <TabsTrigger value="tags">{t('foodSearch.tags')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="categories" className="mt-4">
@@ -192,7 +212,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
                       className="cursor-pointer"
                       onClick={() => toggleCategory(cat.value)}
                     >
-                      {cat.label}
+                      {t(`foodSearch.categoryLabels.${cat.value}`)}
                     </Badge>
                   ))}
                 </div>
@@ -207,7 +227,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
                       className="cursor-pointer"
                       onClick={() => toggleTag(tag.value)}
                     >
-                      {tag.label}
+                      {t(`foodSearch.tagLabels.${tag.value}`)}
                     </Badge>
                   ))}
                 </div>
@@ -220,22 +240,22 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
         <ScrollArea className="flex-1 px-6 pb-6">
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">
-              Cargando alimentos...
+              {t('foodSearch.loading')}
             </div>
           ) : foodCount === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="mb-2">La base de datos está vacía</p>
-              <p className="text-sm">Importa alimentos para comenzar a buscar</p>
+              <p className="mb-2">{t('foodSearch.emptyDatabase')}</p>
+              <p className="text-sm">{t('foodSearch.typeToSearch')}</p>
             </div>
           ) : !searchQuery && filters.categories.length === 0 && filters.tags.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="mb-2">Busca un alimento</p>
-              <p className="text-sm">Escribe el nombre del alimento que buscas</p>
+              <p className="mb-2">{t('foodSearch.searchFood')}</p>
+              <p className="text-sm">{t('foodSearch.typeToSearch')}</p>
             </div>
           ) : filteredResults.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="mb-2">No se encontraron resultados</p>
-              <p className="text-sm">Intenta con otros términos o filtros</p>
+              <p className="mb-2">{t('foodSearch.noResults')}</p>
+              <p className="text-sm">{t('foodSearch.tryOtherTerms')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -250,13 +270,13 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-foreground">{food.name}</h4>
+                      <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
                       {food.brand && (
                         <p className="text-xs text-muted-foreground">{food.brand}</p>
                       )}
                     </div>
                     <Badge variant="secondary" className="text-xs">
-                      {CATEGORIES.find(c => c.value === food.category)?.label}
+                      {t(`foodSearch.categoryLabels.${food.category}`)}
                     </Badge>
                   </div>
                   
@@ -268,14 +288,14 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
                   </div>
                   
                   <p className="text-xs text-muted-foreground mt-1">
-                    por {food.servingSize} {food.servingUnit}
+                    {t('foodSearch.per')} {food.servingSize} {food.servingUnit}
                   </p>
                   
                   {food.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {food.tags.slice(0, 3).map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">
-                          {TAGS.find(t => t.value === tag)?.label || tag}
+                          {t(`foodSearch.tagLabels.${tag}`)}
                         </Badge>
                       ))}
                     </div>

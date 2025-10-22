@@ -37,23 +37,23 @@ interface Routine {
 }
 
 const exerciseLibrary = [
-  "Sentadilla",
-  "Prensa",
-  "Extensión de cuádriceps",
-  "Curl femoral",
-  "Gemelos",
-  "Press banca",
-  "Press inclinado",
-  "Aperturas",
-  "Dominadas",
-  "Remo con barra",
-  "Peso muerto",
-  "Hip thrust",
+  "gym.exercises.squat",
+  "gym.exercises.legPress",
+  "gym.exercises.legExtension",
+  "gym.exercises.legCurl",
+  "gym.exercises.calves",
+  "gym.exercises.benchPress",
+  "gym.exercises.inclinePress",
+  "gym.exercises.flyes",
+  "gym.exercises.pullups",
+  "gym.exercises.barbellRow",
+  "gym.exercises.deadlift",
+  "gym.exercises.hipThrust",
 ];
 
 const Gimnasio = () => {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
@@ -150,7 +150,7 @@ const Gimnasio = () => {
       .from('gym_routines')
       .insert({
         user_id: user.id,
-        name: "Nueva Rutina",
+        name: t('gym.newRoutine'),
         description: "",
         is_active: true
       })
@@ -171,12 +171,12 @@ const Gimnasio = () => {
     setEditingRoutine(newRoutine);
   };
 
-  const addExercise = (exerciseName: string) => {
+  const addExercise = (exerciseKey: string) => {
     if (!editingRoutine) return;
     
     const newExercise: Exercise = {
       id: Date.now().toString(),
-      name: exerciseName,
+      name: t(exerciseKey),
       sets: [{
         id: Date.now().toString(),
         series: 1,
@@ -320,7 +320,7 @@ const Gimnasio = () => {
   };
 
   const filteredExercises = exerciseLibrary.filter(ex =>
-    ex.toLowerCase().includes(exerciseSearch.toLowerCase())
+    t(ex).toLowerCase().includes(exerciseSearch.toLowerCase())
   );
 
   const weekDays = getWeekDays();
@@ -361,11 +361,11 @@ const Gimnasio = () => {
                 
                 {/* Sets Table Header */}
                 <div className="grid grid-cols-6 gap-2 mb-2 text-xs text-muted-foreground">
-                  <span className="text-center">Serie</span>
+                  <span className="text-center">{t('gym.series')}</span>
                   <span className="text-center">Kg</span>
-                  <span className="text-center">Reps</span>
-                  <span className="text-center">RPE</span>
-                  <span className="text-center">Rest</span>
+                  <span className="text-center">{t('gym.reps')}</span>
+                  <span className="text-center">{t('gym.rpe')}</span>
+                  <span className="text-center">{t('gym.rest')}</span>
                   <span></span>
                 </div>
 
@@ -541,7 +541,7 @@ const Gimnasio = () => {
               <PopoverTrigger asChild>
                 <Button variant="ghost" className="font-semibold text-lg">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                  {selectedDate.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="center">
@@ -573,7 +573,7 @@ const Gimnasio = () => {
                   }`}
                 >
                   <span className="text-xs text-muted-foreground mb-1">
-                    {day.toLocaleDateString('es-ES', { weekday: 'short' }).charAt(0).toUpperCase()}
+                    {day.toLocaleDateString(i18n.language, { weekday: 'short' }).charAt(0).toUpperCase()}
                   </span>
                   <span className={`text-sm font-semibold ${isToday ? 'text-accent' : ''}`}>
                     {day.getDate()}
@@ -590,13 +590,13 @@ const Gimnasio = () => {
         {/* Routines List */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground">
-            Rutinas - {selectedDate.getDate()} de {selectedDate.toLocaleDateString('es-ES', { month: 'long' })}
+            {t('gym.title')} - {selectedDate.getDate()} de {selectedDate.toLocaleDateString(i18n.language, { month: 'long' })}
           </h2>
           
           {dayRoutines.length === 0 ? (
             <StatsCard>
               <p className="text-center text-muted-foreground py-8">
-                No hay rutinas para este día
+                {t('meals.noFoodsAdded')}
               </p>
             </StatsCard>
           ) : (
@@ -612,7 +612,7 @@ const Gimnasio = () => {
                       {routine.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {routine.exercises.length} ejercicio{routine.exercises.length !== 1 ? 's' : ''}
+                      {routine.exercises.length} {t('gym.addExercise').toLowerCase()}{routine.exercises.length !== 1 ? 's' : ''}
                     </p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />

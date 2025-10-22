@@ -60,11 +60,17 @@ function parseTags(tagsStr: string): FoodTag[] {
   }
 }
 
-async function parseCSVToFoodItems(csvText: string): Promise<FoodItem[]> {
+async function parseCSVToFoodItems(csvText: string, currentLanguage: string = 'es'): Promise<FoodItem[]> {
   const lines = csvText.split('\n').filter(line => line.trim());
   const headers = parseCSVLine(lines[0]);
   
   const foods: FoodItem[] = [];
+
+  // Map para obtener el nombre según el idioma
+  const getNameForLanguage = (row: Record<string, string>, lang: string): string => {
+    const nameKey = `name_${lang}`;
+    return row[nameKey] || row.name_es || row.name || '';
+  };
 
   for (let i = 1; i < lines.length; i++) {
     try {
@@ -81,7 +87,16 @@ async function parseCSVToFoodItems(csvText: string): Promise<FoodItem[]> {
 
       const food: FoodItem = {
         id: row.id,
-        name: row.name_es,
+        name: getNameForLanguage(row, currentLanguage),
+        names: {
+          es: row.name_es,
+          en: row.name_en,
+          fr: row.name_fr,
+          de: row.name_de,
+          it: row.name_it,
+          pt: row.name_pt,
+          pl: row.name_pl,
+        },
         category,
         tags,
         calories: parseFloat(row.kcal) || 0,
@@ -121,7 +136,7 @@ async function parseCSVToFoodItems(csvText: string): Promise<FoodItem[]> {
         },
         servingSize: 100,
         servingUnit: 'g',
-        searchTerms: [row.search_norm, row.name_es.toLowerCase()],
+        searchTerms: [row.search_norm, getNameForLanguage(row, currentLanguage).toLowerCase()],
         lastUpdated: row.updated_at,
       };
 
@@ -139,7 +154,7 @@ async function parseCSVToFoodItems(csvText: string): Promise<FoodItem[]> {
   return foods;
 }
 
-export async function initializeFoodDatabase(): Promise<void> {
+export async function initializeFoodDatabase(language: string = 'es'): Promise<void> {
   try {
     await foodDatabase.init();
     
@@ -154,7 +169,7 @@ export async function initializeFoodDatabase(): Promise<void> {
     const response = await fetch('/src/data/foods_database.csv');
     const csvText = await response.text();
     
-    const foods = await parseCSVToFoodItems(csvText);
+    const foods = await parseCSVToFoodItems(csvText, language);
     await foodDatabase.addFoods(foods);
     
     console.log(`Food database initialized with ${foods.length} items`);

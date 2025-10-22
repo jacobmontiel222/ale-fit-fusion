@@ -10,6 +10,15 @@ export interface Micronutrient {
 export interface FoodItem {
   id: string;
   name: string;
+  names?: {
+    es?: string;
+    en?: string;
+    fr?: string;
+    de?: string;
+    it?: string;
+    pt?: string;
+    pl?: string;
+  };
   brand?: string;
   category: FoodCategory;
   tags: FoodTag[];
