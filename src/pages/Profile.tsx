@@ -1,4 +1,4 @@
-import { X, ChevronRight, Download, Upload, Pencil } from "lucide-react";
+import { X, ChevronRight, Download, Upload, Pencil, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
@@ -305,6 +305,16 @@ const Profile = () => {
             </button>
             <button onClick={handleExport} className="w-full flex justify-between items-center text-left">
               <span className="text-foreground">Exportar datos</span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button 
+              onClick={() => navigate('/food-database')}
+              className="w-full flex justify-between items-center text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-primary" />
+                <span className="text-foreground">Base de datos de alimentos</span>
+              </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
             <div className="flex justify-between items-center">
