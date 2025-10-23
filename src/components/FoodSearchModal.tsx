@@ -77,7 +77,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
         // Limpiar y recargar con el idioma actual
         await foodDatabase.clearAll();
         
-        const response = await fetch('/src/data/foods_database.csv');
+        const response = await fetch('/data/foods_database.csv');
         const csvText = await response.text();
         const { initializeFoodDatabase } = await import('@/lib/initFoodDatabase');
         await initializeFoodDatabase(i18n.language);

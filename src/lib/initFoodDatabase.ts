@@ -166,7 +166,7 @@ export async function initializeFoodDatabase(language: string = 'es'): Promise<v
 
     console.log('Loading food database from CSV...');
     
-    const response = await fetch('/src/data/foods_database.csv');
+    const response = await fetch('/data/foods_database.csv');
     const csvText = await response.text();
     
     const foods = await parseCSVToFoodItems(csvText, language);

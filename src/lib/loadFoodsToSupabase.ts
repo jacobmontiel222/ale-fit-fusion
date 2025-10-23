@@ -151,7 +151,7 @@ export async function loadFoodsToSupabase(): Promise<void> {
     }
 
     console.log('📥 Cargando CSV de alimentos...');
-    const response = await fetch('/src/data/foods_database.csv');
+    const response = await fetch('/data/foods_database.csv');
     const csvText = await response.text();
     
     console.log('🔄 Procesando CSV...');
