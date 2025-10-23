@@ -469,7 +469,7 @@ const Analytics = () => {
                   dataKey="kg" 
                   stroke={COLORS.weight}
                   strokeWidth={3}
-                  dot={{ fill: COLORS.weight, r: 4 }}
+                  dot={weightRange === 'last3Months' || weightRange === 'last6Months' ? false : { fill: COLORS.weight, r: 4 }}
                   activeDot={{ r: 6 }}
                   connectNulls={false}
                 />
