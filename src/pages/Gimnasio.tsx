@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, Dumbbell } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import { useWeeklySchedule } from "@/hooks/useWeeklySchedule";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Badge } from "@/components/ui/badge";
 
 interface WorkoutSession {
   id: string;
@@ -25,6 +26,15 @@ interface WorkoutSession {
   };
 }
 
+interface TemplateExercise {
+  id: string;
+  exercise_name: string;
+  exercise_type: string;
+  reps_min: number;
+  reps_max: number;
+  order_index: number;
+}
+
 const Gimnasio = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
@@ -33,6 +43,7 @@ const Gimnasio = () => {
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -73,6 +84,29 @@ const Gimnasio = () => {
 
     loadSessions();
   }, [user, selectedDate]);
+
+  // Load exercises for the scheduled template
+  useEffect(() => {
+    const loadTemplateExercises = async () => {
+      const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
+      if (!scheduledTemplate || scheduledTemplate.isRest || !('id' in scheduledTemplate)) {
+        setTemplateExercises([]);
+        return;
+      }
+
+      const { data: exercises } = await supabase
+        .from('template_exercises')
+        .select('*')
+        .eq('template_id', scheduledTemplate.id)
+        .order('order_index', { ascending: true });
+
+      if (exercises) {
+        setTemplateExercises(exercises as TemplateExercise[]);
+      }
+    };
+
+    loadTemplateExercises();
+  }, [selectedDate, schedule, templates]);
 
   // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
@@ -305,7 +339,34 @@ const Gimnasio = () => {
             </p>
           )}
 
-          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
+          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && templateExercises.length > 0 && (
+            <div className="space-y-3">
+              {templateExercises.map((exercise) => (
+                <StatsCard key={exercise.id} className="hover:bg-secondary/50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <Dumbbell className="w-5 h-5 text-primary mt-1" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{exercise.exercise_name}</h3>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {exercise.reps_min}-{exercise.reps_max} {t('gym.reps')}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {t(`gym.exerciseTypes.${exercise.exercise_type}`)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </StatsCard>
+              ))}
+              <Button className="w-full" onClick={createSessionForDate}>
+                <Plus className="w-4 h-4 mr-2" />
+                {t('gym.startWorkout')}
+              </Button>
+            </div>
+          )}
+
+          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && templateExercises.length === 0 && (
             <Button className="w-full" onClick={createSessionForDate}>
               <Plus className="w-4 h-4 mr-2" />
               {t('gym.startWorkout')}
