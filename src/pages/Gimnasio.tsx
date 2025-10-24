@@ -1,104 +1,76 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, Search, Copy, Trash2, Play, Save, FileText, CalendarIcon } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { WeeklyScheduleModal } from "@/components/WeeklyScheduleModal";
+import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
+import { useWeeklySchedule } from "@/hooks/useWeeklySchedule";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
-interface Set {
-  id: string;
-  series: number;
-  weight: number;
-  reps: number;
-  rpe?: number;
-  rest?: number;
-}
-
-interface Exercise {
-  id: string;
-  name: string;
-  sets: Set[];
-}
-
-interface Routine {
+interface WorkoutSession {
   id: string;
   date: string;
-  title: string;
-  exercises: Exercise[];
-  notes?: string;
+  template_id: string | null;
+  completed: boolean;
+  template?: {
+    name: string;
+    color: string;
+  };
 }
-
-const exerciseLibrary = [
-  "gym.exercises.squat",
-  "gym.exercises.legPress",
-  "gym.exercises.legExtension",
-  "gym.exercises.legCurl",
-  "gym.exercises.calves",
-  "gym.exercises.benchPress",
-  "gym.exercises.inclinePress",
-  "gym.exercises.flyes",
-  "gym.exercises.pullups",
-  "gym.exercises.barbellRow",
-  "gym.exercises.deadlift",
-  "gym.exercises.hipThrust",
-];
 
 const Gimnasio = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
-  const [showExerciseSearch, setShowExerciseSearch] = useState(false);
-  const [exerciseSearch, setExerciseSearch] = useState("");
-  const [showNotes, setShowNotes] = useState(false);
+  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const { templates } = useWorkoutTemplates();
+  const { schedule } = useWeeklySchedule();
 
-  // Load routines from Supabase
+  // Load workout sessions from Supabase
   useEffect(() => {
-    const loadRoutines = async () => {
+    const loadSessions = async () => {
       if (!user) return;
 
-      const { data: routinesData } = await supabase
-        .from('gym_routines')
+      // Get start and end of current month for efficient loading
+      const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+      const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+
+      const { data: sessionsData } = await supabase
+        .from('workout_sessions')
         .select(`
           *,
-          routine_exercises(*)
+          workout_templates:template_id(name, color)
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .gte('date', startOfMonth.toISOString().split('T')[0])
+        .lte('date', endOfMonth.toISOString().split('T')[0])
+        .order('date', { ascending: false });
 
-      if (routinesData) {
-        const formattedRoutines: Routine[] = routinesData.map(r => ({
-          id: r.id,
-          date: r.created_at.split('T')[0],
-          title: r.name,
-          notes: r.description || "",
-          exercises: (r.routine_exercises || []).map((ex: any) => ({
-            id: ex.id,
-            name: ex.exercise_name,
-            sets: Array.from({ length: ex.sets }, (_, i) => ({
-              id: `${ex.id}_${i}`,
-              series: i + 1,
-              weight: ex.weight || 0,
-              reps: ex.reps || 0,
-            }))
-          }))
+      if (sessionsData) {
+        const formattedSessions: WorkoutSession[] = sessionsData.map(s => ({
+          id: s.id,
+          date: s.date,
+          template_id: s.template_id,
+          completed: s.completed,
+          template: s.workout_templates ? {
+            name: s.workout_templates.name,
+            color: s.workout_templates.color,
+          } : undefined,
         }));
-        setRoutines(formattedRoutines);
+        setSessions(formattedSessions);
       }
     };
 
-    loadRoutines();
-  }, [user]);
+    loadSessions();
+  }, [user, selectedDate]);
 
   // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
@@ -139,395 +111,91 @@ const Gimnasio = () => {
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
-  const getRoutinesForDate = (date: Date) => {
-    return routines.filter(r => r.date === formatDate(date));
+  const getSessionsForDate = (date: Date) => {
+    return sessions.filter(s => s.date === formatDate(date));
   };
 
-  const createNewRoutine = async () => {
+  const getScheduledTemplateForDate = (date: Date) => {
+    const dayOfWeek = date.getDay();
+    // Convert Sunday (0) to 6, and Monday-Saturday to 0-5
+    const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const scheduleEntry = schedule.find(s => s.day_of_week === adjustedDay);
+    if (!scheduleEntry) return null;
+
+    if (scheduleEntry.is_rest_day) {
+      return { name: t('gym.restDay'), color: '#6B7280', isRest: true };
+    }
+
+    const template = templates.find(t => t.id === scheduleEntry.template_id);
+    if (!template) return null;
+
+    return { ...template, isRest: false };
+  };
+
+  const createSessionForDate = async () => {
     if (!user) return;
 
-    const { data: newRoutineData, error } = await supabase
-      .from('gym_routines')
+    const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
+    if (!scheduledTemplate || scheduledTemplate.isRest) return;
+
+    // Verificar que tiene id (no es día de descanso)
+    const templateId = 'id' in scheduledTemplate ? scheduledTemplate.id : null;
+    if (!templateId) return;
+
+    const { data, error } = await supabase
+      .from('workout_sessions')
       .insert({
         user_id: user.id,
-        name: t('gym.newRoutine'),
-        description: "",
-        is_active: true
+        date: formatDate(selectedDate),
+        template_id: templateId,
+        completed: false,
       })
       .select()
       .single();
 
-    if (error || !newRoutineData) return;
-
-    const newRoutine: Routine = {
-      id: newRoutineData.id,
-      date: newRoutineData.created_at.split('T')[0],
-      title: newRoutineData.name,
-      exercises: [],
-      notes: newRoutineData.description || "",
-    };
-    
-    setRoutines([newRoutine, ...routines]);
-    setEditingRoutine(newRoutine);
-  };
-
-  const addExercise = (exerciseKey: string) => {
-    if (!editingRoutine) return;
-    
-    const newExercise: Exercise = {
-      id: Date.now().toString(),
-      name: t(exerciseKey),
-      sets: [{
-        id: Date.now().toString(),
-        series: 1,
-        weight: 0,
-        reps: 0,
-      }],
-    };
-
-    const updatedRoutine = {
-      ...editingRoutine,
-      exercises: [...editingRoutine.exercises, newExercise],
-    };
-    
-    setEditingRoutine(updatedRoutine);
-    setShowExerciseSearch(false);
-    setExerciseSearch("");
-  };
-
-  const addSet = (exerciseId: string) => {
-    if (!editingRoutine) return;
-    
-    const updatedExercises = editingRoutine.exercises.map(ex => {
-      if (ex.id === exerciseId) {
-        const lastSet = ex.sets[ex.sets.length - 1];
-        return {
-          ...ex,
-          sets: [...ex.sets, {
-            id: Date.now().toString(),
-            series: ex.sets.length + 1,
-            weight: lastSet?.weight || 0,
-            reps: lastSet?.reps || 0,
-          }],
-        };
-      }
-      return ex;
-    });
-
-    setEditingRoutine({ ...editingRoutine, exercises: updatedExercises });
-  };
-
-  const duplicateSet = (exerciseId: string, setId: string) => {
-    if (!editingRoutine) return;
-    
-    const updatedExercises = editingRoutine.exercises.map(ex => {
-      if (ex.id === exerciseId) {
-        const setToDuplicate = ex.sets.find(s => s.id === setId);
-        if (setToDuplicate) {
-          return {
-            ...ex,
-            sets: [...ex.sets, {
-              ...setToDuplicate,
-              id: Date.now().toString(),
-              series: ex.sets.length + 1,
-            }],
-          };
-        }
-      }
-      return ex;
-    });
-
-    setEditingRoutine({ ...editingRoutine, exercises: updatedExercises });
-  };
-
-  const deleteSet = (exerciseId: string, setId: string) => {
-    if (!editingRoutine) return;
-    
-    const updatedExercises = editingRoutine.exercises.map(ex => {
-      if (ex.id === exerciseId) {
-        return {
-          ...ex,
-          sets: ex.sets.filter(s => s.id !== setId).map((s, idx) => ({ ...s, series: idx + 1 })),
-        };
-      }
-      return ex;
-    }).filter(ex => ex.sets.length > 0);
-
-    setEditingRoutine({ ...editingRoutine, exercises: updatedExercises });
-  };
-
-  const updateSet = (exerciseId: string, setId: string, field: keyof Set, value: number) => {
-    if (!editingRoutine) return;
-    
-    const updatedExercises = editingRoutine.exercises.map(ex => {
-      if (ex.id === exerciseId) {
-        return {
-          ...ex,
-          sets: ex.sets.map(s => 
-            s.id === setId ? { ...s, [field]: value } : s
-          ),
-        };
-      }
-      return ex;
-    });
-
-    setEditingRoutine({ ...editingRoutine, exercises: updatedExercises });
-  };
-
-  const saveRoutine = async () => {
-    if (!editingRoutine || !user) return;
-
-    // Update routine in Supabase
-    const { error: routineError } = await supabase
-      .from('gym_routines')
-      .update({
-        name: editingRoutine.title,
-        description: editingRoutine.notes
-      })
-      .eq('id', editingRoutine.id)
-      .eq('user_id', user.id);
-
-    if (routineError) {
-      console.error('Error saving routine:', routineError);
+    if (error) {
+      console.error('Error creating session:', error);
       return;
     }
 
-    // Delete existing exercises
-    await supabase
-      .from('routine_exercises')
-      .delete()
-      .eq('routine_id', editingRoutine.id);
+    // Reload sessions
+    const { data: sessionsData } = await supabase
+      .from('workout_sessions')
+      .select(`
+        *,
+        workout_templates:template_id(name, color)
+      `)
+      .eq('user_id', user.id)
+      .eq('date', formatDate(selectedDate));
 
-    // Insert new exercises
-    for (const exercise of editingRoutine.exercises) {
-      if (exercise.sets.length > 0) {
-        const firstSet = exercise.sets[0];
-        await supabase
-          .from('routine_exercises')
-          .insert({
-            routine_id: editingRoutine.id,
-            exercise_name: exercise.name,
-            sets: exercise.sets.length,
-            reps: firstSet.reps || 0,
-            weight: firstSet.weight || 0,
-            order_index: 0
-          });
-      }
+    if (sessionsData && sessionsData.length > 0) {
+      const newSession: WorkoutSession = {
+        id: sessionsData[0].id,
+        date: sessionsData[0].date,
+        template_id: sessionsData[0].template_id,
+        completed: sessionsData[0].completed,
+        template: sessionsData[0].workout_templates ? {
+          name: sessionsData[0].workout_templates.name,
+          color: sessionsData[0].workout_templates.color,
+        } : undefined,
+      };
+      setSessions([...sessions, newSession]);
     }
-    
-    setRoutines(routines.map(r => r.id === editingRoutine.id ? editingRoutine : r));
-    setEditingRoutine(null);
   };
 
-  const filteredExercises = exerciseLibrary.filter(ex =>
-    t(ex).toLowerCase().includes(exerciseSearch.toLowerCase())
-  );
-
   const weekDays = getWeekDays();
-  const dayRoutines = getRoutinesForDate(selectedDate);
-
-  if (editingRoutine) {
-    return (
-      <div className="min-h-screen bg-background pb-24">
-        <div className="max-w-md mx-auto px-4 py-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setEditingRoutine(null)}
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </Button>
-            <Input
-              value={editingRoutine.title}
-              onChange={(e) => setEditingRoutine({ ...editingRoutine, title: e.target.value })}
-              className="flex-1 mx-4 text-xl font-bold text-center bg-card border-none"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowNotes(true)}
-            >
-              <FileText className="w-6 h-6" />
-            </Button>
-          </div>
-
-          {/* Exercises */}
-          <div className="space-y-4 mb-6">
-            {editingRoutine.exercises.map((exercise) => (
-              <StatsCard key={exercise.id}>
-                <h3 className="text-lg font-semibold text-foreground mb-4">{exercise.name}</h3>
-                
-                {/* Sets Table Header */}
-                <div className="grid grid-cols-6 gap-2 mb-2 text-xs text-muted-foreground">
-                  <span className="text-center">{t('gym.series')}</span>
-                  <span className="text-center">Kg</span>
-                  <span className="text-center">{t('gym.reps')}</span>
-                  <span className="text-center">{t('gym.rpe')}</span>
-                  <span className="text-center">{t('gym.rest')}</span>
-                  <span></span>
-                </div>
-
-                {/* Sets */}
-                {exercise.sets.map((set) => (
-                  <div key={set.id} className="grid grid-cols-6 gap-2 mb-2">
-                    <div className="flex items-center justify-center text-sm font-semibold">
-                      {set.series}
-                    </div>
-                    <Input
-                      type="number"
-                      value={set.weight || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateSet(exercise.id, set.id, 'weight', val === '' ? 0 : Number(val));
-                      }}
-                      className="h-8 text-center text-sm"
-                    />
-                    <Input
-                      type="number"
-                      value={set.reps || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateSet(exercise.id, set.id, 'reps', val === '' ? 0 : Number(val));
-                      }}
-                      className="h-8 text-center text-sm"
-                    />
-                    <Input
-                      type="number"
-                      value={set.rpe || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateSet(exercise.id, set.id, 'rpe', val === '' ? undefined : Number(val));
-                      }}
-                      className="h-8 text-center text-sm"
-                      placeholder="-"
-                    />
-                    <Input
-                      type="number"
-                      value={set.rest || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateSet(exercise.id, set.id, 'rest', val === '' ? undefined : Number(val));
-                      }}
-                      className="h-8 text-center text-sm"
-                      placeholder="-"
-                    />
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => duplicateSet(exercise.id, set.id)}
-                      >
-                        <Copy className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => deleteSet(exercise.id, set.id)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => addSet(exercise.id)}
-                  className="w-full mt-2"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Serie
-                </Button>
-              </StatsCard>
-            ))}
-          </div>
-
-          {/* Add Exercise Button */}
-          <Button
-            onClick={() => setShowExerciseSearch(true)}
-            className="w-full mb-4"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ejercicio
-          </Button>
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" onClick={saveRoutine}>
-              <Save className="w-4 h-4 mr-2" />
-              Guardar
-            </Button>
-            <Button>
-              <Play className="w-4 h-4 mr-2" />
-              Iniciar
-            </Button>
-          </div>
-        </div>
-
-        {/* Exercise Search Dialog */}
-        <Dialog open={showExerciseSearch} onOpenChange={setShowExerciseSearch}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Añadir Ejercicio</DialogTitle>
-            </DialogHeader>
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar ejercicio..."
-                value={exerciseSearch}
-                onChange={(e) => setExerciseSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {filteredExercises.map((exercise) => (
-                <Button
-                  key={exercise}
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => addExercise(exercise)}
-                >
-                  {exercise}
-                </Button>
-              ))}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Notes Dialog */}
-        <Dialog open={showNotes} onOpenChange={setShowNotes}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Notas</DialogTitle>
-            </DialogHeader>
-            <Textarea
-              placeholder="Añade notas sobre tu entrenamiento..."
-              value={editingRoutine.notes || ''}
-              onChange={(e) => setEditingRoutine({ ...editingRoutine, notes: e.target.value })}
-              rows={6}
-            />
-          </DialogContent>
-        </Dialog>
-
-        <BottomNav />
-      </div>
-    );
-  }
+  const daySessions = getSessionsForDate(selectedDate);
+  const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-foreground">Gimnasio</h1>
-          <Button onClick={createNewRoutine}>
-            <Plus className="w-4 h-4 mr-2" />
-            Rutina
+          <h1 className="text-3xl font-bold text-foreground">{t('gym.title')}</h1>
+          <Button size="icon" onClick={createSessionForDate} disabled={!scheduledTemplate || scheduledTemplate.isRest}>
+            <Plus className="w-5 h-5" />
           </Button>
         </div>
 
@@ -562,13 +230,14 @@ const Gimnasio = () => {
             {weekDays.map((day, idx) => {
               const isSelected = formatDate(day) === formatDate(selectedDate);
               const isToday = formatDate(day) === formatDate(new Date());
-              const hasRoutines = getRoutinesForDate(day).length > 0;
+              const hasSessions = getSessionsForDate(day).length > 0;
+              const dayTemplate = getScheduledTemplateForDate(day);
               
               return (
                 <button
                   key={idx}
                   onClick={() => setSelectedDate(day)}
-                  className={`flex flex-col items-center py-2 rounded-lg transition-colors ${
+                  className={`flex flex-col items-center py-2 rounded-lg transition-colors relative ${
                     isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'
                   }`}
                 >
@@ -578,7 +247,13 @@ const Gimnasio = () => {
                   <span className={`text-sm font-semibold ${isToday ? 'text-accent' : ''}`}>
                     {day.getDate()}
                   </span>
-                  {hasRoutines && (
+                  {dayTemplate && (
+                    <div
+                      className="absolute bottom-1 w-6 h-1 rounded-full"
+                      style={{ backgroundColor: dayTemplate.color }}
+                    />
+                  )}
+                  {hasSessions && !dayTemplate && (
                     <div className="w-1 h-1 rounded-full bg-accent mt-1" />
                   )}
                 </button>
@@ -587,40 +262,89 @@ const Gimnasio = () => {
           </div>
         </StatsCard>
 
-        {/* Routines List */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">
-            {t('gym.title')} - {selectedDate.getDate()} de {selectedDate.toLocaleDateString(i18n.language, { month: 'long' })}
+        {/* Date Header */}
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold text-foreground">
+            {selectedDate.toLocaleDateString(i18n.language, { day: 'numeric', month: 'long' })}
           </h2>
-          
-          {dayRoutines.length === 0 ? (
-            <StatsCard>
-              <p className="text-center text-muted-foreground py-8">
-                {t('meals.noFoodsAdded')}
-              </p>
-            </StatsCard>
-          ) : (
-            dayRoutines.map((routine) => (
-              <StatsCard
-                key={routine.id}
-                className="cursor-pointer hover:bg-secondary/50 transition-colors"
-                onClick={() => setEditingRoutine(routine)}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-1">
-                      {routine.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {routine.exercises.length} {t('gym.addExercise').toLowerCase()}{routine.exercises.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </div>
-              </StatsCard>
-            ))
+          {scheduledTemplate && (
+            <div className="flex items-center gap-2 mt-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: scheduledTemplate.color }}
+              />
+              <span className="text-lg font-medium" style={{ color: scheduledTemplate.color }}>
+                {scheduledTemplate.name}
+              </span>
+            </div>
           )}
         </div>
+
+        {/* Sessions or Empty State */}
+        <div className="space-y-4 mb-6">
+          {daySessions.length === 0 && !scheduledTemplate && (
+            <StatsCard>
+              <p className="text-center text-muted-foreground py-8">
+                {t('gym.noRoutineScheduled')}
+              </p>
+            </StatsCard>
+          )}
+
+          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
+            <StatsCard>
+              <p className="text-center text-muted-foreground py-4">
+                {t('gym.scheduledNotStarted')}
+              </p>
+              <Button className="w-full mt-4" onClick={createSessionForDate}>
+                <Plus className="w-4 h-4 mr-2" />
+                {t('gym.startWorkout')}
+              </Button>
+            </StatsCard>
+          )}
+
+          {daySessions.length === 0 && scheduledTemplate && scheduledTemplate.isRest && (
+            <StatsCard>
+              <p className="text-center text-muted-foreground py-8">
+                {t('gym.restDayMessage')}
+              </p>
+            </StatsCard>
+          )}
+
+          {daySessions.map((session) => (
+            <StatsCard key={session.id} className="cursor-pointer hover:bg-secondary/50 transition-colors">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {session.template?.name || t('gym.workout')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {session.completed ? t('gym.completed') : t('gym.inProgress')}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </StatsCard>
+          ))}
+        </div>
+
+        {/* Schedule Section */}
+        <div className="fixed bottom-20 left-0 right-0 p-4 bg-background border-t">
+          <div className="max-w-md mx-auto">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowScheduleModal(true)}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              {t('gym.scheduleWeek')}
+            </Button>
+          </div>
+        </div>
+
+        <WeeklyScheduleModal
+          open={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+        />
       </div>
 
       <BottomNav />
