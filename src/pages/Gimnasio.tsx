@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, Dumbbell } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import { useWeeklySchedule } from "@/hooks/useWeeklySchedule";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
+import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 
 interface WorkoutSession {
   id: string;
@@ -44,6 +44,7 @@ const Gimnasio = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
+  const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -86,25 +87,25 @@ const Gimnasio = () => {
   }, [user, selectedDate]);
 
   // Load exercises for the scheduled template
+  const loadTemplateExercises = async () => {
+    const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
+    if (!scheduledTemplate || scheduledTemplate.isRest || !('id' in scheduledTemplate)) {
+      setTemplateExercises([]);
+      return;
+    }
+
+    const { data: exercises } = await supabase
+      .from('template_exercises')
+      .select('*')
+      .eq('template_id', scheduledTemplate.id)
+      .order('order_index', { ascending: true });
+
+    if (exercises) {
+      setTemplateExercises(exercises as TemplateExercise[]);
+    }
+  };
+
   useEffect(() => {
-    const loadTemplateExercises = async () => {
-      const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
-      if (!scheduledTemplate || scheduledTemplate.isRest || !('id' in scheduledTemplate)) {
-        setTemplateExercises([]);
-        return;
-      }
-
-      const { data: exercises } = await supabase
-        .from('template_exercises')
-        .select('*')
-        .eq('template_id', scheduledTemplate.id)
-        .order('order_index', { ascending: true });
-
-      if (exercises) {
-        setTemplateExercises(exercises as TemplateExercise[]);
-      }
-    };
-
     loadTemplateExercises();
   }, [selectedDate, schedule, templates]);
 
@@ -312,21 +313,19 @@ const Gimnasio = () => {
           <h2 className="text-2xl font-semibold text-foreground">
             {selectedDate.toLocaleDateString(i18n.language, { day: 'numeric', month: 'long' })}
           </h2>
-          {scheduledTemplate && (
-            <div className="flex items-center gap-2 mt-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: scheduledTemplate.color }}
-              />
-              <span className="text-lg font-medium" style={{ color: scheduledTemplate.color }}>
-                {scheduledTemplate.name}
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Sessions or Empty State */}
-        <div className="space-y-4 mb-6">
+        {/* Template Name Subtitle */}
+        {scheduledTemplate && !scheduledTemplate.isRest && (
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold" style={{ color: scheduledTemplate.color }}>
+              {scheduledTemplate.name}
+            </h3>
+          </div>
+        )}
+
+        {/* Exercises List or Empty State */}
+        <div className="space-y-3 mb-6">
           {daySessions.length === 0 && !scheduledTemplate && (
             <p className="text-center text-muted-foreground py-4">
               {t('gym.noRoutineScheduled')}
@@ -339,42 +338,57 @@ const Gimnasio = () => {
             </p>
           )}
 
-          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && templateExercises.length > 0 && (
-            <div className="space-y-3">
-              {templateExercises.map((exercise) => (
-                <StatsCard key={exercise.id} className="hover:bg-secondary/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <Dumbbell className="w-5 h-5 text-primary mt-1" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{exercise.exercise_name}</h3>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {exercise.reps_min}-{exercise.reps_max} {t('gym.reps')}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
-                          {t(`gym.exerciseTypes.${exercise.exercise_type}`)}
-                        </Badge>
+          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
+            <>
+              {templateExercises.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    {templateExercises.map((exercise) => (
+                      <div
+                        key={exercise.id}
+                        className="p-3 rounded-lg bg-secondary/30 border border-border"
+                      >
+                        <div className="font-medium text-foreground mb-1">
+                          {exercise.exercise_name}
+                        </div>
+                        <div className="text-sm text-muted-foreground flex gap-4">
+                          <span>{exercise.reps_min}-{exercise.reps_max} {t('gym.reps')}</span>
+                          <span>{t(`gym.exerciseTypes.${exercise.exercise_type}`)}</span>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                </StatsCard>
-              ))}
-              <Button className="w-full" onClick={createSessionForDate}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t('gym.startWorkout')}
-              </Button>
-            </div>
-          )}
-
-          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && templateExercises.length === 0 && (
-            <Button className="w-full" onClick={createSessionForDate}>
-              <Plus className="w-4 h-4 mr-2" />
-              {t('gym.startWorkout')}
-            </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowAddExerciseDialog(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {t('gym.addExercise')}
+                  </Button>
+                  <Button className="w-full" onClick={createSessionForDate}>
+                    {t('gym.startWorkout')}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowAddExerciseDialog(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t('gym.addExercise')}
+                </Button>
+              )}
+            </>
           )}
 
           {daySessions.map((session) => (
-            <StatsCard key={session.id} className="cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate(`/gimnasio/session/${session.id}`)}>
+            <StatsCard
+              key={session.id}
+              className="cursor-pointer hover:bg-secondary/50 transition-colors"
+              onClick={() => navigate(`/gimnasio/session/${session.id}`)}
+            >
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">
@@ -394,6 +408,15 @@ const Gimnasio = () => {
           open={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
         />
+
+        {scheduledTemplate && !scheduledTemplate.isRest && 'id' in scheduledTemplate && (
+          <AddExerciseDialog
+            open={showAddExerciseDialog}
+            onClose={() => setShowAddExerciseDialog(false)}
+            templateId={scheduledTemplate.id}
+            onExerciseAdded={loadTemplateExercises}
+          />
+        )}
       </div>
 
       <BottomNav />
