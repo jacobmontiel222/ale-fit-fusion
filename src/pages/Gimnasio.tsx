@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { WeeklyScheduleModal } from "@/components/WeeklyScheduleModal";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import { useWeeklySchedule } from "@/hooks/useWeeklySchedule";
@@ -27,6 +28,7 @@ interface WorkoutSession {
 const Gimnasio = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -311,7 +313,7 @@ const Gimnasio = () => {
           )}
 
           {daySessions.map((session) => (
-            <StatsCard key={session.id} className="cursor-pointer hover:bg-secondary/50 transition-colors">
+            <StatsCard key={session.id} className="cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => navigate(`/gimnasio/session/${session.id}`)}>
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">

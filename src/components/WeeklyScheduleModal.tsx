@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslation } from 'react-i18next';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWeeklySchedule } from '@/hooks/useWeeklySchedule';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
+import { TemplateExercisesModal } from '@/components/TemplateExercisesModal';
 
 interface WeeklyScheduleModalProps {
   open: boolean;
@@ -31,6 +32,8 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
   const [showNewTemplate, setShowNewTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateColor, setNewTemplateColor] = useState(COLORS[0]);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editingTemplateName, setEditingTemplateName] = useState('');
 
   const dayNames = [
     t('gym.days.monday'),
@@ -105,10 +108,22 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
                   </SelectContent>
                 </Select>
                 {selectedTemplate && (
-                  <div
-                    className="h-1 rounded-full"
-                    style={{ backgroundColor: selectedTemplate.color }}
-                  />
+                  <div className="flex items-center gap-2 mt-2">
+                    <div
+                      className="h-1 rounded-full flex-1"
+                      style={{ backgroundColor: selectedTemplate.color }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingTemplateId(selectedTemplate.id);
+                        setEditingTemplateName(selectedTemplate.name);
+                      }}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </div>
                 )}
               </div>
             );
@@ -158,6 +173,18 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
             </div>
           )}
         </div>
+
+        {editingTemplateId && (
+          <TemplateExercisesModal
+            open={!!editingTemplateId}
+            onClose={() => {
+              setEditingTemplateId(null);
+              setEditingTemplateName('');
+            }}
+            templateId={editingTemplateId}
+            templateName={editingTemplateName}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -6,7 +6,7 @@ interface WorkoutTemplate {
   id: string;
   name: string;
   color: string;
-  exercises?: TemplateExercise[];
+  template_exercises?: TemplateExercise[];
 }
 
 interface TemplateExercise {
