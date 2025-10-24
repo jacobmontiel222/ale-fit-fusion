@@ -196,9 +196,6 @@ const Gimnasio = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-foreground">{t('gym.title')}</h1>
-          <Button size="icon" onClick={createSessionForDate} disabled={!scheduledTemplate || scheduledTemplate.isRest}>
-            <Plus className="w-5 h-5" />
-          </Button>
         </div>
 
         {/* Mini Calendar */}
@@ -264,6 +261,18 @@ const Gimnasio = () => {
           </div>
         </StatsCard>
 
+        {/* Schedule Section - Moved below calendar */}
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowScheduleModal(true)}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            {t('gym.scheduleWeek')}
+          </Button>
+        </div>
+
         {/* Date Header */}
         <div className="mb-4">
           <h2 className="text-2xl font-semibold text-foreground">
@@ -285,31 +294,22 @@ const Gimnasio = () => {
         {/* Sessions or Empty State */}
         <div className="space-y-4 mb-6">
           {daySessions.length === 0 && !scheduledTemplate && (
-            <StatsCard>
-              <p className="text-center text-muted-foreground py-8">
-                {t('gym.noRoutineScheduled')}
-              </p>
-            </StatsCard>
-          )}
-
-          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
-            <StatsCard>
-              <p className="text-center text-muted-foreground py-4">
-                {t('gym.scheduledNotStarted')}
-              </p>
-              <Button className="w-full mt-4" onClick={createSessionForDate}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t('gym.startWorkout')}
-              </Button>
-            </StatsCard>
+            <p className="text-center text-muted-foreground py-4">
+              {t('gym.noRoutineScheduled')}
+            </p>
           )}
 
           {daySessions.length === 0 && scheduledTemplate && scheduledTemplate.isRest && (
-            <StatsCard>
-              <p className="text-center text-muted-foreground py-8">
-                {t('gym.restDayMessage')}
-              </p>
-            </StatsCard>
+            <p className="text-center text-muted-foreground py-4">
+              {t('gym.restDayMessage')}
+            </p>
+          )}
+
+          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
+            <Button className="w-full" onClick={createSessionForDate}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t('gym.startWorkout')}
+            </Button>
           )}
 
           {daySessions.map((session) => (
@@ -327,20 +327,6 @@ const Gimnasio = () => {
               </div>
             </StatsCard>
           ))}
-        </div>
-
-        {/* Schedule Section */}
-        <div className="fixed bottom-20 left-0 right-0 p-4 bg-background border-t">
-          <div className="max-w-md mx-auto">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowScheduleModal(true)}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              {t('gym.scheduleWeek')}
-            </Button>
-          </div>
         </div>
 
         <WeeklyScheduleModal
