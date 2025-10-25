@@ -513,6 +513,7 @@ export type Database = {
           exercise_type: string
           id: string
           order_index: number
+          planned_sets: Json | null
           reps_max: number
           reps_min: number
           template_id: string
@@ -523,6 +524,7 @@ export type Database = {
           exercise_type?: string
           id?: string
           order_index?: number
+          planned_sets?: Json | null
           reps_max?: number
           reps_min?: number
           template_id: string
@@ -533,6 +535,7 @@ export type Database = {
           exercise_type?: string
           id?: string
           order_index?: number
+          planned_sets?: Json | null
           reps_max?: number
           reps_min?: number
           template_id?: string

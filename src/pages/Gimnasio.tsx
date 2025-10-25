@@ -14,6 +14,7 @@ import { useWeeklySchedule } from "@/hooks/useWeeklySchedule";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
+import { TemplateExerciseCard } from "@/components/TemplateExerciseCard";
 
 interface WorkoutSession {
   id: string;
@@ -26,6 +27,13 @@ interface WorkoutSession {
   };
 }
 
+interface PlannedSet {
+  weight?: number;
+  reps?: number;
+  rest_seconds?: number;
+  minutes?: number;
+}
+
 interface TemplateExercise {
   id: string;
   exercise_name: string;
@@ -33,6 +41,7 @@ interface TemplateExercise {
   reps_min: number;
   reps_max: number;
   order_index: number;
+  planned_sets: PlannedSet[];
 }
 
 const Gimnasio = () => {
@@ -342,31 +351,24 @@ const Gimnasio = () => {
             <>
               {templateExercises.length > 0 ? (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {templateExercises.map((exercise) => (
-                      <div
+                      <TemplateExerciseCard
                         key={exercise.id}
-                        className="p-3 rounded-lg bg-secondary/30 border border-border"
-                      >
-                        <div className="font-medium text-foreground mb-1">
-                          {exercise.exercise_name}
-                        </div>
-                        <div className="text-sm text-muted-foreground flex gap-4">
-                          <span>{exercise.reps_min}-{exercise.reps_max} {t('gym.reps')}</span>
-                          <span>{t(`gym.exerciseTypes.${exercise.exercise_type}`)}</span>
-                        </div>
-                      </div>
+                        exercise={exercise}
+                        onUpdate={loadTemplateExercises}
+                      />
                     ))}
                   </div>
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className="w-full mt-3"
                     onClick={() => setShowAddExerciseDialog(true)}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     {t('gym.addExercise')}
                   </Button>
-                  <Button className="w-full" onClick={createSessionForDate}>
+                  <Button className="w-full mt-3" onClick={createSessionForDate}>
                     {t('gym.startWorkout')}
                   </Button>
                 </>

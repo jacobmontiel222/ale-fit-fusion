@@ -1,30 +1,29 @@
-import { useState, useEffect } from 'react';
-import { StatsCard } from '@/components/StatsCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Save, TrendingUp } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { useProgressionLogic } from '@/hooks/useProgressionLogic';
-import { useWorkoutSessions } from '@/hooks/useWorkoutSessions';
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Plus, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { StatsCard } from "@/components/StatsCard";
+import { useWorkoutSessions } from "@/hooks/useWorkoutSessions";
+import { toast } from "sonner";
 
-interface Set {
+interface ExerciseSet {
   set: number;
   weight: number;
   reps: number;
-  rpe?: number;
   completed: boolean;
 }
 
 interface ExerciseCardProps {
   sessionId: string;
   exerciseName: string;
-  exerciseType: 'compound' | 'accessory' | 'calisthenics';
+  exerciseType: 'compound' | 'accessory' | 'calisthenics' | 'cardio';
   repsMin: number;
   repsMax: number;
-  onSave?: () => void;
+  onSave: () => void;
 }
 
 export const ExerciseCard = ({
@@ -36,244 +35,183 @@ export const ExerciseCard = ({
   onSave,
 }: ExerciseCardProps) => {
   const { t } = useTranslation();
-  const { calculateProgression } = useProgressionLogic();
-  const { getLastExerciseData, saveExerciseHistory } = useWorkoutSessions(sessionId);
-  
-  const [sets, setSets] = useState<Set[]>([
-    { set: 1, weight: 0, reps: 0, completed: false }
+  const { saveExerciseHistory, getLastExerciseData } = useWorkoutSessions();
+  const [sets, setSets] = useState<ExerciseSet[]>([
+    { set: 1, weight: 0, reps: repsMin, completed: false },
   ]);
-  const [suggestedWeight, setSuggestedWeight] = useState<number>(0);
-  const [suggestedRepsMin, setSuggestedRepsMin] = useState<number>(repsMin);
-  const [suggestedRepsMax, setSuggestedRepsMax] = useState<number>(repsMax);
-  const [progressionMessage, setProgressionMessage] = useState<string>('');
-  const [techniqueGood, setTechniqueGood] = useState(true);
-  const [notes, setNotes] = useState('');
-  const [showNotes, setShowNotes] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [goalAchieved, setGoalAchieved] = useState(true);
+  const [techniquegood, setTechniqueGood] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
 
-  useEffect(() => {
-    const loadLastData = async () => {
-      const lastData = await getLastExerciseData(exerciseName);
-      
-      if (lastData) {
-        const lastSets = lastData.sets_data as Set[];
-        const lastEffectiveSet = lastSets[lastSets.length - 1];
-
-        const progression = calculateProgression(
-          {
-            weight: lastEffectiveSet.weight,
-            reps: lastEffectiveSet.reps,
-            technique_good: lastData.technique_good,
-            rpe: lastEffectiveSet.rpe,
-          },
-          exerciseType,
-          repsMin,
-          repsMax
-        );
-
-        setSuggestedWeight(progression.suggestedWeight);
-        setSuggestedRepsMin(progression.suggestedRepsMin);
-        setSuggestedRepsMax(progression.suggestedRepsMax);
-        setProgressionMessage(progression.message);
-
-        // Inicializar con los valores sugeridos
-        setSets([
-          {
-            set: 1,
-            weight: progression.suggestedWeight,
-            reps: progression.suggestedRepsMin,
-            completed: false,
-          },
-        ]);
-      }
-    };
-
-    loadLastData();
-  }, [exerciseName, exerciseType, repsMin, repsMax]);
-
-  const addSet = () => {
+  const handleAddSet = () => {
     const lastSet = sets[sets.length - 1];
-    setSets([
-      ...sets,
-      {
-        set: sets.length + 1,
-        weight: lastSet.weight,
-        reps: lastSet.reps,
-        rpe: lastSet.rpe,
-        completed: false,
-      },
-    ]);
+    setSets([...sets, { 
+      set: sets.length + 1,
+      weight: lastSet?.weight || 0, 
+      reps: lastSet?.reps || repsMin, 
+      completed: false 
+    }]);
   };
 
-  const updateSet = (index: number, field: keyof Set, value: any) => {
+  const handleSetChange = (index: number, field: keyof ExerciseSet, value: number | boolean) => {
     const newSets = [...sets];
     newSets[index] = { ...newSets[index], [field]: value };
     setSets(newSets);
   };
 
-  const deleteSet = (index: number) => {
-    if (sets.length === 1) return;
-    setSets(sets.filter((_, i) => i !== index).map((s, i) => ({ ...s, set: i + 1 })));
+  const handleLoadPrevious = async () => {
+    setIsLoadingPrevious(true);
+    try {
+      const lastData = await getLastExerciseData(exerciseName);
+      if (lastData && lastData.sets_data) {
+        const previousSets = (lastData.sets_data as ExerciseSet[]).map((set, index) => ({
+          ...set,
+          set: index + 1,
+          completed: false,
+        }));
+        setSets(previousSets);
+        toast.success(t('gym.previousDataLoaded'));
+      } else {
+        toast.info(t('gym.noPreviousData'));
+      }
+    } catch (error) {
+      console.error('Error loading previous data:', error);
+      toast.error(t('common.error'));
+    } finally {
+      setIsLoadingPrevious(false);
+    }
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
-      // Verificar si se cumplió el objetivo
-      const completedSets = sets.filter(s => s.completed);
-      const lastSet = completedSets[completedSets.length - 1];
-      
-      let goalAchieved = false;
-      if (lastSet) {
-        goalAchieved = lastSet.weight >= suggestedWeight && lastSet.reps >= suggestedRepsMin;
-      }
-
       await saveExerciseHistory({
         sessionId,
         exerciseName,
         setsData: sets,
-        suggestedWeight,
-        suggestedRepsMin,
-        suggestedRepsMax,
+        notes: notes || null,
         goalAchieved,
-        techniqueGood,
-        notes: notes || undefined,
+        techniqueGood: techniquegood,
       });
-
-      onSave?.();
+      setIsSaved(true);
+      onSave();
+      toast.success(t('gym.exerciseSaved'));
     } catch (error) {
       console.error('Error saving exercise:', error);
-    } finally {
-      setIsSaving(false);
+      toast.error(t('common.error'));
     }
   };
 
+  const allSetsCompleted = sets.every(set => set.completed);
+
   return (
-    <StatsCard>
+    <StatsCard className={isSaved ? 'border-2 border-primary' : ''}>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
+        <div className="flex justify-between items-start">
+          <div>
             <h3 className="text-lg font-semibold text-foreground">{exerciseName}</h3>
-            {progressionMessage && (
-              <div className="flex items-center gap-2 mt-1">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <span className="text-sm text-primary font-medium">
-                  {progressionMessage}
-                </span>
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground mt-1">
-              {t('gym.objective')}: {suggestedWeight}kg × {suggestedRepsMin}-{suggestedRepsMax} {t('gym.reps').toLowerCase()}
+            <p className="text-sm text-muted-foreground">
+              {t(`gym.exerciseTypes.${exerciseType}`)} • {repsMin}-{repsMax} {t('gym.reps')}
             </p>
           </div>
+          {isSaved && <Check className="w-5 h-5 text-primary" />}
         </div>
 
-        {/* Sets Table */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-6 gap-2 text-xs text-muted-foreground font-medium">
-            <span className="text-center">{t('gym.series')}</span>
-            <span className="text-center">Kg</span>
-            <span className="text-center">{t('gym.reps')}</span>
-            <span className="text-center">{t('gym.rpe')}</span>
-            <span className="text-center">✓</span>
-            <span></span>
-          </div>
+        {/* Load Previous Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleLoadPrevious}
+          disabled={isLoadingPrevious}
+          className="w-full"
+        >
+          {isLoadingPrevious ? t('common.loading') : t('gym.loadPrevious')}
+        </Button>
 
+        {/* Sets */}
+        <div className="space-y-2">
           {sets.map((set, index) => (
-            <div key={index} className="grid grid-cols-6 gap-2">
-              <div className="flex items-center justify-center text-sm font-semibold">
-                {set.set}
-              </div>
+            <div key={index} className="flex items-center gap-2">
+              <Checkbox
+                checked={set.completed}
+                onCheckedChange={(checked) =>
+                  handleSetChange(index, 'completed', checked as boolean)
+                }
+              />
+              <span className="text-sm text-muted-foreground min-w-[60px]">
+                {t('gym.series')} {index + 1}
+              </span>
               <Input
                 type="number"
-                value={set.weight || ''}
-                onChange={(e) => updateSet(index, 'weight', Number(e.target.value))}
-                className="h-9 text-center text-sm"
-                step="0.5"
+                value={set.weight}
+                onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value))}
+                className="w-20"
+                placeholder="kg"
               />
+              <span className="text-xs text-muted-foreground">kg</span>
               <Input
                 type="number"
-                value={set.reps || ''}
-                onChange={(e) => updateSet(index, 'reps', Number(e.target.value))}
-                className="h-9 text-center text-sm"
+                value={set.reps}
+                onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value))}
+                className="w-20"
+                placeholder={t('gym.reps')}
               />
-              <Input
-                type="number"
-                value={set.rpe || ''}
-                onChange={(e) => updateSet(index, 'rpe', Number(e.target.value) || undefined)}
-                className="h-9 text-center text-sm"
-                placeholder="-"
-                min="1"
-                max="10"
-              />
-              <div className="flex items-center justify-center">
-                <Switch
-                  checked={set.completed}
-                  onCheckedChange={(checked) => updateSet(index, 'completed', checked)}
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9"
-                onClick={() => deleteSet(index)}
-                disabled={sets.length === 1}
-              >
-                ×
-              </Button>
+              <span className="text-xs text-muted-foreground">{t('gym.reps')}</span>
             </div>
           ))}
-
-          <Button variant="outline" size="sm" onClick={addSet} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            {t('gym.addSet')}
-          </Button>
         </div>
 
-        {/* Technique Toggle */}
-        <div className="flex items-center justify-between py-2 border-t">
-          <Label htmlFor={`technique-${exerciseName}`} className="text-sm">
-            {t('gym.goodTechnique')}
-          </Label>
-          <Switch
-            id={`technique-${exerciseName}`}
-            checked={techniqueGood}
-            onCheckedChange={setTechniqueGood}
-          />
+        {/* Add Set Button */}
+        <Button variant="outline" size="sm" onClick={handleAddSet} className="w-full">
+          <Plus className="w-4 h-4 mr-2" />
+          {t('gym.addSet')}
+        </Button>
+
+        {/* Goal and Technique */}
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={`goal-${exerciseName}`}
+              checked={goalAchieved}
+              onCheckedChange={(checked) => setGoalAchieved(checked as boolean)}
+            />
+            <Label htmlFor={`goal-${exerciseName}`} className="text-sm">
+              {t('gym.objective')}
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id={`technique-${exerciseName}`}
+              checked={techniquegood}
+              onCheckedChange={(checked) => setTechniqueGood(checked as boolean)}
+            />
+            <Label htmlFor={`technique-${exerciseName}`} className="text-sm">
+              {t('gym.goodTechnique')}
+            </Label>
+          </div>
         </div>
 
         {/* Notes */}
-        {showNotes ? (
-          <div className="space-y-2 border-t pt-3">
-            <Label className="text-sm">{t('gym.notes')}</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('gym.notesPlaceholder')}
-              rows={3}
-              className="text-sm"
-            />
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowNotes(true)}
-            className="w-full"
-          >
-            {t('gym.addNotes')}
-          </Button>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor={`notes-${exerciseName}`}>{t('gym.notes')}</Label>
+          <Textarea
+            id={`notes-${exerciseName}`}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={t('gym.notesPlaceholder')}
+            rows={2}
+          />
+        </div>
 
         {/* Save Button */}
         <Button
           onClick={handleSave}
-          disabled={isSaving || !sets.some(s => s.completed)}
+          disabled={!allSetsCompleted || isSaved}
           className="w-full"
         >
-          <Save className="w-4 h-4 mr-2" />
-          {isSaving ? t('common.saving') : t('common.save')}
+          {isSaved ? t('gym.exerciseSaved') : t('common.save')}
         </Button>
       </div>
     </StatsCard>

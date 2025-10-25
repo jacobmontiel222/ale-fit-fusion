@@ -215,8 +215,15 @@
     "exerciseTypes": {
       "compound": "Compound/Basic",
       "accessory": "Accessory",
-      "calisthenics": "Calisthenics"
+      "calisthenics": "Calisthenics",
+      "cardio": "Cardio"
     },
+    "kg": "kg",
+    "minutes": "minutes",
+    "restSeconds": "Rest (s)",
+    "loadPrevious": "Load previous",
+    "noPreviousData": "No previous data",
+    "previousDataLoaded": "Previous data loaded",
     "days": {
       "monday": "Monday",
       "tuesday": "Tuesday",

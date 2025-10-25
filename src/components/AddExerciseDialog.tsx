@@ -24,8 +24,6 @@ export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }
   const { t } = useTranslation();
   const [exerciseName, setExerciseName] = useState("");
   const [exerciseType, setExerciseType] = useState("compound");
-  const [repsMin, setRepsMin] = useState(5);
-  const [repsMax, setRepsMax] = useState(8);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -51,17 +49,16 @@ export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }
           template_id: templateId,
           exercise_name: exerciseName.trim(),
           exercise_type: exerciseType,
-          reps_min: repsMin,
-          reps_max: repsMax,
+          reps_min: 5,
+          reps_max: 8,
           order_index: nextOrderIndex,
+          planned_sets: [],
         });
 
       if (error) throw error;
 
       setExerciseName("");
       setExerciseType("compound");
-      setRepsMin(5);
-      setRepsMax(8);
       onExerciseAdded();
       onClose();
     } catch (error) {
@@ -97,30 +94,9 @@ export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }
                 <SelectItem value="compound">{t('gym.exerciseTypes.compound')}</SelectItem>
                 <SelectItem value="accessory">{t('gym.exerciseTypes.accessory')}</SelectItem>
                 <SelectItem value="calisthenics">{t('gym.exerciseTypes.calisthenics')}</SelectItem>
+                <SelectItem value="cardio">{t('gym.exerciseTypes.cardio')}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="reps-min">{t('gym.repsMin')}</Label>
-              <Input
-                id="reps-min"
-                type="number"
-                value={repsMin}
-                onChange={(e) => setRepsMin(parseInt(e.target.value))}
-                min={1}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reps-max">{t('gym.repsMax')}</Label>
-              <Input
-                id="reps-max"
-                type="number"
-                value={repsMax}
-                onChange={(e) => setRepsMax(parseInt(e.target.value))}
-                min={1}
-              />
-            </div>
           </div>
         </div>
         <DialogFooter>
