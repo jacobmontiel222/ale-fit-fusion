@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PlannedSet {
   weight?: number;
   reps?: number;
-  rest_seconds?: number;
   minutes?: number;
 }
 
@@ -28,19 +37,20 @@ interface TemplateExerciseCardProps {
 export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCardProps) => {
   const { t } = useTranslation();
   const [sets, setSets] = useState<PlannedSet[]>(exercise.planned_sets || []);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const isCardio = exercise.exercise_type === "cardio";
 
   const handleAddSet = async () => {
     const newSet: PlannedSet = isCardio 
       ? { minutes: 10 }
-      : { weight: 0, reps: 10, rest_seconds: 90 };
+      : { weight: undefined, reps: 10 };
     
     const updatedSets = [...sets, newSet];
     setSets(updatedSets);
     await saveSets(updatedSets);
   };
 
-  const handleDeleteExercise = async () => {
+  const confirmDeleteExercise = async () => {
     const { error } = await supabase
       .from('template_exercises')
       .delete()
@@ -52,6 +62,7 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
     }
 
     toast.success(t('gym.exerciseDeleted'));
+    setShowDeleteDialog(false);
     onUpdate();
   };
 
@@ -94,68 +105,81 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
         <Button
           variant="ghost"
           size="icon"
-          onClick={handleDeleteExercise}
+          onClick={() => setShowDeleteDialog(true)}
           className="text-destructive hover:text-destructive"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
 
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('gym.deleteExerciseTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('gym.deleteExerciseConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteExercise}>
+              {t('common.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Sets */}
       <div className="space-y-2">
         {sets.map((set, index) => (
-          <div key={index} className="flex items-center gap-2">
+          <div key={index} className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground min-w-[60px]">
               {t('gym.series')} {index + 1}
             </span>
             
             {isCardio ? (
-              <div className="flex-1 flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
                 <Input
                   type="number"
-                  value={set.minutes || 0}
-                  onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value))}
+                  value={set.minutes || ""}
+                  onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value) || 0)}
                   className="w-24"
                   placeholder={t('gym.minutes')}
                 />
                 <span className="text-sm text-muted-foreground">{t('gym.minutes')}</span>
               </div>
             ) : (
-              <>
-                <Input
-                  type="number"
-                  value={set.weight || 0}
-                  onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value))}
-                  className="w-20"
-                  placeholder={t('gym.kg')}
-                />
-                <span className="text-xs text-muted-foreground">kg</span>
+              <div className="flex items-center gap-2 flex-1 min-w-[200px] flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    value={set.weight || ""}
+                    onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
+                    className="w-20"
+                    placeholder={t('gym.kg')}
+                  />
+                  <span className="text-xs text-muted-foreground">kg</span>
+                </div>
                 
-                <Input
-                  type="number"
-                  value={set.reps || 0}
-                  onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value))}
-                  className="w-20"
-                  placeholder={t('gym.reps')}
-                />
-                <span className="text-xs text-muted-foreground">{t('gym.reps')}</span>
-                
-                <Input
-                  type="number"
-                  value={set.rest_seconds || 0}
-                  onChange={(e) => handleSetChange(index, 'rest_seconds', parseInt(e.target.value))}
-                  className="w-20"
-                  placeholder={t('gym.restSeconds')}
-                />
-                <span className="text-xs text-muted-foreground">s</span>
-              </>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    value={set.reps || ""}
+                    onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
+                    className="w-20"
+                    placeholder={t('gym.reps')}
+                  />
+                  <span className="text-xs text-muted-foreground">{t('gym.reps')}</span>
+                </div>
+              </div>
             )}
             
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleDeleteSet(index)}
-              className="text-destructive hover:text-destructive"
+              className="text-destructive hover:text-destructive shrink-0"
             >
               <Trash2 className="w-4 h-4" />
             </Button>

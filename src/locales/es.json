@@ -221,9 +221,12 @@
     "kg": "kg",
     "minutes": "minutos",
     "restSeconds": "Descanso (s)",
+    "exerciseDeleted": "Ejercicio eliminado",
     "loadPrevious": "Cargar anterior",
     "noPreviousData": "No hay datos anteriores",
     "previousDataLoaded": "Datos anteriores cargados",
+    "deleteExerciseTitle": "¿Eliminar ejercicio?",
+    "deleteExerciseConfirm": "¿Estás seguro de que quieres eliminar este ejercicio? Esta acción no se puede deshacer.",
     "days": {
       "monday": "Lunes",
       "tuesday": "Martes",

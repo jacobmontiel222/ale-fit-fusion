@@ -368,9 +368,6 @@ const Gimnasio = () => {
                     <Plus className="w-4 h-4 mr-2" />
                     {t('gym.addExercise')}
                   </Button>
-                  <Button className="w-full mt-3" onClick={createSessionForDate}>
-                    {t('gym.startWorkout')}
-                  </Button>
                 </>
               ) : (
                 <Button
