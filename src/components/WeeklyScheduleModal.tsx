@@ -7,8 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslation } from 'react-i18next';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWeeklySchedule } from '@/hooks/useWeeklySchedule';
-import { Plus, Settings } from 'lucide-react';
-import { TemplateExercisesModal } from '@/components/TemplateExercisesModal';
+import { Plus, Palette } from 'lucide-react';
 
 interface WeeklyScheduleModalProps {
   open: boolean;
@@ -29,11 +28,11 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
   const { t } = useTranslation();
   const { templates, createTemplate } = useWorkoutTemplates();
   const { schedule, setDaySchedule } = useWeeklySchedule();
-  const [showNewTemplate, setShowNewTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateColor, setNewTemplateColor] = useState(COLORS[0]);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
-  const [editingTemplateName, setEditingTemplateName] = useState('');
+  const [editingColorTemplateId, setEditingColorTemplateId] = useState<string | null>(null);
+  const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
+  const { updateTemplate } = useWorkoutTemplates();
 
   const dayNames = [
     t('gym.days.monday'),
@@ -49,7 +48,15 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
     if (!newTemplateName.trim()) return;
     await createTemplate({ name: newTemplateName, color: newTemplateColor });
     setNewTemplateName('');
-    setShowNewTemplate(false);
+    setNewTemplateColor(COLORS[0]);
+    setShowNewRoutineDialog(false);
+  };
+
+  const handleUpdateColor = async (templateId: string, newColor: string) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (!template) return;
+    await updateTemplate({ id: templateId, name: template.name, color: newColor });
+    setEditingColorTemplateId(null);
   };
 
   const handleSetDay = async (dayOfWeek: number, templateId: string | 'rest') => {
@@ -109,61 +116,80 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
                 </Select>
                 {selectedTemplate && (
                   <div className="flex items-center gap-2 mt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1"
+                      onClick={() => setEditingColorTemplateId(selectedTemplate.id)}
+                    >
+                      <Palette className="w-4 h-4" />
+                    </Button>
                     <div
                       className="h-1 rounded-full flex-1"
                       style={{ backgroundColor: selectedTemplate.color }}
                     />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditingTemplateId(selectedTemplate.id);
-                        setEditingTemplateName(selectedTemplate.name);
-                      }}
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
+                  </div>
+                )}
+                {editingColorTemplateId === selectedTemplate?.id && (
+                  <div className="flex gap-2 mt-2">
+                    {COLORS.map((color) => (
+                      <button
+                        key={color}
+                        className="w-6 h-6 rounded-full border-2 border-border hover:scale-110 transition-transform"
+                        style={{ backgroundColor: color }}
+                        onClick={() => handleUpdateColor(selectedTemplate.id, color)}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
             );
           })}
 
-          {/* Crear nueva plantilla */}
-          {!showNewTemplate && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowNewTemplate(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {t('gym.newTemplate')}
-            </Button>
-          )}
+          {/* Crear nueva rutina */}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setShowNewRoutineDialog(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {t('gym.newRoutine')}
+          </Button>
+        </div>
 
-          {showNewTemplate && (
-            <div className="space-y-3 border rounded-lg p-4">
-              <Label>{t('gym.templateName')}</Label>
-              <Input
-                value={newTemplateName}
-                onChange={(e) => setNewTemplateName(e.target.value)}
-                placeholder={t('gym.templateNamePlaceholder')}
-              />
-              <Label>{t('gym.color')}</Label>
-              <div className="flex gap-2">
-                {COLORS.map((color) => (
-                  <button
-                    key={color}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      newTemplateColor === color ? 'border-foreground' : 'border-transparent'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setNewTemplateColor(color)}
-                  />
-                ))}
+        {/* Dialog para crear nueva rutina */}
+        <Dialog open={showNewRoutineDialog} onOpenChange={setShowNewRoutineDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{t('gym.newRoutine')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>{t('gym.templateName')}</Label>
+                <Input
+                  value={newTemplateName}
+                  onChange={(e) => setNewTemplateName(e.target.value)}
+                  placeholder={t('gym.templateNamePlaceholder')}
+                  className="mt-2"
+                />
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowNewTemplate(false)} className="flex-1">
+              <div>
+                <Label>{t('gym.color')}</Label>
+                <div className="flex gap-2 mt-2">
+                  {COLORS.map((color) => (
+                    <button
+                      key={color}
+                      className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                        newTemplateColor === color ? 'border-foreground scale-110' : 'border-border'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setNewTemplateColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowNewRoutineDialog(false)} className="flex-1">
                   {t('common.cancel')}
                 </Button>
                 <Button onClick={handleCreateTemplate} className="flex-1">
@@ -171,20 +197,8 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
                 </Button>
               </div>
             </div>
-          )}
-        </div>
-
-        {editingTemplateId && (
-          <TemplateExercisesModal
-            open={!!editingTemplateId}
-            onClose={() => {
-              setEditingTemplateId(null);
-              setEditingTemplateName('');
-            }}
-            templateId={editingTemplateId}
-            templateName={editingTemplateName}
-          />
-        )}
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
