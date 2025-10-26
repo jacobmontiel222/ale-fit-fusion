@@ -25,11 +25,16 @@ const CreateRecipe = () => {
   const [recipeName, setRecipeName] = useState("");
   const [items, setItems] = useState<RecipeItem[]>([]);
 
-  // Load pending items from sessionStorage on mount
+  // Load pending items and recipe name from sessionStorage on mount
   useEffect(() => {
     const pendingItems = sessionStorage.getItem("pendingRecipeItems");
     if (pendingItems) {
       setItems(JSON.parse(pendingItems));
+    }
+    
+    const pendingName = sessionStorage.getItem("pendingRecipeName");
+    if (pendingName) {
+      setRecipeName(pendingName);
     }
   }, []);
 
@@ -37,6 +42,11 @@ const CreateRecipe = () => {
   useEffect(() => {
     sessionStorage.setItem("pendingRecipeItems", JSON.stringify(items));
   }, [items]);
+
+  // Save recipe name to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem("pendingRecipeName", recipeName);
+  }, [recipeName]);
 
   const handleRemoveItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
@@ -114,9 +124,10 @@ const CreateRecipe = () => {
 
       // 3. Limpiar sessionStorage
       sessionStorage.removeItem("pendingRecipeItems");
+      sessionStorage.removeItem("pendingRecipeName");
 
       toast.success(`${recipeName} se ha guardado correctamente`);
-      navigate("/comidas");
+      navigate("/recipes");
     } catch (error) {
       toast.error("Error inesperado al guardar la receta");
       console.error(error);
@@ -135,7 +146,8 @@ const CreateRecipe = () => {
             size="icon"
             onClick={() => {
               sessionStorage.removeItem("pendingRecipeItems");
-              navigate("/comidas");
+              sessionStorage.removeItem("pendingRecipeName");
+              navigate("/recipes");
             }}
             className="rounded-full"
           >
