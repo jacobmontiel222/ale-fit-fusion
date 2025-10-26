@@ -228,6 +228,9 @@
     "previousDataLoaded": "Datos anteriores cargados",
     "deleteExerciseTitle": "¿Eliminar ejercicio?",
     "deleteExerciseConfirm": "¿Estás seguro de que quieres eliminar este ejercicio? Esta acción no se puede deshacer.",
+    "reorderExercises": "Reordenar ejercicios",
+    "exercisesReordered": "Ejercicios reordenados correctamente",
+    "errorReordering": "Error al reordenar ejercicios",
     "days": {
       "monday": "Lunes",
       "tuesday": "Martes",

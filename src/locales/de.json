@@ -191,6 +191,9 @@
     "previousDataLoaded": "Vorherige Daten geladen",
     "deleteExerciseTitle": "Übung löschen?",
     "deleteExerciseConfirm": "Sind Sie sicher, dass Sie diese Übung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "reorderExercises": "Übungen neu anordnen",
+    "exercisesReordered": "Übungen erfolgreich neu angeordnet",
+    "errorReordering": "Fehler beim Neuanordnen der Übungen",
     "days": {
       "monday": "Montag",
       "tuesday": "Dienstag",

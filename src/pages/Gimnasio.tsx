@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 import { TemplateExerciseCard } from "@/components/TemplateExerciseCard";
+import { ReorderExercisesModal } from "@/components/ReorderExercisesModal";
 
 interface WorkoutSession {
   id: string;
@@ -54,6 +55,7 @@ const Gimnasio = () => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
   const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
+  const [showReorderModal, setShowReorderModal] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -327,7 +329,13 @@ const Gimnasio = () => {
         {/* Template Name Subtitle */}
         {scheduledTemplate && !scheduledTemplate.isRest && (
           <div className="mb-4 flex items-center gap-2">
-            <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
+            <button
+              onClick={() => setShowReorderModal(true)}
+              className="p-1 hover:bg-secondary rounded transition-colors"
+              disabled={templateExercises.length === 0}
+            >
+              <GripVertical className="w-5 h-5 text-muted-foreground cursor-pointer" />
+            </button>
             <h3 className="text-xl font-semibold" style={{ color: scheduledTemplate.color }}>
               {scheduledTemplate.name}
             </h3>
@@ -410,12 +418,21 @@ const Gimnasio = () => {
         />
 
         {scheduledTemplate && !scheduledTemplate.isRest && 'id' in scheduledTemplate && (
-          <AddExerciseDialog
-            open={showAddExerciseDialog}
-            onClose={() => setShowAddExerciseDialog(false)}
-            templateId={scheduledTemplate.id}
-            onExerciseAdded={loadTemplateExercises}
-          />
+          <>
+            <AddExerciseDialog
+              open={showAddExerciseDialog}
+              onClose={() => setShowAddExerciseDialog(false)}
+              templateId={scheduledTemplate.id}
+              onExerciseAdded={loadTemplateExercises}
+            />
+            <ReorderExercisesModal
+              open={showReorderModal}
+              onClose={() => setShowReorderModal(false)}
+              templateId={scheduledTemplate.id}
+              exercises={templateExercises}
+              onReorder={loadTemplateExercises}
+            />
+          </>
         )}
       </div>
 

@@ -191,6 +191,9 @@
     "previousDataLoaded": "Dati precedenti caricati",
     "deleteExerciseTitle": "Eliminare esercizio?",
     "deleteExerciseConfirm": "Sei sicuro di voler eliminare questo esercizio? Questa azione non può essere annullata.",
+    "reorderExercises": "Riordina esercizi",
+    "exercisesReordered": "Esercizi riordinati con successo",
+    "errorReordering": "Errore nel riordinare gli esercizi",
     "days": {
       "monday": "Lunedì",
       "tuesday": "Martedì",

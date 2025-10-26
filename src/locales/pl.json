@@ -191,6 +191,9 @@
     "previousDataLoaded": "Poprzednie dane załadowane",
     "deleteExerciseTitle": "Usunąć ćwiczenie?",
     "deleteExerciseConfirm": "Czy na pewno chcesz usunąć to ćwiczenie? Ta akcja nie może być cofnięta.",
+    "reorderExercises": "Zmień kolejność ćwiczeń",
+    "exercisesReordered": "Kolejność ćwiczeń zmieniona pomyślnie",
+    "errorReordering": "Błąd podczas zmiany kolejności ćwiczeń",
     "days": {
       "monday": "Poniedziałek",
       "tuesday": "Wtorek",
