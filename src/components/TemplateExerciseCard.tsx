@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,10 +17,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type SetStatus = 'pending' | 'success' | 'failed';
+
 interface PlannedSet {
   weight?: number;
   reps?: number;
   minutes?: number;
+  status?: SetStatus;
 }
 
 interface TemplateExercise {
@@ -42,10 +46,24 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
 
   const handleAddSet = async () => {
     const newSet: PlannedSet = isCardio 
-      ? { minutes: 10 }
-      : { weight: undefined, reps: 10 };
+      ? { minutes: 10, status: 'pending' }
+      : { weight: undefined, reps: 10, status: 'pending' };
     
     const updatedSets = [...sets, newSet];
+    setSets(updatedSets);
+    await saveSets(updatedSets);
+  };
+
+  const handleStatusToggle = async (index: number) => {
+    const updatedSets = [...sets];
+    const currentStatus = updatedSets[index].status || 'pending';
+    
+    // Cycle through: pending -> success -> failed -> pending
+    const nextStatus: SetStatus = 
+      currentStatus === 'pending' ? 'success' :
+      currentStatus === 'success' ? 'failed' : 'pending';
+    
+    updatedSets[index] = { ...updatedSets[index], status: nextStatus };
     setSets(updatedSets);
     await saveSets(updatedSets);
   };
@@ -132,59 +150,74 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
 
       {/* Sets */}
       <div className="space-y-2">
-        {sets.map((set, index) => (
-          <div key={index} className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted-foreground min-w-[60px]">
-              {t('gym.series')} {index + 1}
-            </span>
-            
-            {isCardio ? (
-              <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <Input
-                  type="number"
-                  value={set.minutes || ""}
-                  onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value) || 0)}
-                  className="w-24"
-                  placeholder={t('gym.minutes')}
-                />
-                <span className="text-sm text-muted-foreground">{t('gym.minutes')}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 flex-1 min-w-[200px] flex-wrap">
-                <div className="flex items-center gap-1">
+        {sets.map((set, index) => {
+          const status = set.status || 'pending';
+          return (
+            <div key={index} className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {t('gym.series')} {index + 1}
+              </span>
+              
+              {isCardio ? (
+                <div className="flex items-center gap-1 flex-1">
+                  <Input
+                    type="number"
+                    value={set.minutes || ""}
+                    onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value) || 0)}
+                    className="w-20 h-8"
+                    placeholder={t('gym.minutes')}
+                  />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.minutes')}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 flex-1">
                   <Input
                     type="number"
                     value={set.weight || ""}
                     onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
-                    className="w-20"
-                    placeholder={t('gym.kg')}
+                    className="w-16 h-8"
+                    placeholder="kg"
                   />
                   <span className="text-xs text-muted-foreground">kg</span>
-                </div>
-                
-                <div className="flex items-center gap-1">
+                  
                   <Input
                     type="number"
                     value={set.reps || ""}
                     onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
-                    className="w-20"
-                    placeholder={t('gym.reps')}
+                    className="w-16 h-8"
+                    placeholder="reps"
                   />
-                  <span className="text-xs text-muted-foreground">{t('gym.reps')}</span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.reps')}</span>
                 </div>
-              </div>
-            )}
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDeleteSet(index)}
-              className="text-destructive hover:text-destructive shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        ))}
+              )}
+              
+              {/* Status button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleStatusToggle(index)}
+                className={cn(
+                  "h-8 w-8 shrink-0",
+                  status === 'success' && "text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100",
+                  status === 'failed' && "text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100"
+                )}
+              >
+                {status === 'success' && <Check className="w-4 h-4" />}
+                {status === 'failed' && <X className="w-4 h-4" />}
+                {status === 'pending' && <Check className="w-4 h-4 opacity-30" />}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteSet(index)}
+                className="text-destructive hover:text-destructive h-8 w-8 shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Add Set Button */}
