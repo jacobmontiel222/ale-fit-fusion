@@ -35,6 +35,8 @@ export const ReorderExercisesModal = ({
   const { t } = useTranslation();
   const [orderedExercises, setOrderedExercises] = useState<Exercise[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchCurrentY, setTouchCurrentY] = useState<number | null>(null);
 
   useEffect(() => {
     setOrderedExercises([...exercises].sort((a, b) => a.order_index - b.order_index));
@@ -63,6 +65,46 @@ export const ReorderExercisesModal = ({
 
   const handleDragEnd = () => {
     setDraggedIndex(null);
+  };
+
+  const handleTouchStart = (index: number, e: React.TouchEvent) => {
+    setDraggedIndex(index);
+    setTouchStartY(e.touches[0].clientY);
+    setTouchCurrentY(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (draggedIndex === null || touchStartY === null) return;
+    
+    e.preventDefault();
+    const currentY = e.touches[0].clientY;
+    setTouchCurrentY(currentY);
+    
+    // Calculate which position we're over based on touch position
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const exerciseElement = element?.closest('[data-exercise-index]');
+    
+    if (exerciseElement) {
+      const targetIndex = parseInt(exerciseElement.getAttribute('data-exercise-index') || '0');
+      
+      if (targetIndex !== draggedIndex) {
+        const newExercises = [...orderedExercises];
+        const draggedExercise = newExercises[draggedIndex];
+        
+        newExercises.splice(draggedIndex, 1);
+        newExercises.splice(targetIndex, 0, draggedExercise);
+        
+        setOrderedExercises(newExercises);
+        setDraggedIndex(targetIndex);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setDraggedIndex(null);
+    setTouchStartY(null);
+    setTouchCurrentY(null);
   };
 
   const handleSave = async () => {
@@ -102,12 +144,16 @@ export const ReorderExercisesModal = ({
           {orderedExercises.map((exercise, index) => (
             <div
               key={exercise.id}
+              data-exercise-index={index}
               draggable
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              className={`flex items-center gap-3 p-3 bg-secondary/50 rounded-lg cursor-grab active:cursor-grabbing transition-all ${
-                draggedIndex === index ? 'opacity-50' : 'opacity-100'
+              onTouchStart={(e) => handleTouchStart(index, e)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className={`flex items-center gap-3 p-3 bg-secondary/50 rounded-lg cursor-grab active:cursor-grabbing transition-all touch-none ${
+                draggedIndex === index ? 'opacity-50 scale-105' : 'opacity-100'
               }`}
             >
               <GripVertical className="w-5 h-5 text-muted-foreground flex-shrink-0" />
