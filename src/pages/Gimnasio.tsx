@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -326,7 +326,8 @@ const Gimnasio = () => {
 
         {/* Template Name Subtitle */}
         {scheduledTemplate && !scheduledTemplate.isRest && (
-          <div className="mb-4">
+          <div className="mb-4 flex items-center gap-2">
+            <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
             <h3 className="text-xl font-semibold" style={{ color: scheduledTemplate.color }}>
               {scheduledTemplate.name}
             </h3>
