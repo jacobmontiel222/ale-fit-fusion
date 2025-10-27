@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2, Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,9 +41,32 @@ interface TemplateExerciseCardProps {
 
 export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCardProps) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [sets, setSets] = useState<PlannedSet[]>(exercise.planned_sets || []);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [previousData, setPreviousData] = useState<PlannedSet[]>([]);
   const isCardio = exercise.exercise_type === "cardio";
+
+  useEffect(() => {
+    const fetchPreviousData = async () => {
+      if (!user?.id) return;
+
+      const { data, error } = await supabase
+        .from('exercise_history')
+        .select('sets_data')
+        .eq('user_id', user.id)
+        .eq('exercise_name', exercise.exercise_name)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data && !error) {
+        setPreviousData(data.sets_data as PlannedSet[]);
+      }
+    };
+
+    fetchPreviousData();
+  }, [user?.id, exercise.exercise_name]);
 
   const handleAddSet = async () => {
     const newSet: PlannedSet = isCardio 
@@ -165,28 +189,42 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
                     value={set.minutes || ""}
                     onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value) || 0)}
                     className="w-20 h-8"
-                    placeholder={t('gym.minutes')}
+                    placeholder={previousData[index]?.minutes ? `${previousData[index].minutes}` : t('gym.minutes')}
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.minutes')}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1 flex-1">
-                  <Input
-                    type="number"
-                    value={set.weight || ""}
-                    onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
-                    className="w-16 h-8"
-                    placeholder="kg"
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={set.weight || ""}
+                      onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
+                      className="w-16 h-8"
+                      placeholder={previousData[index]?.weight ? `${previousData[index].weight}` : "kg"}
+                    />
+                    {!set.weight && previousData[index]?.weight && (
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/30 text-sm pointer-events-none">
+                        {previousData[index].weight}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-muted-foreground">kg</span>
                   
-                  <Input
-                    type="number"
-                    value={set.reps || ""}
-                    onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
-                    className="w-16 h-8"
-                    placeholder="reps"
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={set.reps || ""}
+                      onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
+                      className="w-16 h-8"
+                      placeholder={previousData[index]?.reps ? `${previousData[index].reps}` : "reps"}
+                    />
+                    {!set.reps && previousData[index]?.reps && (
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/30 text-sm pointer-events-none">
+                        {previousData[index].reps}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.reps')}</span>
                 </div>
               )}
