@@ -250,6 +250,45 @@ export type Database = {
         }
         Relationships: []
       }
+      gym_sets: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          exercise_id: string
+          id: string
+          performed_at: string | null
+          reps: number | null
+          set_number: number
+          updated_at: string | null
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          exercise_id: string
+          id?: string
+          performed_at?: string | null
+          reps?: number | null
+          set_number: number
+          updated_at?: string | null
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          exercise_id?: string
+          id?: string
+          performed_at?: string | null
+          reps?: number | null
+          set_number?: number
+          updated_at?: string | null
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       meal_entries: {
         Row: {
           amount: number

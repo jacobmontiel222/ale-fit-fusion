@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -45,6 +45,13 @@ interface TemplateExercise {
   planned_sets: PlannedSet[];
 }
 
+interface PreviousSetValue {
+  weight_kg: number | null;
+  reps: number | null;
+}
+
+type PreviousSetsMap = Record<string, Record<number, PreviousSetValue>>;
+
 const Gimnasio = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
@@ -58,6 +65,22 @@ const Gimnasio = () => {
   const [showReorderModal, setShowReorderModal] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
+  const [previousSetGhosts, setPreviousSetGhosts] = useState<PreviousSetsMap>({});
+  const previousSetsCache = useRef<Map<string, PreviousSetsMap>>(new Map());
+
+  const startOfWeek = useMemo(() => {
+    const date = new Date(selectedDate);
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // make Monday the first day
+    const monday = new Date(date);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(monday.getDate() + diff);
+    return monday;
+  }, [selectedDate]);
+
+  const exerciseIds = useMemo(() => {
+    return templateExercises.map((exercise) => exercise.id);
+  }, [templateExercises]);
 
   // Load workout sessions from Supabase
   useEffect(() => {
@@ -119,6 +142,100 @@ const Gimnasio = () => {
   useEffect(() => {
     loadTemplateExercises();
   }, [selectedDate, schedule, templates]);
+
+  useEffect(() => {
+    if (!user) {
+      setPreviousSetGhosts({});
+      return;
+    }
+
+    const uniqueExerciseIds = Array.from(new Set(exerciseIds));
+    if (uniqueExerciseIds.length === 0) {
+      setPreviousSetGhosts({});
+      return;
+    }
+
+    const cacheKey = `${user.id}-${startOfWeek.toISOString()}-${uniqueExerciseIds.slice().sort().join(",")}`;
+    if (previousSetsCache.current.has(cacheKey)) {
+      setPreviousSetGhosts(previousSetsCache.current.get(cacheKey)!);
+      return;
+    }
+
+    let isActive = true;
+
+    const fetchPreviousSets = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('gym_sets')
+          .select('exercise_id, set_number, weight_kg, reps, performed_at, date')
+          .eq('user_id', user.id)
+          .in('exercise_id', uniqueExerciseIds);
+
+        if (error) {
+          throw error;
+        }
+
+        const startTime = startOfWeek.getTime();
+
+        const sortedRows = (data ?? [])
+          .filter((row) => {
+            const rawDate = row.performed_at ?? row.date;
+            if (!rawDate) return false;
+            const timestamp = new Date(rawDate).getTime();
+            if (Number.isNaN(timestamp)) return false;
+            return timestamp < startTime;
+          })
+          .sort((a, b) => {
+            const dateA = new Date(a.performed_at ?? a.date ?? 0).getTime();
+            const dateB = new Date(b.performed_at ?? b.date ?? 0).getTime();
+            return dateB - dateA;
+          });
+
+        const grouped: PreviousSetsMap = {};
+
+        for (const row of sortedRows) {
+          if (!row.exercise_id || !row.set_number) {
+            continue;
+          }
+
+          if (!grouped[row.exercise_id]) {
+            grouped[row.exercise_id] = {};
+          }
+
+          if (!grouped[row.exercise_id][row.set_number]) {
+            grouped[row.exercise_id][row.set_number] = {
+              weight_kg:
+                row.weight_kg !== null && row.weight_kg !== undefined
+                  ? Number(row.weight_kg)
+                  : null,
+              reps:
+                row.reps !== null && row.reps !== undefined
+                  ? Number(row.reps)
+                  : null,
+            };
+          }
+        }
+
+        if (!isActive) {
+          return;
+        }
+
+        previousSetsCache.current.set(cacheKey, grouped);
+        setPreviousSetGhosts(grouped);
+      } catch (err) {
+        console.error('Error fetching previous gym sets:', err);
+        if (isActive) {
+          setPreviousSetGhosts({});
+        }
+      }
+    };
+
+    fetchPreviousSets();
+
+    return () => {
+      isActive = false;
+    };
+  }, [user, exerciseIds, startOfWeek]);
 
   // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
@@ -366,6 +483,9 @@ const Gimnasio = () => {
                         key={exercise.id}
                         exercise={exercise}
                         onUpdate={loadTemplateExercises}
+                        ghostValues={previousSetGhosts[exercise.id]}
+                        selectedDate={selectedDate}
+                        userId={user?.id}
                       />
                     ))}
                   </div>

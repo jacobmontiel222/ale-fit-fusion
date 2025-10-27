@@ -33,21 +33,48 @@ interface TemplateExercise {
   planned_sets: PlannedSet[];
 }
 
+interface GhostSetValue {
+  weight_kg: number | null;
+  reps: number | null;
+}
+
 interface TemplateExerciseCardProps {
   exercise: TemplateExercise;
   onUpdate: () => void;
+  ghostValues?: Record<number, GhostSetValue>;
+  selectedDate: Date;
+  userId?: string;
 }
 
-export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCardProps) => {
+export const TemplateExerciseCard = ({
+  exercise,
+  onUpdate,
+  ghostValues,
+  selectedDate,
+  userId,
+}: TemplateExerciseCardProps) => {
   const { t } = useTranslation();
   const [sets, setSets] = useState<PlannedSet[]>(exercise.planned_sets || []);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const isCardio = exercise.exercise_type === "cardio";
 
+  const formatGhostNumber = (value: number | null | undefined) => {
+    if (value === null || value === undefined) {
+      return '—';
+    }
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      return '—';
+    }
+    return Number.isInteger(numeric)
+      ? numeric.toString()
+      : numeric.toFixed(1).replace(/\.0$/, '');
+  };
+
   const handleAddSet = async () => {
     const newSet: PlannedSet = isCardio 
       ? { minutes: 10, status: 'pending' }
-      : { weight: undefined, reps: 10, status: 'pending' };
+      : { weight: undefined, reps: undefined, status: 'pending' };
     
     const updatedSets = [...sets, newSet];
     setSets(updatedSets);
@@ -84,7 +111,7 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
     onUpdate();
   };
 
-  const handleSetChange = async (index: number, field: keyof PlannedSet, value: number) => {
+  const handleSetChange = async (index: number, field: keyof PlannedSet, value: number | undefined) => {
     const updatedSets = [...sets];
     updatedSets[index] = { ...updatedSets[index], [field]: value };
     setSets(updatedSets);
@@ -97,6 +124,41 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
     await saveSets(updatedSets);
   };
 
+  const persistGymSets = async (updatedSets: PlannedSet[]) => {
+    if (!userId || isCardio) {
+      return;
+    }
+
+    const workoutDate = new Date(selectedDate);
+    workoutDate.setHours(0, 0, 0, 0);
+    const dateString = workoutDate.toISOString().split('T')[0];
+    const timestamp = workoutDate.toISOString();
+
+    const entries = updatedSets
+      .map((set, idx) => ({
+        user_id: userId,
+        exercise_id: exercise.id,
+        set_number: idx + 1,
+        weight_kg: set.weight ?? null,
+        reps: set.reps ?? null,
+        date: dateString,
+        performed_at: timestamp,
+      }))
+      .filter((entry) => entry.weight_kg !== null || entry.reps !== null);
+
+    if (entries.length === 0) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from('gym_sets')
+      .upsert(entries, { onConflict: 'user_id,exercise_id,set_number,date' });
+
+    if (error) {
+      console.error('Error saving gym sets history:', error);
+    }
+  };
+
   const saveSets = async (updatedSets: PlannedSet[]) => {
     const { error } = await supabase
       .from('template_exercises')
@@ -105,7 +167,10 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
 
     if (error) {
       console.error('Error saving sets:', error);
+      return;
     }
+
+    await persistGymSets(updatedSets);
   };
 
   return (
@@ -152,6 +217,14 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
       <div className="space-y-2">
         {sets.map((set, index) => {
           const status = set.status || 'pending';
+          const ghostEntry = ghostValues?.[index + 1];
+          const ghostText = ghostEntry
+            ? `${formatGhostNumber(ghostEntry.weight_kg)} × ${formatGhostNumber(ghostEntry.reps)}`
+            : null;
+          const weightGhostText = ghostText ?? 'KG';
+          const repsGhostText = ghostText ?? 'reps';
+          const hasWeightValue = typeof set.weight === 'number' && !Number.isNaN(set.weight);
+          const hasRepsValue = typeof set.reps === 'number' && !Number.isNaN(set.reps);
           return (
             <div key={index} className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -162,8 +235,16 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
                 <div className="flex items-center gap-1 flex-1">
                   <Input
                     type="number"
-                    value={set.minutes || ""}
-                    onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value) || 0)}
+                    value={set.minutes ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const parsed = value === '' ? undefined : parseFloat(value);
+                      handleSetChange(
+                        index,
+                        'minutes',
+                        parsed === undefined || Number.isNaN(parsed) ? undefined : parsed,
+                      );
+                    }}
                     className="w-20 h-8"
                     placeholder={t('gym.minutes')}
                   />
@@ -171,22 +252,62 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
                 </div>
               ) : (
                 <div className="flex items-center gap-1 flex-1">
-                  <Input
-                    type="number"
-                    value={set.weight || ""}
-                    onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
-                    className="w-16 h-8"
-                    placeholder="kg"
-                  />
+                  <div className="relative w-16 h-8">
+                    <Input
+                      type="number"
+                      value={set.weight ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const parsed = value === '' ? undefined : parseFloat(value);
+                        handleSetChange(
+                          index,
+                          'weight',
+                          parsed === undefined || Number.isNaN(parsed) ? undefined : parsed,
+                        );
+                      }}
+                      className="w-full h-full peer"
+                      aria-label={`Set ${index + 1} peso (kg)`}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "pointer-events-none absolute inset-0 flex items-center px-3 text-sm text-[#ffffff33] transition-opacity",
+                        "peer-focus:opacity-0",
+                        hasWeightValue ? "opacity-0" : "opacity-100",
+                      )}
+                    >
+                      {weightGhostText}
+                    </span>
+                  </div>
                   <span className="text-xs text-muted-foreground">kg</span>
                   
-                  <Input
-                    type="number"
-                    value={set.reps || ""}
-                    onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
-                    className="w-16 h-8"
-                    placeholder="reps"
-                  />
+                  <div className="relative w-16 h-8">
+                    <Input
+                      type="number"
+                      value={set.reps ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const parsed = value === '' ? undefined : parseInt(value, 10);
+                        handleSetChange(
+                          index,
+                          'reps',
+                          parsed === undefined || Number.isNaN(parsed) ? undefined : parsed,
+                        );
+                      }}
+                      className="w-full h-full peer"
+                      aria-label={`Set ${index + 1} repeticiones`}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "pointer-events-none absolute inset-0 flex items-center px-3 text-sm text-[#ffffff33] transition-opacity",
+                        "peer-focus:opacity-0",
+                        hasRepsValue ? "opacity-0" : "opacity-100",
+                      )}
+                    >
+                      {repsGhostText}
+                    </span>
+                  </div>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.reps')}</span>
                 </div>
               )}
