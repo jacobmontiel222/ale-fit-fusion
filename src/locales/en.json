@@ -231,6 +231,7 @@
     "reorderExercises": "Reorder exercises",
     "exercisesReordered": "Exercises reordered successfully",
     "errorReordering": "Error reordering exercises",
+    "exerciseSaved": "Exercise saved successfully",
     "days": {
       "monday": "Monday",
       "tuesday": "Tuesday",
