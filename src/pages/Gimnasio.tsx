@@ -66,7 +66,10 @@ const Gimnasio = () => {
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
   const [previousSetGhosts, setPreviousSetGhosts] = useState<PreviousSetsMap>({});
-  const previousSetsCache = useRef<Map<string, PreviousSetsMap>>(new Map());
+  const [currentWeekSets, setCurrentWeekSets] = useState<PreviousSetsMap>({});
+  const previousSetsCache = useRef<
+    Map<string, { previous: PreviousSetsMap; current: PreviousSetsMap }>
+  >(new Map());
 
   const startOfWeek = useMemo(() => {
     const date = new Date(selectedDate);
@@ -146,18 +149,25 @@ const Gimnasio = () => {
   useEffect(() => {
     if (!user) {
       setPreviousSetGhosts({});
+      setCurrentWeekSets({});
       return;
     }
 
     const uniqueExerciseIds = Array.from(new Set(exerciseIds));
     if (uniqueExerciseIds.length === 0) {
       setPreviousSetGhosts({});
+      setCurrentWeekSets({});
       return;
     }
 
-    const cacheKey = `${user.id}-${startOfWeek.toISOString()}-${uniqueExerciseIds.slice().sort().join(",")}`;
-    if (previousSetsCache.current.has(cacheKey)) {
-      setPreviousSetGhosts(previousSetsCache.current.get(cacheKey)!);
+    const cacheKey = `${user.id}-${startOfWeek.toISOString()}-${uniqueExerciseIds
+      .slice()
+      .sort()
+      .join(",")}`;
+    const cached = previousSetsCache.current.get(cacheKey);
+    if (cached) {
+      setPreviousSetGhosts(cached.previous);
+      setCurrentWeekSets(cached.current);
       return;
     }
 
@@ -176,56 +186,89 @@ const Gimnasio = () => {
         }
 
         const startTime = startOfWeek.getTime();
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
+        endOfWeek.setHours(0, 0, 0, 0);
+        const endTime = endOfWeek.getTime();
 
-        const sortedRows = (data ?? [])
-          .filter((row) => {
-            const rawDate = row.performed_at ?? row.date;
-            if (!rawDate) return false;
-            const timestamp = new Date(rawDate).getTime();
-            if (Number.isNaN(timestamp)) return false;
-            return timestamp < startTime;
-          })
-          .sort((a, b) => {
-            const dateA = new Date(a.performed_at ?? a.date ?? 0).getTime();
-            const dateB = new Date(b.performed_at ?? b.date ?? 0).getTime();
-            return dateB - dateA;
-          });
+        const previousAccumulator: Record<
+          string,
+          Record<number, { value: PreviousSetValue; timestamp: number }>
+        > = {};
+        const currentAccumulator: PreviousSetsMap = {};
 
-        const grouped: PreviousSetsMap = {};
-
-        for (const row of sortedRows) {
-          if (!row.exercise_id || !row.set_number) {
+        for (const row of data ?? []) {
+          if (!row.exercise_id || row.set_number === null || row.set_number === undefined) {
             continue;
           }
 
-          if (!grouped[row.exercise_id]) {
-            grouped[row.exercise_id] = {};
+          const rawDate = row.performed_at ?? row.date;
+          if (!rawDate) {
+            continue;
           }
 
-          if (!grouped[row.exercise_id][row.set_number]) {
-            grouped[row.exercise_id][row.set_number] = {
-              weight_kg:
-                row.weight_kg !== null && row.weight_kg !== undefined
-                  ? Number(row.weight_kg)
-                  : null,
-              reps:
-                row.reps !== null && row.reps !== undefined
-                  ? Number(row.reps)
-                  : null,
-            };
+          const timestamp = new Date(rawDate).getTime();
+          if (Number.isNaN(timestamp)) {
+            continue;
+          }
+
+          const value: PreviousSetValue = {
+            weight_kg:
+              row.weight_kg !== null && row.weight_kg !== undefined
+                ? Number(row.weight_kg)
+                : null,
+            reps:
+              row.reps !== null && row.reps !== undefined
+                ? Number(row.reps)
+                : null,
+          };
+
+          if (timestamp >= startTime && timestamp < endTime) {
+            if (!currentAccumulator[row.exercise_id]) {
+              currentAccumulator[row.exercise_id] = {};
+            }
+            currentAccumulator[row.exercise_id][row.set_number] = value;
+            continue;
+          }
+
+          if (timestamp < startTime) {
+            if (!previousAccumulator[row.exercise_id]) {
+              previousAccumulator[row.exercise_id] = {};
+            }
+
+            const existing = previousAccumulator[row.exercise_id][row.set_number];
+            if (!existing || timestamp > existing.timestamp) {
+              previousAccumulator[row.exercise_id][row.set_number] = {
+                value,
+                timestamp,
+              };
+            }
           }
         }
+
+        const previousResult: PreviousSetsMap = {};
+        Object.entries(previousAccumulator).forEach(([exerciseId, sets]) => {
+          previousResult[exerciseId] = {};
+          Object.entries(sets).forEach(([setNumber, payload]) => {
+            previousResult[exerciseId][Number(setNumber)] = payload.value;
+          });
+        });
 
         if (!isActive) {
           return;
         }
 
-        previousSetsCache.current.set(cacheKey, grouped);
-        setPreviousSetGhosts(grouped);
+        setPreviousSetGhosts(previousResult);
+        setCurrentWeekSets(currentAccumulator);
+        previousSetsCache.current.set(cacheKey, {
+          previous: previousResult,
+          current: currentAccumulator,
+        });
       } catch (err) {
         console.error('Error fetching previous gym sets:', err);
         if (isActive) {
           setPreviousSetGhosts({});
+          setCurrentWeekSets({});
         }
       }
     };
@@ -484,6 +527,7 @@ const Gimnasio = () => {
                         exercise={exercise}
                         onUpdate={loadTemplateExercises}
                         ghostValues={previousSetGhosts[exercise.id]}
+                        currentValues={currentWeekSets[exercise.id]}
                         selectedDate={selectedDate}
                         userId={user?.id}
                       />
