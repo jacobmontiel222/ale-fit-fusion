@@ -188,43 +188,29 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
                     type="number"
                     value={set.minutes || ""}
                     onChange={(e) => handleSetChange(index, 'minutes', parseFloat(e.target.value) || 0)}
-                    className="w-20 h-8"
+                    className="w-20 h-8 placeholder:text-muted-foreground/40"
                     placeholder={previousData[index]?.minutes ? `${previousData[index].minutes}` : t('gym.minutes')}
                   />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.minutes')}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1 flex-1">
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      value={set.weight || ""}
-                      onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
-                      className="w-16 h-8"
-                      placeholder={previousData[index]?.weight ? `${previousData[index].weight}` : "kg"}
-                    />
-                    {!set.weight && previousData[index]?.weight && (
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/30 text-sm pointer-events-none">
-                        {previousData[index].weight}
-                      </span>
-                    )}
-                  </div>
+                  <Input
+                    type="number"
+                    value={set.weight || ""}
+                    onChange={(e) => handleSetChange(index, 'weight', parseFloat(e.target.value) || 0)}
+                    className="w-16 h-8 placeholder:text-muted-foreground/40"
+                    placeholder={previousData[index]?.weight ? `${previousData[index].weight}` : "kg"}
+                  />
                   <span className="text-xs text-muted-foreground">kg</span>
                   
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      value={set.reps || ""}
-                      onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
-                      className="w-16 h-8"
-                      placeholder={previousData[index]?.reps ? `${previousData[index].reps}` : "reps"}
-                    />
-                    {!set.reps && previousData[index]?.reps && (
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/30 text-sm pointer-events-none">
-                        {previousData[index].reps}
-                      </span>
-                    )}
-                  </div>
+                  <Input
+                    type="number"
+                    value={set.reps || ""}
+                    onChange={(e) => handleSetChange(index, 'reps', parseInt(e.target.value) || 0)}
+                    className="w-16 h-8 placeholder:text-muted-foreground/40"
+                    placeholder={previousData[index]?.reps ? `${previousData[index].reps}` : "reps"}
+                  />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">{t('gym.reps')}</span>
                 </div>
               )}
