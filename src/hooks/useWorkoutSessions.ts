@@ -4,9 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ExerciseSet {
   set: number;
-  weight: number | null;
-  reps: number | null;
-  rpe?: number | null;
+  weight: number;
+  reps: number;
+  rpe?: number;
   completed: boolean;
 }
 
@@ -48,30 +48,6 @@ export const useWorkoutSessions = (sessionId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const normalizeNumericValue = (value: unknown): number | null => {
-    if (typeof value === 'number') {
-      return Number.isNaN(value) ? null : value;
-    }
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (trimmed === '') {
-        return null;
-      }
-      const parsed = Number(trimmed.replace(',', '.'));
-      return Number.isNaN(parsed) ? null : parsed;
-    }
-    return null;
-  };
-
-  const normalizeExerciseSets = (rawSets: any[] | null | undefined): ExerciseSet[] =>
-    (rawSets ?? []).map((set, index) => ({
-      set: typeof set?.set === 'number' && !Number.isNaN(set.set) ? set.set : index + 1,
-      weight: normalizeNumericValue(set?.weight),
-      reps: normalizeNumericValue(set?.reps),
-      rpe: normalizeNumericValue(set?.rpe),
-      completed: Boolean(set?.completed),
-    }));
-
   const { data: session, isLoading } = useQuery({
     queryKey: ['workoutSession', sessionId],
     queryFn: async (): Promise<WorkoutSession | null> => {
@@ -99,7 +75,7 @@ export const useWorkoutSessions = (sessionId?: string) => {
         ...data,
         exercise_history: (data.exercise_history || []).map((eh: any) => ({
           ...eh,
-          sets_data: normalizeExerciseSets(eh.sets_data ?? []),
+          sets_data: eh.sets_data as ExerciseSet[],
         })),
       };
       
@@ -108,38 +84,23 @@ export const useWorkoutSessions = (sessionId?: string) => {
     enabled: !!sessionId && !!user?.id,
   });
 
-  const getPreviousExerciseData = async (
-    exerciseName: string,
-    templateId?: string | null,
-    currentSessionId?: string,
-  ) => {
+  const getLastExerciseData = async (exerciseName: string) => {
     if (!user?.id) return null;
 
-    let query = supabase
+    const { data, error } = await supabase
       .from('exercise_history')
-      .select(`
-        *,
-        workout_sessions:session_id(template_id, date)
-      `)
+      .select('*')
       .eq('user_id', user.id)
       .eq('exercise_name', exerciseName)
-      .order('created_at', { ascending: false });
-
-    if (currentSessionId) {
-      query = query.neq('session_id', currentSessionId);
-    }
-
-    if (templateId) {
-      query = query.eq('workout_sessions.template_id', templateId);
-    }
-
-    const { data, error } = await query.limit(1).maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (error || !data) return null;
-
+    
     return {
       ...data,
-      sets_data: normalizeExerciseSets(data.sets_data ?? []),
+      sets_data: data.sets_data as unknown as ExerciseSet[],
     } as ExerciseHistory;
   };
 
@@ -167,15 +128,13 @@ export const useWorkoutSessions = (sessionId?: string) => {
     }) => {
       if (!user?.id) throw new Error('No user');
 
-      const normalizedSets = normalizeExerciseSets(setsData);
-
       const { error } = await supabase
         .from('exercise_history')
         .insert({
           session_id: sessionId,
           user_id: user.id,
           exercise_name: exerciseName,
-          sets_data: normalizedSets as any,
+          sets_data: setsData as any,
           suggested_weight: suggestedWeight || null,
           suggested_reps_min: suggestedRepsMin || null,
           suggested_reps_max: suggestedRepsMax || null,
@@ -223,7 +182,7 @@ export const useWorkoutSessions = (sessionId?: string) => {
   return {
     session,
     isLoading,
-    getPreviousExerciseData,
+    getLastExerciseData,
     saveExerciseHistory: saveExerciseHistory.mutateAsync,
     updateSession: updateSession.mutateAsync,
   };

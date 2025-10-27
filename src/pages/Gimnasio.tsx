@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -45,13 +45,6 @@ interface TemplateExercise {
   planned_sets: PlannedSet[];
 }
 
-interface PreviousSetValue {
-  weight_kg: number | null;
-  reps: number | null;
-}
-
-type PreviousSetsMap = Record<string, Record<number, PreviousSetValue>>;
-
 const Gimnasio = () => {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
@@ -65,25 +58,6 @@ const Gimnasio = () => {
   const [showReorderModal, setShowReorderModal] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
-  const [previousSetGhosts, setPreviousSetGhosts] = useState<PreviousSetsMap>({});
-  const [currentWeekSets, setCurrentWeekSets] = useState<PreviousSetsMap>({});
-  const previousSetsCache = useRef<
-    Map<string, { previous: PreviousSetsMap; current: PreviousSetsMap }>
-  >(new Map());
-
-  const startOfWeek = useMemo(() => {
-    const date = new Date(selectedDate);
-    const day = date.getDay();
-    const diff = day === 0 ? -6 : 1 - day; // make Monday the first day
-    const monday = new Date(date);
-    monday.setHours(0, 0, 0, 0);
-    monday.setDate(monday.getDate() + diff);
-    return monday;
-  }, [selectedDate]);
-
-  const exerciseIds = useMemo(() => {
-    return templateExercises.map((exercise) => exercise.id);
-  }, [templateExercises]);
 
   // Load workout sessions from Supabase
   useEffect(() => {
@@ -145,140 +119,6 @@ const Gimnasio = () => {
   useEffect(() => {
     loadTemplateExercises();
   }, [selectedDate, schedule, templates]);
-
-  useEffect(() => {
-    if (!user) {
-      setPreviousSetGhosts({});
-      setCurrentWeekSets({});
-      return;
-    }
-
-    const uniqueExerciseIds = Array.from(new Set(exerciseIds));
-    if (uniqueExerciseIds.length === 0) {
-      setPreviousSetGhosts({});
-      setCurrentWeekSets({});
-      return;
-    }
-
-    const cacheKey = `${user.id}-${startOfWeek.toISOString()}-${uniqueExerciseIds
-      .slice()
-      .sort()
-      .join(",")}`;
-    const cached = previousSetsCache.current.get(cacheKey);
-    if (cached) {
-      setPreviousSetGhosts(cached.previous);
-      setCurrentWeekSets(cached.current);
-      return;
-    }
-
-    let isActive = true;
-
-    const fetchPreviousSets = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('gym_sets')
-          .select('exercise_id, set_number, weight_kg, reps, performed_at, date')
-          .eq('user_id', user.id)
-          .in('exercise_id', uniqueExerciseIds);
-
-        if (error) {
-          throw error;
-        }
-
-        const startTime = startOfWeek.getTime();
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(endOfWeek.getDate() + 7);
-        endOfWeek.setHours(0, 0, 0, 0);
-        const endTime = endOfWeek.getTime();
-
-        const previousAccumulator: Record<
-          string,
-          Record<number, { value: PreviousSetValue; timestamp: number }>
-        > = {};
-        const currentAccumulator: PreviousSetsMap = {};
-
-        for (const row of data ?? []) {
-          if (!row.exercise_id || row.set_number === null || row.set_number === undefined) {
-            continue;
-          }
-
-          const rawDate = row.performed_at ?? row.date;
-          if (!rawDate) {
-            continue;
-          }
-
-          const timestamp = new Date(rawDate).getTime();
-          if (Number.isNaN(timestamp)) {
-            continue;
-          }
-
-          const value: PreviousSetValue = {
-            weight_kg:
-              row.weight_kg !== null && row.weight_kg !== undefined
-                ? Number(row.weight_kg)
-                : null,
-            reps:
-              row.reps !== null && row.reps !== undefined
-                ? Number(row.reps)
-                : null,
-          };
-
-          if (timestamp >= startTime && timestamp < endTime) {
-            if (!currentAccumulator[row.exercise_id]) {
-              currentAccumulator[row.exercise_id] = {};
-            }
-            currentAccumulator[row.exercise_id][row.set_number] = value;
-            continue;
-          }
-
-          if (timestamp < startTime) {
-            if (!previousAccumulator[row.exercise_id]) {
-              previousAccumulator[row.exercise_id] = {};
-            }
-
-            const existing = previousAccumulator[row.exercise_id][row.set_number];
-            if (!existing || timestamp > existing.timestamp) {
-              previousAccumulator[row.exercise_id][row.set_number] = {
-                value,
-                timestamp,
-              };
-            }
-          }
-        }
-
-        const previousResult: PreviousSetsMap = {};
-        Object.entries(previousAccumulator).forEach(([exerciseId, sets]) => {
-          previousResult[exerciseId] = {};
-          Object.entries(sets).forEach(([setNumber, payload]) => {
-            previousResult[exerciseId][Number(setNumber)] = payload.value;
-          });
-        });
-
-        if (!isActive) {
-          return;
-        }
-
-        setPreviousSetGhosts(previousResult);
-        setCurrentWeekSets(currentAccumulator);
-        previousSetsCache.current.set(cacheKey, {
-          previous: previousResult,
-          current: currentAccumulator,
-        });
-      } catch (err) {
-        console.error('Error fetching previous gym sets:', err);
-        if (isActive) {
-          setPreviousSetGhosts({});
-          setCurrentWeekSets({});
-        }
-      }
-    };
-
-    fetchPreviousSets();
-
-    return () => {
-      isActive = false;
-    };
-  }, [user, exerciseIds, startOfWeek]);
 
   // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
@@ -526,10 +366,6 @@ const Gimnasio = () => {
                         key={exercise.id}
                         exercise={exercise}
                         onUpdate={loadTemplateExercises}
-                        ghostValues={previousSetGhosts[exercise.id]}
-                        currentValues={currentWeekSets[exercise.id]}
-                        selectedDate={selectedDate}
-                        userId={user?.id}
                       />
                     ))}
                   </div>
