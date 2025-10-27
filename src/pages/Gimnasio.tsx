@@ -16,7 +16,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 import { TemplateExerciseCard } from "@/components/TemplateExerciseCard";
 import { ReorderExercisesModal } from "@/components/ReorderExercisesModal";
-import { SessionExerciseCard } from "@/components/SessionExerciseCard";
 
 interface WorkoutSession {
   id: string;
@@ -57,7 +56,6 @@ const Gimnasio = () => {
   const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
   const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
   const [showReorderModal, setShowReorderModal] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -120,65 +118,7 @@ const Gimnasio = () => {
 
   useEffect(() => {
     loadTemplateExercises();
-    loadOrCreateSession();
   }, [selectedDate, schedule, templates]);
-
-  // Load or create session for selected date
-  const loadOrCreateSession = async () => {
-    if (!user) return;
-    
-    const sessionsForDate = getSessionsForDate(selectedDate);
-    if (sessionsForDate.length > 0) {
-      setCurrentSessionId(sessionsForDate[0].id);
-      return;
-    }
-
-    // Check if there's a scheduled template for this date
-    const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
-    if (!scheduledTemplate || scheduledTemplate.isRest || !('id' in scheduledTemplate)) {
-      setCurrentSessionId(null);
-      return;
-    }
-
-    // Auto-create session when user starts viewing exercises
-    const { data, error } = await supabase
-      .from('workout_sessions')
-      .insert({
-        user_id: user.id,
-        date: formatDate(selectedDate),
-        template_id: scheduledTemplate.id,
-        completed: false,
-      })
-      .select()
-      .single();
-
-    if (data && !error) {
-      setCurrentSessionId(data.id);
-      // Reload sessions to update UI
-      const { data: sessionsData } = await supabase
-        .from('workout_sessions')
-        .select(`
-          *,
-          workout_templates:template_id(name, color)
-        `)
-        .eq('user_id', user.id)
-        .eq('date', formatDate(selectedDate));
-
-      if (sessionsData && sessionsData.length > 0) {
-        const newSession: WorkoutSession = {
-          id: sessionsData[0].id,
-          date: sessionsData[0].date,
-          template_id: sessionsData[0].template_id,
-          completed: sessionsData[0].completed,
-          template: sessionsData[0].workout_templates ? {
-            name: sessionsData[0].workout_templates.name,
-            color: sessionsData[0].workout_templates.color,
-          } : undefined,
-        };
-        setSessions([...sessions, newSession]);
-      }
-    }
-  };
 
   // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
@@ -416,18 +356,16 @@ const Gimnasio = () => {
             </p>
           )}
 
-          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && currentSessionId && (
+          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
             <>
               {templateExercises.length > 0 ? (
                 <>
                   <div className="space-y-3">
                     {templateExercises.map((exercise) => (
-                      <SessionExerciseCard
+                      <TemplateExerciseCard
                         key={exercise.id}
-                        sessionId={currentSessionId}
-                        exerciseName={exercise.exercise_name}
-                        exerciseType={exercise.exercise_type}
-                        templateExerciseId={exercise.id}
+                        exercise={exercise}
+                        onUpdate={loadTemplateExercises}
                       />
                     ))}
                   </div>

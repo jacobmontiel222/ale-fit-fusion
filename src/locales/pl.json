@@ -194,7 +194,6 @@
     "reorderExercises": "Zmień kolejność ćwiczeń",
     "exercisesReordered": "Kolejność ćwiczeń zmieniona pomyślnie",
     "errorReordering": "Błąd podczas zmiany kolejności ćwiczeń",
-    "exerciseSaved": "Ćwiczenie zapisane pomyślnie",
     "days": {
       "monday": "Poniedziałek",
       "tuesday": "Wtorek",
