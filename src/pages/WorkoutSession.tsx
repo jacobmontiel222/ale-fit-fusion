@@ -90,6 +90,7 @@ const WorkoutSession = () => {
               <ExerciseCard
                 key={exercise.id}
                 sessionId={session.id}
+                templateId={session.template_id}
                 exerciseName={exercise.exercise_name}
                 exerciseType={exercise.exercise_type as 'compound' | 'accessory' | 'calisthenics'}
                 repsMin={exercise.reps_min}
