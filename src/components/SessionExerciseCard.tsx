@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Check, X, Save } from "lucide-react";
+import { Plus, Check, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -162,6 +162,22 @@ export const SessionExerciseCard = ({
     }
   };
 
+  const handleDeleteSet = (index: number) => {
+    const updatedSets = sets.filter((_, i) => i !== index);
+    setSets(updatedSets);
+    setHasChanges(true);
+  };
+
+  // Auto-save when changes are made
+  useEffect(() => {
+    if (hasChanges && sets.length > 0) {
+      const timer = setTimeout(() => {
+        handleSave();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [sets, hasChanges]);
+
   return (
     <div className="p-4 rounded-lg bg-card border border-border space-y-3">
       {/* Header */}
@@ -174,17 +190,6 @@ export const SessionExerciseCard = ({
             {t(`gym.exerciseTypes.${exerciseType}`)}
           </p>
         </div>
-        {hasChanges && (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {isSaving ? t('common.saving') : t('common.save')}
-          </Button>
-        )}
       </div>
 
       {/* Sets */}
@@ -244,6 +249,15 @@ export const SessionExerciseCard = ({
                 {status === 'success' && <Check className="w-4 h-4" />}
                 {status === 'failed' && <X className="w-4 h-4" />}
                 {status === 'pending' && <Check className="w-4 h-4 opacity-30" />}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteSet(index)}
+                className="text-destructive hover:text-destructive h-8 w-8 shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
               </Button>
             </div>
           );
