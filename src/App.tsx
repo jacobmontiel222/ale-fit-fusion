@@ -64,10 +64,12 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <BrowserRouter>
+        <BrowserRouter basename={basename}>
           <AuthProvider>
             <NutritionProvider>
               <TooltipProvider>
