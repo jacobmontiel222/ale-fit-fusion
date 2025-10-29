@@ -15,6 +15,7 @@ import Gimnasio from "./pages/Gimnasio";
 import WorkoutSession from "./pages/WorkoutSession";
 import FityAI from "./pages/FityAI";
 import Analytics from "./pages/Analytics";
+import Coaches from "./pages/Coaches";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -83,6 +84,7 @@ const App = () => {
                   <Route path="/recipes" element={<ProtectedRoute><Recipes /></ProtectedRoute>} />
                   <Route path="/create-recipe" element={<ProtectedRoute><CreateRecipe /></ProtectedRoute>} />
                   <Route path="/gimnasio" element={<ProtectedRoute><Gimnasio /></ProtectedRoute>} />
+                  <Route path="/coaches" element={<ProtectedRoute><Coaches /></ProtectedRoute>} />
                   <Route path="/gimnasio/session/:sessionId" element={<ProtectedRoute><WorkoutSession /></ProtectedRoute>} />
                   <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />

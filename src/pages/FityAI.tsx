@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { BottomNav } from "@/components/BottomNav";
+import FitAILogo from "@/components/FitAILogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot } from "lucide-react";
+import { Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { setFitAIUnread } from "@/lib/fitai";
 
 type Message = {
   id: string;
@@ -27,6 +29,10 @@ const FityAI = () => {
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
+    setFitAIUnread(false);
+  }, []);
+
+  useEffect(() => {
     // Load chat history from localStorage
     const savedMessages = localStorage.getItem("fityai-chat-history");
     if (savedMessages) {
@@ -40,6 +46,7 @@ const FityAI = () => {
     if (messages.length > 0) {
       localStorage.setItem("fityai-chat-history", JSON.stringify(messages));
     }
+    setFitAIUnread(false);
   }, [messages]);
 
   useEffect(() => {
@@ -135,7 +142,7 @@ const FityAI = () => {
       <div className="sticky top-0 z-10 border-b border-white/10" style={{ backgroundColor: "#1A1A1A" }}>
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
-            <Bot className="w-6 h-6 text-primary" />
+            <FitAILogo />
             <h1 className="text-xl font-semibold text-white">{t('fityai.title')}</h1>
           </div>
         </div>
@@ -146,7 +153,7 @@ const FityAI = () => {
         <div className="max-w-md mx-auto px-4 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
-              <Bot className="w-16 h-16 text-primary mb-4 opacity-50" />
+              <FitAILogo className="mb-4 h-16 w-16" />
               <p className="text-lg" style={{ color: "#F1F1F1" }}>
                 {t('fityai.welcome')}
               </p>

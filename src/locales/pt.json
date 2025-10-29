@@ -12,6 +12,9 @@
     "consumed": "Consumidas",
     "remaining": "Restantes"
   },
+  "accessibility": {
+    "openFitAI": "Abrir chat FitAI"
+  },
   "dashboard": {
     "title": "Olá, {{name}}",
     "motto": "Vamos lá!",
@@ -31,6 +34,12 @@
     "findTrainer": "Encontre seu treinador ideal.",
     "gymSession": "Sessão Academia",
     "trackWorkout": "Acompanhe seu treino"
+  },
+  "coaches": {
+    "title": "Coach Hub",
+    "subtitle": "Acompanhamento humano em breve",
+    "highlightsTitle": "Estamos preparando tudo",
+    "description": "Estamos criando um espaço dedicado para conectar você a coaches certificados. Volte em breve para conhecer planos personalizados."
   },
   "meals": {
     "title": "Refeições",
@@ -73,6 +82,7 @@
     "analytics": "Analytics",
     "meals": "Refeições",
     "gym": "Academia",
+    "coach": "Coach",
     "ai": "FityAI"
   },
   "profile": {

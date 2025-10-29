@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Bell, ArrowRight, Scale, Footprints, Flame, Dumbbell, User, Droplet } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
@@ -7,6 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTranslation } from "react-i18next";
+import FitAILogo from "@/components/FitAILogo";
+import { trackAnalyticsEvent, FITAI_OPEN_FROM_HOME_HEADER_EVENT, FITAI_OPEN_FROM_TAB_EVENT } from "@/lib/analytics";
+import { FITAI_UNREAD_KEY, getFitAIUnread, setFitAIUnread } from "@/lib/fitai";
 
 interface WeightEntry {
   date: string;
@@ -22,6 +26,50 @@ const Index = () => {
   const navigate = useNavigate();
   const { data, isLoading } = useDashboardData();
   const { t } = useTranslation();
+  const [hasFitAIUnread, setHasFitAIUnread] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncUnread = () => {
+      setHasFitAIUnread(getFitAIUnread());
+    };
+
+    syncUnread();
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === FITAI_UNREAD_KEY) {
+        syncUnread();
+      }
+    };
+
+    const customHandler = ((event: CustomEvent<{ value?: boolean }>) => {
+      if (typeof event.detail?.value === "boolean") {
+        setHasFitAIUnread(event.detail.value);
+      }
+    }) as unknown as EventListener;
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("fityai:unread-changed", customHandler);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("fityai:unread-changed", customHandler);
+    };
+  }, []);
+
+  const handleOpenFitAI = () => {
+    setFitAIUnread(false);
+    setHasFitAIUnread(false);
+    trackAnalyticsEvent(FITAI_OPEN_FROM_HOME_HEADER_EVENT);
+    trackAnalyticsEvent(FITAI_OPEN_FROM_TAB_EVENT, {
+      deprecated: true,
+      source: "home_header",
+    });
+    navigate("/fityai");
+  };
   
   const kcalPerStep = 0.045;
   
@@ -58,10 +106,22 @@ const Index = () => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-card rounded-full transition-colors">
+            <button
+              type="button"
+              onClick={handleOpenFitAI}
+              className="relative rounded-full p-1 transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label={t('accessibility.openFitAI')}
+            >
+              <FitAILogo />
+              {hasFitAIUnread && (
+                <span className="absolute -top-0.5 -right-0.5 inline-flex h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" />
+              )}
+            </button>
+            <button className="p-2 hover:bg-card rounded-full transition-colors" type="button">
               <Bell className="w-6 h-6 text-foreground" />
             </button>
             <button 
+              type="button"
               className="p-2 hover:bg-card rounded-full transition-colors"
               onClick={() => navigate('/profile')}
             >
@@ -250,7 +310,10 @@ const Index = () => {
           </StatsCard>
 
           {/* Entrenadores Card */}
-          <StatsCard>
+          <StatsCard
+            className="cursor-pointer hover:bg-secondary/50 transition-colors"
+            onClick={() => navigate('/coaches')}
+          >
             <div className="flex items-center gap-2 mb-3">
               <Dumbbell className="w-5 h-5 text-foreground" />
               <h3 className="text-lg font-semibold text-foreground">{t('dashboard.trainers')}</h3>

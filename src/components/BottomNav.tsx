@@ -1,4 +1,4 @@
-import { Home, BarChart3, Utensils, Dumbbell, Bot } from "lucide-react";
+import { Home, BarChart3, Utensils, Dumbbell, UserRound } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -12,7 +12,7 @@ export const BottomNav = () => {
     { icon: BarChart3, label: t('navigation.analytics'), path: "/analytics" },
     { icon: Utensils, label: t('navigation.meals'), path: "/comidas" },
     { icon: Dumbbell, label: t('navigation.gym'), path: "/gimnasio" },
-    { icon: Bot, label: t('navigation.ai'), path: "/fityai" },
+    { icon: UserRound, label: t('navigation.coach'), path: "/coaches" },
   ];
 
   return (

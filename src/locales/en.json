@@ -14,6 +14,9 @@
     "remaining": "Remaining",
     "error": "Error"
   },
+  "accessibility": {
+    "openFitAI": "Open FitAI chat"
+  },
   "dashboard": {
     "title": "Hello, {{name}}",
     "motto": "Let's do this!",
@@ -33,6 +36,12 @@
     "findTrainer": "Find your ideal trainer.",
     "gymSession": "Gym Session",
     "trackWorkout": "Track your workout"
+  },
+  "coaches": {
+    "title": "Coach Hub",
+    "subtitle": "Human guidance, launching soon",
+    "highlightsTitle": "We're getting ready",
+    "description": "We're preparing a dedicated experience to connect you with certified coaches. Come back soon to explore personalised plans."
   },
   "meals": {
     "title": "Meals",
@@ -75,6 +84,7 @@
     "analytics": "Analytics",
     "meals": "Meals",
     "gym": "Gym",
+    "coach": "Coach",
     "ai": "FityAI"
   },
   "profile": {
