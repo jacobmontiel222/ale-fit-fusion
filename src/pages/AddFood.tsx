@@ -60,6 +60,12 @@ const AddFood = () => {
     servingSize: 100,
     servingUnit: "g",
   });
+  const [manualNutritionInputs, setManualNutritionInputs] = useState({
+    calories: "",
+    protein: "",
+    fat: "",
+    carbs: "",
+  });
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [foodHistory, setFoodHistory] = useState<HistoryItem[]>([]);
@@ -522,44 +528,80 @@ const AddFood = () => {
                   <div>
                     <Label>{t('addFood.calories')}</Label>
                     <Input
-                      type="number"
-                      value={manualFood.calories}
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      value={manualNutritionInputs.calories}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setManualFood({ ...manualFood, calories: val === '' ? 0 : parseFloat(val) });
+                        const raw = e.target.value;
+                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
+                          setManualNutritionInputs((prev) => ({ ...prev, calories: raw }));
+                          const parsed = parseFloat(raw.replace(',', '.'));
+                          setManualFood((prev) => ({
+                            ...prev,
+                            calories: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
+                          }));
+                        }
                       }}
                     />
                   </div>
                   <div>
                     <Label>{t('addFood.protein')}</Label>
                     <Input
-                      type="number"
-                      value={manualFood.protein}
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      value={manualNutritionInputs.protein}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setManualFood({ ...manualFood, protein: val === '' ? 0 : parseFloat(val) });
+                        const raw = e.target.value;
+                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
+                          setManualNutritionInputs((prev) => ({ ...prev, protein: raw }));
+                          const parsed = parseFloat(raw.replace(',', '.'));
+                          setManualFood((prev) => ({
+                            ...prev,
+                            protein: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
+                          }));
+                        }
                       }}
                     />
                   </div>
                   <div>
                     <Label>{t('addFood.fat')}</Label>
                     <Input
-                      type="number"
-                      value={manualFood.fat}
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      value={manualNutritionInputs.fat}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setManualFood({ ...manualFood, fat: val === '' ? 0 : parseFloat(val) });
+                        const raw = e.target.value;
+                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
+                          setManualNutritionInputs((prev) => ({ ...prev, fat: raw }));
+                          const parsed = parseFloat(raw.replace(',', '.'));
+                          setManualFood((prev) => ({
+                            ...prev,
+                            fat: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
+                          }));
+                        }
                       }}
                     />
                   </div>
                   <div>
                     <Label>{t('addFood.carbs')}</Label>
                     <Input
-                      type="number"
-                      value={manualFood.carbs}
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      value={manualNutritionInputs.carbs}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setManualFood({ ...manualFood, carbs: val === '' ? 0 : parseFloat(val) });
+                        const raw = e.target.value;
+                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
+                          setManualNutritionInputs((prev) => ({ ...prev, carbs: raw }));
+                          const parsed = parseFloat(raw.replace(',', '.'));
+                          setManualFood((prev) => ({
+                            ...prev,
+                            carbs: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
+                          }));
+                        }
                       }}
                     />
                   </div>
@@ -598,7 +640,15 @@ const AddFood = () => {
         {!selectedFood && !manualEntry && (
           <Button
             variant="outline"
-            onClick={() => setManualEntry(true)}
+            onClick={() => {
+              setManualEntry(true);
+              setManualNutritionInputs({
+                calories: manualFood.calories ? String(manualFood.calories) : "",
+                protein: manualFood.protein ? String(manualFood.protein) : "",
+                fat: manualFood.fat ? String(manualFood.fat) : "",
+                carbs: manualFood.carbs ? String(manualFood.carbs) : "",
+              });
+            }}
             className="w-full"
           >
             {t('addFood.manualEntry')}
