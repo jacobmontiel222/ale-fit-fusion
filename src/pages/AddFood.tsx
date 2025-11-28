@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Barcode, Search, Clock } from "lucide-react";
+import { ArrowLeft, Barcode, Search, Clock, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,9 +69,11 @@ const AddFood = () => {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [foodHistory, setFoodHistory] = useState<HistoryItem[]>([]);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<any>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedDatabaseFood, setSelectedDatabaseFood] = useState<FoodItemType | null>(null);
@@ -136,6 +138,72 @@ const AddFood = () => {
   useEffect(() => {
     return () => stopScanner();
   }, []);
+
+  const handleOpenCamera = () => {
+    photoInputRef.current?.click();
+  };
+
+  const handlePhotoSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const res = await fetch("https://jacobfityourself.app.n8n.cloud/webhook/nutrition-analysis", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Request failed");
+      }
+
+      const data = await res.json();
+      const { protein, fat, carbs, calories } = data || {};
+      if (
+        protein === undefined ||
+        fat === undefined ||
+        carbs === undefined ||
+        calories === undefined
+      ) {
+        throw new Error("Invalid response");
+      }
+
+      setSelectedFood(null);
+      setManualEntry(true);
+      setServingAmount(100);
+      setServingAmountInput("100");
+
+      setManualFood((prev) => ({
+        ...prev,
+        name: prev.name || t('addFood.photoFoodName', { defaultValue: "Comida desde foto" }),
+        protein: Number(protein) || 0,
+        fat: Number(fat) || 0,
+        carbs: Number(carbs) || 0,
+        calories: Number(calories) || 0,
+      }));
+
+      setManualNutritionInputs({
+        protein: String(protein ?? ""),
+        fat: String(fat ?? ""),
+        carbs: String(carbs ?? ""),
+        calories: String(calories ?? ""),
+      });
+
+      toast.success(t('addFood.photoSuccess', { defaultValue: 'Datos de la foto cargados' }));
+    } catch (error) {
+      console.error("Error uploading photo", error);
+      toast.error(t('addFood.photoError', { defaultValue: 'No se pudo analizar la foto' }));
+    } finally {
+      setIsUploadingPhoto(false);
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
+  };
 
   const startScanner = async () => {
     setScannerOpen(true);
@@ -446,9 +514,20 @@ const AddFood = () => {
               className="pl-9"
             />
           </div>
+          <Button onClick={handleOpenCamera} size="icon" variant="outline" disabled={isUploadingPhoto} title={t('addFood.photoCapture', { defaultValue: 'Foto de comida' })}>
+            <Camera className="w-4 h-4" />
+          </Button>
           <Button onClick={startScanner} size="icon" title={t('addFood.scanBarcode')}>
             <Barcode className="w-4 h-4" />
           </Button>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handlePhotoSelected}
+          />
         </div>
 
         {/* Selected or Manual Food */}
