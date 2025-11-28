@@ -152,7 +152,7 @@ const AddFood = () => {
       const formData = new FormData();
       formData.append("photo", file);
 
-      const res = await fetch("https://jacobfityourself.app.n8n.cloud/webhook/nutrition-analysis", {
+      const res = await fetch("https://jacobfityourself.app.n8n.cloud/webhook/analyze-food", {
         method: "POST",
         body: formData,
       });
