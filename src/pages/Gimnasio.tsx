@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical, Check, CalendarDays } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ const Gimnasio = () => {
   const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
   const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
   const [showReorderModal, setShowReorderModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -314,7 +315,7 @@ const Gimnasio = () => {
             className="w-full"
             onClick={() => setShowScheduleModal(true)}
           >
-            <Settings className="w-4 h-4 mr-2" />
+            <CalendarDays className="w-4 h-4 mr-2" />
             {t('gym.scheduleWeek')}
           </Button>
         </div>
@@ -328,17 +329,37 @@ const Gimnasio = () => {
 
         {/* Template Name Subtitle */}
         {scheduledTemplate && !scheduledTemplate.isRest && (
-          <div className="mb-4 flex items-center gap-2">
-            <button
-              onClick={() => setShowReorderModal(true)}
-              className="p-1 hover:bg-secondary rounded transition-colors"
-              disabled={templateExercises.length === 0}
-            >
-              <GripVertical className="w-5 h-5 text-muted-foreground cursor-pointer" />
-            </button>
-            <h3 className="text-xl font-semibold" style={{ color: scheduledTemplate.color }}>
-              {scheduledTemplate.name}
-            </h3>
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowReorderModal(true)}
+                className="p-1 hover:bg-secondary rounded transition-colors"
+                disabled={templateExercises.length === 0}
+              >
+                <GripVertical className="w-5 h-5 text-muted-foreground cursor-pointer" />
+              </button>
+              <button
+                onClick={() => setIsEditMode(true)}
+                className={cn(
+                  "p-1 rounded transition-colors",
+                  isEditMode ? "bg-primary/10 text-primary" : "hover:bg-secondary text-muted-foreground"
+                )}
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              <h3 className="text-xl font-semibold" style={{ color: scheduledTemplate.color }}>
+                {scheduledTemplate.name}
+              </h3>
+            </div>
+            {isEditMode && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsEditMode(false)}
+              >
+                <Check className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         )}
 
@@ -366,6 +387,7 @@ const Gimnasio = () => {
                         key={exercise.id}
                         exercise={exercise}
                         onUpdate={loadTemplateExercises}
+                        isEditMode={isEditMode}
                       />
                     ))}
                   </div>

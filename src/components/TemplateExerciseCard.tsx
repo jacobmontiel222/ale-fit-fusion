@@ -36,9 +36,10 @@ interface TemplateExercise {
 interface TemplateExerciseCardProps {
   exercise: TemplateExercise;
   onUpdate: () => void;
+  isEditMode?: boolean;
 }
 
-export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCardProps) => {
+export const TemplateExerciseCard = ({ exercise, onUpdate, isEditMode = false }: TemplateExerciseCardProps) => {
   const { t } = useTranslation();
   const [sets, setSets] = useState<PlannedSet[]>(exercise.planned_sets || []);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -120,14 +121,16 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
             {t(`gym.exerciseTypes.${exercise.exercise_type}`)}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowDeleteDialog(true)}
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        {isEditMode && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -207,14 +210,16 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
                 {status === 'pending' && <Check className="w-4 h-4 opacity-30" />}
               </Button>
               
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDeleteSet(index)}
-                className="text-destructive hover:text-destructive h-8 w-8 shrink-0"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              {isEditMode && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteSet(index)}
+                  className="text-destructive hover:text-destructive h-8 w-8 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           );
         })}
