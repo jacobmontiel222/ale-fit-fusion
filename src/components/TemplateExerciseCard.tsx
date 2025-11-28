@@ -47,7 +47,7 @@ export const TemplateExerciseCard = ({ exercise, onUpdate }: TemplateExerciseCar
   const handleAddSet = async () => {
     const newSet: PlannedSet = isCardio 
       ? { minutes: 10, status: 'pending' }
-      : { weight: undefined, reps: 10, status: 'pending' };
+      : { weight: undefined, reps: undefined, status: 'pending' };
     
     const updatedSets = [...sets, newSet];
     setSets(updatedSets);
