@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, ArrowRight, Scale, Footprints, Flame, Dumbbell, User, Droplet } from "lucide-react";
+import { Bell, ArrowRight, Scale, Footprints, Flame, Dumbbell, User, Droplet, Bot } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { BottomNav } from "@/components/BottomNav";
@@ -8,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTranslation } from "react-i18next";
-import FitAILogo from "@/components/FitAILogo";
 import { trackAnalyticsEvent, FITAI_OPEN_FROM_HOME_HEADER_EVENT, FITAI_OPEN_FROM_TAB_EVENT } from "@/lib/analytics";
 import { FITAI_UNREAD_KEY, getFitAIUnread, setFitAIUnread } from "@/lib/fitai";
 
@@ -112,7 +111,7 @@ const Index = () => {
               className="relative rounded-full p-1 transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label={t('accessibility.openFitAI')}
             >
-              <FitAILogo />
+              <Bot className="w-6 h-6 text-foreground" />
               {hasFitAIUnread && (
                 <span className="absolute -top-0.5 -right-0.5 inline-flex h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" />
               )}

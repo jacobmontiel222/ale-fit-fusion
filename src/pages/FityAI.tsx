@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { BottomNav } from "@/components/BottomNav";
-import FitAILogo from "@/components/FitAILogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send } from "lucide-react";
+import { Send, Bot, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
@@ -27,6 +27,7 @@ const FityAI = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setFitAIUnread(false);
@@ -142,7 +143,15 @@ const FityAI = () => {
       <div className="sticky top-0 z-10 border-b border-white/10" style={{ backgroundColor: "#1A1A1A" }}>
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
-            <FitAILogo />
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="p-1 rounded-full hover:bg-white/10 transition-colors"
+              aria-label={t('common.back') || "Volver"}
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <Bot className="w-6 h-6 text-white" />
             <h1 className="text-xl font-semibold text-white">{t('fityai.title')}</h1>
           </div>
         </div>
@@ -153,7 +162,7 @@ const FityAI = () => {
         <div className="max-w-md mx-auto px-4 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center px-6">
-              <FitAILogo className="mb-4 h-16 w-16" />
+              <Bot className="mb-4 h-16 w-16 text-white" />
               <p className="text-lg" style={{ color: "#F1F1F1" }}>
                 {t('fityai.welcome')}
               </p>
