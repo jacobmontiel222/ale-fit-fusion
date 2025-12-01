@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 import { TemplateExerciseCard } from "@/components/TemplateExerciseCard";
 import { ReorderExercisesModal } from "@/components/ReorderExercisesModal";
+import { NewRoutineDialog } from "@/components/NewRoutineDialog";
 
 interface WorkoutSession {
   id: string;
@@ -57,6 +58,7 @@ const Gimnasio = () => {
   const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
   const [showReorderModal, setShowReorderModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -310,14 +312,24 @@ const Gimnasio = () => {
 
         {/* Schedule Section - Moved below calendar */}
         <div className="mb-6">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowScheduleModal(true)}
-          >
-            <CalendarDays className="w-4 h-4 mr-2" />
-            {t('gym.scheduleWeek')}
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowScheduleModal(true)}
+            >
+              <CalendarDays className="w-4 h-4 mr-2" />
+              {t('gym.scheduleWeek')}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowNewRoutineDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {t('gym.newRoutine')}
+            </Button>
+          </div>
         </div>
 
         {/* Date Header */}
@@ -437,6 +449,11 @@ const Gimnasio = () => {
         <WeeklyScheduleModal
           open={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
+        />
+
+        <NewRoutineDialog
+          open={showNewRoutineDialog}
+          onClose={() => setShowNewRoutineDialog(false)}
         />
 
         {scheduledTemplate && !scheduledTemplate.isRest && 'id' in scheduledTemplate && (

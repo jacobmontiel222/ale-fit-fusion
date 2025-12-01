@@ -12,10 +12,11 @@ interface WorkoutTemplate {
 interface TemplateExercise {
   id: string;
   exercise_name: string;
-  exercise_type: 'compound' | 'accessory' | 'calisthenics';
+  exercise_type: 'compound' | 'accessory' | 'calisthenics' | 'cardio';
   reps_min: number;
   reps_max: number;
   order_index: number;
+  planned_sets?: any[];
 }
 
 export const useWorkoutTemplates = () => {
@@ -43,7 +44,7 @@ export const useWorkoutTemplates = () => {
   });
 
   const createTemplate = useMutation({
-    mutationFn: async (template: { name: string; color: string }) => {
+    mutationFn: async (template: { name: string; color: string; exercises?: string[] }) => {
       if (!user?.id) throw new Error('No user');
 
       const { data, error } = await supabase
@@ -57,6 +58,29 @@ export const useWorkoutTemplates = () => {
         .single();
 
       if (error) throw error;
+
+      const trimmedExercises = (template.exercises || [])
+        .map((exercise) => exercise.trim())
+        .filter(Boolean);
+
+      if (data && trimmedExercises.length > 0) {
+        const exercisesPayload = trimmedExercises.map((exercise_name, index) => ({
+          template_id: data.id,
+          exercise_name,
+          exercise_type: 'compound' as const,
+          reps_min: 5,
+          reps_max: 8,
+          order_index: index,
+          planned_sets: [],
+        }));
+
+        const { error: exercisesError } = await supabase
+          .from('template_exercises')
+          .insert(exercisesPayload);
+
+        if (exercisesError) throw exercisesError;
+      }
+
       return data;
     },
     onSuccess: () => {

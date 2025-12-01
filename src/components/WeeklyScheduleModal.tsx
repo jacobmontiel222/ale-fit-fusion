@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { useWorkoutTemplates } from '@/hooks/useWorkoutTemplates';
 import { useWeeklySchedule } from '@/hooks/useWeeklySchedule';
-import { Plus, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 
 interface WeeklyScheduleModalProps {
   open: boolean;
@@ -26,12 +25,9 @@ const COLORS = [
 
 export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps) => {
   const { t } = useTranslation();
-  const { templates, createTemplate } = useWorkoutTemplates();
+  const { templates } = useWorkoutTemplates();
   const { schedule, setDaySchedule } = useWeeklySchedule();
-  const [newTemplateName, setNewTemplateName] = useState('');
-  const [newTemplateColor, setNewTemplateColor] = useState(COLORS[0]);
   const [editingColorTemplateId, setEditingColorTemplateId] = useState<string | null>(null);
-  const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
   const { updateTemplate } = useWorkoutTemplates();
 
   const dayNames = [
@@ -43,14 +39,6 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
     t('gym.days.saturday'),
     t('gym.days.sunday'),
   ];
-
-  const handleCreateTemplate = async () => {
-    if (!newTemplateName.trim()) return;
-    await createTemplate({ name: newTemplateName, color: newTemplateColor });
-    setNewTemplateName('');
-    setNewTemplateColor(COLORS[0]);
-    setShowNewRoutineDialog(false);
-  };
 
   const handleUpdateColor = async (templateId: string, newColor: string) => {
     const template = templates.find((t) => t.id === templateId);
@@ -145,60 +133,7 @@ export const WeeklyScheduleModal = ({ open, onClose }: WeeklyScheduleModalProps)
               </div>
             );
           })}
-
-          {/* Crear nueva rutina */}
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowNewRoutineDialog(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {t('gym.newRoutine')}
-          </Button>
         </div>
-
-        {/* Dialog para crear nueva rutina */}
-        <Dialog open={showNewRoutineDialog} onOpenChange={setShowNewRoutineDialog}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>{t('gym.newRoutine')}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>{t('gym.templateName')}</Label>
-                <Input
-                  value={newTemplateName}
-                  onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder={t('gym.templateNamePlaceholder')}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label>{t('gym.color')}</Label>
-                <div className="flex gap-2 mt-2">
-                  {COLORS.map((color) => (
-                    <button
-                      key={color}
-                      className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                        newTemplateColor === color ? 'border-foreground scale-110' : 'border-border'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => setNewTemplateColor(color)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" onClick={() => setShowNewRoutineDialog(false)} className="flex-1">
-                  {t('common.cancel')}
-                </Button>
-                <Button onClick={handleCreateTemplate} className="flex-1">
-                  {t('common.save')}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </DialogContent>
     </Dialog>
   );
