@@ -106,7 +106,7 @@ export const TemplateExercisesModal = ({
       <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {templateName} - {t('gym.exercises')}
+            {templateName} - {t('gym.exercisesLabel')}
           </DialogTitle>
         </DialogHeader>
 

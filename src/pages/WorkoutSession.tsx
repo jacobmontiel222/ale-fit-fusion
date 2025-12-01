@@ -71,7 +71,7 @@ const WorkoutSession = () => {
               {session.template?.name || t('gym.workout')}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {exercises.length} {t('gym.exercises')}
+              {exercises.length} {t('gym.exercisesLabel')}
             </p>
           </div>
           {session.template?.color && (

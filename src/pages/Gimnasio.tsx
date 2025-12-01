@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical, Check, CalendarDays } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical, Check, CalendarDays, ListChecks } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { AddExerciseDialog } from "@/components/AddExerciseDialog";
 import { TemplateExerciseCard } from "@/components/TemplateExerciseCard";
 import { ReorderExercisesModal } from "@/components/ReorderExercisesModal";
 import { NewRoutineDialog } from "@/components/NewRoutineDialog";
+import { MyRoutinesDialog } from "@/components/MyRoutinesDialog";
 
 interface WorkoutSession {
   id: string;
@@ -59,6 +60,7 @@ const Gimnasio = () => {
   const [showReorderModal, setShowReorderModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
+  const [showMyRoutinesDialog, setShowMyRoutinesDialog] = useState(false);
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
@@ -324,10 +326,10 @@ const Gimnasio = () => {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => setShowNewRoutineDialog(true)}
+              onClick={() => setShowMyRoutinesDialog(true)}
             >
-              <Plus className="w-4 h-4 mr-2" />
-              {t('gym.newRoutine')}
+              <ListChecks className="w-4 h-4 mr-2" />
+              {t('gym.myRoutines')}
             </Button>
           </div>
         </div>
@@ -454,6 +456,12 @@ const Gimnasio = () => {
         <NewRoutineDialog
           open={showNewRoutineDialog}
           onClose={() => setShowNewRoutineDialog(false)}
+        />
+
+        <MyRoutinesDialog
+          open={showMyRoutinesDialog}
+          onClose={() => setShowMyRoutinesDialog(false)}
+          onCreateNewRoutine={() => setShowNewRoutineDialog(true)}
         />
 
         {scheduledTemplate && !scheduledTemplate.isRest && 'id' in scheduledTemplate && (

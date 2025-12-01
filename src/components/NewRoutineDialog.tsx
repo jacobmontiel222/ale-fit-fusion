@@ -114,7 +114,7 @@ export const NewRoutineDialog = ({ open, onClose }: NewRoutineDialogProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label>{t("gym.exercises")}</Label>
+            <Label>{t("gym.exercisesLabel")}</Label>
             <div className="flex gap-2">
               <Input
                 value={exerciseInput}
