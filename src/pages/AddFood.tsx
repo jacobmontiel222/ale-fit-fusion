@@ -929,6 +929,20 @@ const AddFood = () => {
           )}
         </div>
       )}
+
+      {isUploadingPhoto && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center gap-4 text-white px-6">
+          <div className={`${PROCESSING_SPINNER_SIZE} border-4 border-white/30 border-t-white rounded-full animate-spin`} />
+          <div className="text-center space-y-1">
+            <p className="text-lg font-semibold">
+              {t('addFood.processingPhoto', { defaultValue: "Analizando tu comida..." })}
+            </p>
+            <p className="text-sm text-white/80">
+              {t('addFood.processingWait', { defaultValue: "Procesando información de la foto..." })}
+            </p>
+          </div>
+        </div>
+      )}
       
       
       <FoodDetailsModal
