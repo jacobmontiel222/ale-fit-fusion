@@ -138,6 +138,7 @@ const AddFood = () => {
       controlsRef.current?.stop();
     } catch {}
     setScanning(false);
+    processingScanRef.current = false;
   };
 
   useEffect(() => {
@@ -271,12 +272,9 @@ const AddFood = () => {
   };
 
   const startScanner = async () => {
-    processingScanRef.current = false;
-    setIsProcessingScan(false);
-
     const hasPermission = await ensureCameraPermission();
     if (!hasPermission) {
-      toast.error("Autoriza la c?mara para escanear c?digos.");
+      toast.error("Autoriza la cámara para escanear códigos.");
       setScannerOpen(false);
       setScanning(false);
       return;
@@ -291,16 +289,14 @@ const AddFood = () => {
     
     try {
       await readerRef.current.decodeFromVideoDevice(undefined, videoRef.current!, async (result, err, controls) => {
-        if (!result || processingScanRef.current) return;
+        if (!result) return;
         controlsRef.current = controls;
         const barcode = result.getText();
         if (!/^\d{8,14}$/.test(barcode)) return;
         
-        processingScanRef.current = true;
-        setIsProcessingScan(true);
-        setScanning(false);
         controls?.stop();
         stopScanner();
+        setScannerOpen(false);
         
         try {
           const url = import.meta.env.VITE_N8N_BARCODE_URL ?? "https://jacobfityourself.app.n8n.cloud/webhook/barcode";
@@ -311,17 +307,14 @@ const AddFood = () => {
           });
           const data = await res.json();
           
-          console.log("?? Datos recibidos del webhook:", data);
-          console.log("?? per_100g:", data?.per_100g);
+          console.log("📦 Datos recibidos del webhook:", data);
+          console.log("📊 per_100g:", data.per_100g);
           
           // El webhook devuelve un array, tomamos el primer elemento
           const productData = Array.isArray(data) ? data[0] : data;
           
           if (productData?.error) {
-            toast.error("No hay coincidencias para este c?digo.");
-            setIsProcessingScan(false);
-            setScannerOpen(false);
-            processingScanRef.current = false;
+            toast.error("No hay coincidencias para este código.");
             return;
           }
           
@@ -339,24 +332,18 @@ const AddFood = () => {
           setSelectedFood(item);
           setServingAmount(item.servingSize);
           toast.success(`${item.name} detectado`);
-          setIsProcessingScan(false);
-          setScannerOpen(false);
-          processingScanRef.current = false;
         } catch {
           toast.error("Fallo al consultar el producto.");
-          setIsProcessingScan(false);
-          setScannerOpen(false);
-          processingScanRef.current = false;
         }
       });
     } catch (error) {
-      toast.error("Autoriza la c?mara o usa HTTPS.");
+      toast.error("Autoriza la cámara o usa HTTPS.");
       setScannerOpen(false);
       setScanning(false);
     }
   };
 
-    const calculateAdjustedMacros = (food: FoodItem, amount: number) => {
+  const calculateAdjustedMacros = (food: FoodItem, amount: number) => {
     const multiplier = amount / food.servingSize;
     return {
       calories: Math.round(food.calories * multiplier),
@@ -890,43 +877,24 @@ const AddFood = () => {
       {/* Scanner Modal */}
       {scannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
-          {!isProcessingScan ? (
-            <>
-              <div className="flex items-center justify-between p-4 text-white">
-                <span className="font-semibold">{t('addFood.scanBarcodeLabel')}</span>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    stopScanner();
-                    setScannerOpen(false);
-                  }}
-                >
-                  {t('addFood.close')}
-                </Button>
-              </div>
-              <div className="relative flex-1 flex items-center justify-center">
-                <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-56 h-36 border-2 border-white rounded-lg opacity-80" />
-                </div>
-              </div>
-              <div className="p-4 text-center text-white">
-                {scanning ? t('addFood.pointToCode') : t('addFood.preparingCamera')}
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-white px-6">
-              <div className={`${PROCESSING_SPINNER_SIZE} border-4 border-white/30 border-t-white rounded-full animate-spin`} />
-              <div className="text-center space-y-1">
-                <p className="text-lg font-semibold">
-                  {t('addFood.processingBarcode', { defaultValue: "Escaneando código de barras..." })}
-                </p>
-                <p className="text-sm text-white/80">
-                  {t('addFood.processingWait', { defaultValue: "Procesando información..." })}
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="flex items-center justify-between p-4 text-white">
+            <span className="font-semibold">{t('addFood.scanBarcodeLabel')}</span>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                stopScanner();
+                setScannerOpen(false);
+              }}
+            >
+              {t('addFood.close')}
+            </Button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+          </div>
+          <div className="p-4 text-center text-white">
+            {scanning ? t('addFood.pointToCode') : t('addFood.preparingCamera')}
+          </div>
         </div>
       )}
       
