@@ -20,6 +20,7 @@ interface AddExerciseDialogProps {
   onExerciseAdded: () => void;
 }
 
+
 export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }: AddExerciseDialogProps) => {
   const { t } = useTranslation();
   const [exerciseName, setExerciseName] = useState("");
