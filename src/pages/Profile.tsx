@@ -9,7 +9,6 @@ import { useState, useEffect } from "react";
 import { getState, exportJSON, importJSON } from "@/lib/storage";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { AvatarSelector } from "@/components/AvatarSelector";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { useTheme } from "next-themes";
@@ -216,15 +215,17 @@ const Profile = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={editData.current_weight || ""}
+                    value={editData.current_weight ?? ""}
                     onChange={(e) => setEditData({ ...editData, current_weight: e.target.value ? Number(e.target.value) : null })}
                     className="w-20 h-8 text-right"
-                    placeholder="0"
+                    placeholder="--"
                   />
                   <span className="text-muted-foreground">{t('profile.kg')}</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">{profile?.current_weight || 0} {t('profile.kg')}</span>
+                <span className="text-muted-foreground">
+                  {profile?.current_weight != null ? `${profile.current_weight} ${t('profile.kg')}` : '--'}
+                </span>
               )}
             </div>
             <div className="flex justify-between items-center">
