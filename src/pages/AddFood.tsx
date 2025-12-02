@@ -54,6 +54,7 @@ const AddFood = () => {
   const [servingAmount, setServingAmount] = useState(100);
   const [servingAmountInput, setServingAmountInput] = useState('100');
   const [manualEntry, setManualEntry] = useState(false);
+  const [isPhotoResult, setIsPhotoResult] = useState(false);
   const [manualFood, setManualFood] = useState<FoodItem>({
     name: "",
     calories: 0,
@@ -239,12 +240,13 @@ const AddFood = () => {
 
       setSelectedFood(null);
       setManualEntry(true);
+      setIsPhotoResult(true);
       setServingAmount(100);
       setServingAmountInput("100");
 
       setManualFood((prev) => ({
         ...prev,
-        name: prev.name || t('addFood.photoFoodName', { defaultValue: "Comida desde foto" }),
+        name: "",
         protein: Number(protein) || 0,
         fat: Number(fat) || 0,
         carbs: Number(carbs) || 0,
@@ -273,6 +275,7 @@ const AddFood = () => {
   const startScanner = async () => {
     processingScanRef.current = false;
     setIsProcessingScan(false);
+    setIsPhotoResult(false);
 
     const hasPermission = await ensureCameraPermission();
     if (!hasPermission) {
@@ -338,6 +341,7 @@ const AddFood = () => {
           
           setSelectedFood(item);
           setServingAmount(item.servingSize);
+          setManualEntry(false);
           toast.success(`${item.name} detectado`);
           setIsProcessingScan(false);
           setScannerOpen(false);
@@ -458,6 +462,8 @@ const AddFood = () => {
     });
     setServingAmount(item.servingSize);
     setServingAmountInput(String(item.servingSize));
+    setManualEntry(false);
+    setIsPhotoResult(false);
   };
   
   // Manejar selección de alimento desde la base de datos
@@ -626,6 +632,7 @@ const AddFood = () => {
                 <Input
                   id="foodName"
                   value={selectedFood?.name || manualFood.name}
+                  placeholder={isPhotoResult ? t('addFood.photoNamePlaceholder', { defaultValue: "Añadir nombre del plato" }) : undefined}
                   onChange={(e) => {
                     if (selectedFood) {
                       setSelectedFood({ ...selectedFood, name: e.target.value });
@@ -636,7 +643,7 @@ const AddFood = () => {
                 />
               </div>
 
-              {selectedFood && selectedFood.brand && (
+              {selectedFood && selectedFood.brand && !isPhotoResult && (
                 <div>
                   <Label htmlFor="brand">{t('addFood.brand')}</Label>
                   <Input
@@ -647,47 +654,49 @@ const AddFood = () => {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="amount">{t('addFood.amount')}</Label>
-                  <Input
-                    id="amount"
-                    type="text"
-                    inputMode="decimal"
-                    pattern="[0-9]*[.,]?[0-9]*"
-                    value={servingAmountInput}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
+              {!isPhotoResult && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="amount">{t('addFood.amount')}</Label>
+                    <Input
+                      id="amount"
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.,]?[0-9]*"
+                      value={servingAmountInput}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
                         const cleaned = raw.replace(/^0+(?=\d)/, '');
-                        setServingAmountInput(cleaned);
-                        const parsed = parseFloat(cleaned.replace(',', '.'));
-                        if (!isNaN(parsed)) setServingAmount(parsed);
-                      }
-                    }}
-                    onBlur={() => {
-                      if (servingAmountInput === '') {
-                        setServingAmountInput('0');
-                        setServingAmount(0);
-                      }
-                    }}
-                  />
+                          setServingAmountInput(cleaned);
+                          const parsed = parseFloat(cleaned.replace(',', '.'));
+                          if (!isNaN(parsed)) setServingAmount(parsed);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (servingAmountInput === '') {
+                          setServingAmountInput('0');
+                          setServingAmount(0);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="unit">{t('addFood.unit')}</Label>
+                    <Input
+                      id="unit"
+                      value={selectedFood?.servingUnit || manualFood.servingUnit}
+                      onChange={(e) => {
+                        if (selectedFood) {
+                          setSelectedFood({ ...selectedFood, servingUnit: e.target.value });
+                        } else {
+                          setManualFood({ ...manualFood, servingUnit: e.target.value });
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="unit">{t('addFood.unit')}</Label>
-                  <Input
-                    id="unit"
-                    value={selectedFood?.servingUnit || manualFood.servingUnit}
-                    onChange={(e) => {
-                      if (selectedFood) {
-                        setSelectedFood({ ...selectedFood, servingUnit: e.target.value });
-                      } else {
-                        setManualFood({ ...manualFood, servingUnit: e.target.value });
-                      }
-                    }}
-                  />
-                </div>
-              </div>
+              )}
 
               {manualEntry && (
                 <div className="grid grid-cols-2 gap-3">
@@ -808,6 +817,7 @@ const AddFood = () => {
             variant="outline"
             onClick={() => {
               setManualEntry(true);
+              setIsPhotoResult(false);
               setManualNutritionInputs({
                 calories: manualFood.calories ? String(manualFood.calories) : "",
                 protein: manualFood.protein ? String(manualFood.protein) : "",
