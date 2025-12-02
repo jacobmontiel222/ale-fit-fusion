@@ -17,6 +17,8 @@ import { searchFoods } from "@/lib/foodSearch";
 import { useTranslation } from "react-i18next";
 import { initializeFoodDatabase } from "@/lib/initFoodDatabase";
 
+const CAMERA_PERMISSION_KEY = "cameraPermissionGranted";
+
 interface FoodItem {
   name: string;
   brand?: string;
@@ -139,6 +141,66 @@ const AddFood = () => {
     return () => stopScanner();
   }, []);
 
+  const markCameraGranted = () => {
+    localStorage.setItem(CAMERA_PERMISSION_KEY, "true");
+  };
+
+  const checkCameraPermission = async (): Promise<boolean | null> => {
+    if (!navigator.permissions || !('query' in navigator.permissions)) {
+      return null;
+    }
+
+    try {
+      const result = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      if (result.state === "granted") {
+        markCameraGranted();
+        return true;
+      }
+      if (result.state === "denied") {
+        return false;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const requestCameraPermission = async (): Promise<boolean> => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("La cámara no está disponible en este dispositivo.");
+      return false;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      stream.getTracks().forEach((track) => track.stop());
+      markCameraGranted();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const ensureCameraPermission = async (): Promise<boolean> => {
+    const stored = localStorage.getItem(CAMERA_PERMISSION_KEY);
+    if (stored === "true") {
+      const state = await checkCameraPermission();
+      if (state === false) {
+        localStorage.removeItem(CAMERA_PERMISSION_KEY);
+        return false;
+      }
+      // Stored flag plus non-denied system state is enough to proceed without re-prompt.
+      return true;
+    }
+
+    const permissionState = await checkCameraPermission();
+    if (permissionState === true) {
+      return true;
+    }
+
+    return requestCameraPermission();
+  };
+
   const handleOpenCamera = () => {
     photoInputRef.current?.click();
   };
@@ -206,6 +268,14 @@ const AddFood = () => {
   };
 
   const startScanner = async () => {
+    const hasPermission = await ensureCameraPermission();
+    if (!hasPermission) {
+      toast.error("Autoriza la cámara para escanear códigos.");
+      setScannerOpen(false);
+      setScanning(false);
+      return;
+    }
+
     setScannerOpen(true);
     setScanning(true);
     if (!readerRef.current) {
