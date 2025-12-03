@@ -1254,61 +1254,105 @@ const AddFood = () => {
               <Clock className="w-4 h-4" />
               <h3>{t('addFood.recentHistory')}</h3>
             </div>
-            {foodHistory.slice(0, 10).map((item) => (
-              <StatsCard 
-                key={item.id} 
-                className="cursor-pointer hover:bg-secondary/50 transition-colors" 
-                onClick={() => handleHistoryItemClick(item)}
-                onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
-                onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
-                onTouchEnd={(e) => handleHistorySwipeEnd(item.id, e.changedTouches[0]?.clientX || 0)}
-                onMouseDown={(e) => handleHistorySwipeStart(item.id, e.clientX)}
-                onMouseMove={(e) => handleHistorySwipeMove(item.id, e.clientX)}
-                onMouseUp={(e) => handleHistorySwipeEnd(item.id, e.clientX)}
-                style={{
-                  transform: `translateX(${historySwipeOffset[item.id] || 0}px)`,
-                  transition: historySwipeOffset[item.id] === 0 ? 'transform 0.15s ease-out' : 'transform 0s',
-                }}
-              >
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground">{item.name}</h4>
-                    {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {item.calories} kcal · P: {item.protein}g · G: {item.fat}g · C: {item.carbs}g
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.servingSize} {item.servingUnit} · {item.meal}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleHistoryItemClick(item);
+            {foodHistory.slice(0, 10).map((item) => {
+              const offset = historySwipeOffset[item.id] || 0;
+              const progress = Math.min(Math.abs(offset) / SWIPE_DELETE_THRESHOLD, 1);
+              const removing = historyRemoving[item.id];
+
+              return (
+                <div
+                  key={item.id}
+                  className="relative overflow-hidden"
+                  style={{
+                    maxHeight: removing ? 0 : 500,
+                    opacity: removing ? 0 : 1,
+                    transition: removing
+                      ? 'max-height 0.25s ease, opacity 0.2s ease'
+                      : 'max-height 0.25s ease',
+                  }}
+                >
+                  <div
+                    className="absolute inset-y-0 right-0 flex items-center pr-4"
+                    style={{
+                      width: `${Math.max(64, Math.abs(offset))}px`,
+                      backgroundColor:
+                        Math.abs(offset) >= SWIPE_DELETE_THRESHOLD
+                          ? '#ef4444'
+                          : `rgba(239, 68, 68, ${progress * 0.7})`,
+                      justifyContent: 'flex-end',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <Trash2
+                      className="w-5 h-5"
+                      style={{
+                        color: 'white',
+                        opacity: progress,
+                        transform: `scale(${0.8 + 0.4 * progress})`,
+                        transition: 'opacity 0.1s ease, transform 0.1s ease',
                       }}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const food = historyToFoodItem(item);
-                        toggleFavorite(food);
-                      }}
-                    >
-                      <Star
-                        className={`w-4 h-4 ${isFavorite(historyToFoodItem(item)) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
-                      />
-                    </Button>
+                    />
                   </div>
+                  <StatsCard 
+                    className="cursor-pointer hover:bg-secondary/50 transition-colors" 
+                    onClick={() => handleHistoryItemClick(item)}
+                    onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
+                    onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
+                    onTouchEnd={(e) => handleHistorySwipeEnd(item.id, e.changedTouches[0]?.clientX || 0)}
+                    onMouseDown={(e) => handleHistorySwipeStart(item.id, e.clientX)}
+                    onMouseMove={(e) => handleHistorySwipeMove(item.id, e.clientX)}
+                    onMouseUp={(e) => handleHistorySwipeEnd(item.id, e.clientX)}
+                    style={{
+                      transform: removing ? 'translateX(-120%)' : `translateX(${offset}px)`,
+                      transition: removing
+                        ? 'transform 0.2s ease, opacity 0.2s ease'
+                        : offset === 0
+                          ? 'transform 0.15s ease-out'
+                          : 'transform 0s',
+                      opacity: removing ? 0 : 1,
+                    }}
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground">{item.name}</h4>
+                        {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {item.calories} kcal ?? P: {item.protein}g ?? G: {item.fat}g ?? C: {item.carbs}g
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.servingSize} {item.servingUnit} ?? {item.meal}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleHistoryItemClick(item);
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const food = historyToFoodItem(item);
+                            toggleFavorite(food);
+                          }}
+                        >
+                          <Star
+                            className={`w-4 h-4 ${isFavorite(historyToFoodItem(item)) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
+                          />
+                        </Button>
+                      </div>
+                    </div>
+                  </StatsCard>
                 </div>
-              </StatsCard>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -1382,4 +1426,5 @@ const AddFood = () => {
 };
 
 export default AddFood;
+
 
