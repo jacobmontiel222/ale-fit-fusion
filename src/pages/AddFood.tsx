@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Barcode, Search, Clock, Camera, Plus, Star } from "lucide-react";
+import { ArrowLeft, Barcode, Search, Clock, Camera, Plus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,8 @@ import { useRef as useReactRef } from "react";
 
 const CAMERA_PERMISSION_KEY = "cameraPermissionGranted";
 const PROCESSING_SPINNER_SIZE = "w-12 h-12";
+const SWIPE_DELETE_THRESHOLD = 80;
+const SWIPE_MAX_OFFSET = 140;
 
 interface FoodItem {
   name: string;
@@ -93,6 +95,7 @@ const AddFood = () => {
   const [favorites, setFavorites] = useState<FoodItemType[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [historySwipeOffset, setHistorySwipeOffset] = useState<Record<string, number>>({});
+  const [historyRemoving, setHistoryRemoving] = useState<Record<string, boolean>>({});
   const historyTouchStart = useReactRef<Record<string, number>>({});
   const historySwipeTriggered = useReactRef(false);
   
@@ -164,6 +167,10 @@ const AddFood = () => {
       const { [id]: _, ...rest } = prev;
       return rest;
     });
+    setHistoryRemoving(prev => {
+      const { [id]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleHistorySwipeStart = (id: string, clientX: number) => {
@@ -178,7 +185,7 @@ const AddFood = () => {
     if (delta < 0) {
       setHistorySwipeOffset(prev => ({
         ...prev,
-        [id]: Math.max(delta, -140),
+        [id]: Math.max(delta, -SWIPE_MAX_OFFSET),
       }));
     } else {
       setHistorySwipeOffset(prev => ({
@@ -193,10 +200,11 @@ const AddFood = () => {
     const delta = startX - clientX;
     delete historyTouchStart.current[id];
 
-    const SWIPE_THRESHOLD = 50;
-    if (delta > SWIPE_THRESHOLD) {
+    if (delta > SWIPE_DELETE_THRESHOLD) {
       historySwipeTriggered.current = true;
-      removeHistoryItem(id);
+      setHistoryRemoving(prev => ({ ...prev, [id]: true }));
+      setHistorySwipeOffset(prev => ({ ...prev, [id]: -SWIPE_MAX_OFFSET }));
+      setTimeout(() => removeHistoryItem(id), 200);
       return;
     }
     // Reset position if no delete
