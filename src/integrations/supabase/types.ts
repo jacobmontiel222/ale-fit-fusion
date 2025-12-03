@@ -220,6 +220,68 @@ export type Database = {
         }
         Relationships: []
       }
+      community_foods: {
+        Row: {
+          base_serving: number
+          base_unit: string
+          barcode: string | null
+          brand: string | null
+          calories: number
+          carbs: number
+          created_at: string
+          created_by: string | null
+          fat: number
+          id: string
+          name: string
+          protein: number
+          source: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          base_serving?: number
+          base_unit?: string
+          barcode?: string | null
+          brand?: string | null
+          calories: number
+          carbs: number
+          created_at?: string
+          created_by?: string | null
+          fat: number
+          id?: string
+          name: string
+          protein: number
+          source?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          base_serving?: number
+          base_unit?: string
+          barcode?: string | null
+          brand?: string | null
+          calories?: number
+          carbs?: number
+          created_at?: string
+          created_by?: string | null
+          fat?: number
+          id?: string
+          name?: string
+          protein?: number
+          source?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_foods_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_routines: {
         Row: {
           created_at: string

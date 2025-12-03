@@ -16,6 +16,7 @@ import { foodDatabase } from "@/lib/foodDatabase";
 import { searchFoods } from "@/lib/foodSearch";
 import { useTranslation } from "react-i18next";
 import { initializeFoodDatabase } from "@/lib/initFoodDatabase";
+import { useProfile } from "@/hooks/useProfile";
 
 const CAMERA_PERMISSION_KEY = "cameraPermissionGranted";
 const PROCESSING_SPINNER_SIZE = "w-12 h-12";
@@ -45,6 +46,7 @@ const AddFood = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { t, i18n } = useTranslation();
   const meal = searchParams.get("meal") || t('meals.breakfast');
   const selectedDate = searchParams.get("date") || new Date().toISOString().split('T')[0];
@@ -85,6 +87,8 @@ const AddFood = () => {
   const [selectedDatabaseFood, setSelectedDatabaseFood] = useState<FoodItemType | null>(null);
   const [databaseFoods, setDatabaseFoods] = useState<FoodItemType[]>([]);
   const [searchResults, setSearchResults] = useState<FoodItemType[]>([]);
+  const [localSearchResults, setLocalSearchResults] = useState<FoodItemType[]>([]);
+  const [communityResults, setCommunityResults] = useState<FoodItemType[]>([]);
   
   // Helper para obtener el nombre del alimento en el idioma actual
   const getFoodName = (food: FoodItemType): string => {
@@ -118,10 +122,10 @@ const AddFood = () => {
     loadFoodDatabase();
   }, [i18n.language]);
 
-  // Buscar en la base de datos cuando cambia el query
+  // Buscar en la base de datos local cuando cambia el query
   useEffect(() => {
     if (!searchQuery.trim() || databaseFoods.length === 0) {
-      setSearchResults([]);
+      setLocalSearchResults([]);
       return;
     }
 
@@ -131,8 +135,37 @@ const AddFood = () => {
       tags: [],
     }, 0.3);
 
-    setSearchResults(results.map(r => r.item).slice(0, 20));
+    setLocalSearchResults(results.map(r => r.item).slice(0, 20));
   }, [searchQuery, databaseFoods]);
+
+  // Combinar resultados comunitarios + locales (prioridad comunidad)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const seen = new Set<string>();
+    const combined: FoodItemType[] = [];
+
+    communityResults.forEach((item) => {
+      const key = item.barcode || item.id;
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(item);
+      }
+    });
+
+    localSearchResults.forEach((item) => {
+      const key = item.barcode || item.id;
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(item);
+      }
+    });
+
+    setSearchResults(combined);
+  }, [searchQuery, communityResults, localSearchResults]);
 
   const stopScanner = () => {
     try {
@@ -144,6 +177,61 @@ const AddFood = () => {
   useEffect(() => {
     return () => stopScanner();
   }, []);
+
+  // Buscar alimentos comunitarios en Supabase
+  useEffect(() => {
+    let active = true;
+
+    const fetchCommunityFoods = async () => {
+      if (!searchQuery.trim()) {
+        setCommunityResults([]);
+        return;
+      }
+
+      try {
+        const queryText = searchQuery.trim();
+        const { data, error } = await supabase
+          .from('community_foods')
+          .select('id, barcode, name, brand, base_serving, base_unit, calories, protein, carbs, fat, updated_at')
+          .or(`name.ilike.%${queryText}%,brand.ilike.%${queryText}%`)
+          .order('name')
+          .limit(30);
+
+        if (error) throw error;
+
+        if (!active) return;
+
+        const mapped = (data || []).map((row) => ({
+          id: row.id,
+          name: row.name,
+          brand: row.brand || undefined,
+          category: 'otros',
+          tags: [],
+          calories: Number(row.calories) || 0,
+          protein: Number(row.protein) || 0,
+          fat: Number(row.fat) || 0,
+          carbs: Number(row.carbs) || 0,
+          micronutrients: { vitamins: [], minerals: [] },
+          servingSize: Number(row.base_serving) || 100,
+          servingUnit: row.base_unit || 'g',
+          barcode: row.barcode || undefined,
+          searchTerms: [],
+          lastUpdated: row.updated_at || undefined,
+        } as FoodItemType));
+
+        setCommunityResults(mapped);
+      } catch (error) {
+        console.error('Error buscando alimentos comunitarios:', error);
+        if (active) setCommunityResults([]);
+      }
+    };
+
+    fetchCommunityFoods();
+
+    return () => {
+      active = false;
+    };
+  }, [searchQuery]);
 
   const markCameraGranted = () => {
     localStorage.setItem(CAMERA_PERMISSION_KEY, "true");
@@ -269,6 +357,40 @@ const AddFood = () => {
       if (event.target) {
         event.target.value = "";
       }
+    }
+  };
+
+  const upsertCommunityFood = async (food: FoodItem, source: 'scan' | 'manual') => {
+    if (!profile?.share_foods_with_community) return;
+
+    const unit = (food.servingUnit || '').toLowerCase();
+    if (unit !== 'g' && unit !== 'ml') {
+      console.warn('Saltando compartir: unidad no permitida', unit);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('community_foods')
+        .upsert({
+          barcode: food.barcode || null,
+          name: food.name,
+          brand: food.brand || null,
+          base_serving: food.servingSize || 100,
+          base_unit: unit,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fat: food.fat,
+          created_by: user?.id || null,
+          source,
+        }, {
+          onConflict: 'barcode',
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error compartiendo alimento con la comunidad:', error);
     }
   };
 
@@ -442,6 +564,10 @@ const AddFood = () => {
       return;
     }
     
+    // Compartir con comunidad si aplica (no bloquea el flujo)
+    const source: 'scan' | 'manual' = foodToAdd.barcode ? 'scan' : 'manual';
+    upsertCommunityFood(foodToAdd, source);
+
     // Trigger meals update event
     window.dispatchEvent(new CustomEvent('mealsUpdated'));
     
@@ -483,7 +609,8 @@ const AddFood = () => {
       return;
     }
 
-    const multiplier = amount / 100; // La base de datos tiene valores por 100g
+    const baseSize = food.servingSize || 100;
+    const multiplier = amount / baseSize;
     const adjustedMacros = {
       calories: Math.round(food.calories * multiplier),
       protein: Math.round(food.protein * multiplier * 10) / 10,
