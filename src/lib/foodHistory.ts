@@ -57,3 +57,10 @@ export function addToHistory(item: Omit<HistoryItem, 'id' | 'addedAt'>): void {
 export function clearHistory(): void {
   localStorage.removeItem(HISTORY_KEY);
 }
+
+// Remove a single item by id
+export function removeFromHistory(id: string): void {
+  const history = getFoodHistory();
+  const updated = history.filter(item => item.id !== id);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+}

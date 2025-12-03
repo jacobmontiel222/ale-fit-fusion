@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { StatsCard } from "@/components/StatsCard";
 import { toast } from "sonner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import { getFoodHistory, addToHistory, type HistoryItem } from "@/lib/foodHistory";
+import { getFoodHistory, addToHistory, type HistoryItem, removeFromHistory } from "@/lib/foodHistory";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { FoodDetailsModal } from "@/components/FoodDetailsModal";
@@ -17,6 +17,7 @@ import { searchFoods } from "@/lib/foodSearch";
 import { useTranslation } from "react-i18next";
 import { initializeFoodDatabase } from "@/lib/initFoodDatabase";
 import { useProfile } from "@/hooks/useProfile";
+import { useRef as useReactRef } from "react";
 
 const CAMERA_PERMISSION_KEY = "cameraPermissionGranted";
 const PROCESSING_SPINNER_SIZE = "w-12 h-12";
@@ -91,6 +92,9 @@ const AddFood = () => {
   const [communityResults, setCommunityResults] = useState<FoodItemType[]>([]);
   const [favorites, setFavorites] = useState<FoodItemType[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [historySwipeOffset, setHistorySwipeOffset] = useState<Record<string, number>>({});
+  const historyTouchStart = useReactRef<Record<string, number>>({});
+  const historySwipeTriggered = useReactRef(false);
   
   // Helper para obtener el nombre del alimento en el idioma actual
   const getFoodName = (food: FoodItemType): string => {
@@ -151,6 +155,55 @@ const AddFood = () => {
   const isFavorite = (food: Partial<FoodItemType>) => {
     const key = getFoodKey(food);
     return favorites.some(f => getFoodKey(f) === key);
+  };
+
+  const removeHistoryItem = (id: string) => {
+    removeFromHistory(id);
+    setFoodHistory(prev => prev.filter(item => item.id !== id));
+    setHistorySwipeOffset(prev => {
+      const { [id]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleHistorySwipeStart = (id: string, clientX: number) => {
+    historyTouchStart.current[id] = clientX;
+    historySwipeTriggered.current = false;
+  };
+
+  const handleHistorySwipeMove = (id: string, clientX: number) => {
+    const startX = historyTouchStart.current[id];
+    if (startX === undefined) return;
+    const delta = clientX - startX;
+    if (delta < 0) {
+      setHistorySwipeOffset(prev => ({
+        ...prev,
+        [id]: Math.max(delta, -140),
+      }));
+    } else {
+      setHistorySwipeOffset(prev => ({
+        ...prev,
+        [id]: 0,
+      }));
+    }
+  };
+
+  const handleHistorySwipeEnd = (id: string, clientX: number) => {
+    const startX = historyTouchStart.current[id] ?? clientX;
+    const delta = startX - clientX;
+    delete historyTouchStart.current[id];
+
+    const SWIPE_THRESHOLD = 50;
+    if (delta > SWIPE_THRESHOLD) {
+      historySwipeTriggered.current = true;
+      removeHistoryItem(id);
+      return;
+    }
+    // Reset position if no delete
+    setHistorySwipeOffset(prev => ({
+      ...prev,
+      [id]: 0,
+    }));
   };
   
   useEffect(() => {
@@ -652,6 +705,10 @@ const AddFood = () => {
   };
   
   const handleHistoryItemClick = (item: HistoryItem) => {
+    if (historySwipeTriggered.current) {
+      historySwipeTriggered.current = false;
+      return;
+    }
     setSelectedFood({
       name: item.name,
       brand: item.brand,
@@ -1194,6 +1251,16 @@ const AddFood = () => {
                 key={item.id} 
                 className="cursor-pointer hover:bg-secondary/50 transition-colors" 
                 onClick={() => handleHistoryItemClick(item)}
+                onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
+                onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
+                onTouchEnd={(e) => handleHistorySwipeEnd(item.id, e.changedTouches[0]?.clientX || 0)}
+                onMouseDown={(e) => handleHistorySwipeStart(item.id, e.clientX)}
+                onMouseMove={(e) => handleHistorySwipeMove(item.id, e.clientX)}
+                onMouseUp={(e) => handleHistorySwipeEnd(item.id, e.clientX)}
+                style={{
+                  transform: `translateX(${historySwipeOffset[item.id] || 0}px)`,
+                  transition: historySwipeOffset[item.id] === 0 ? 'transform 0.15s ease-out' : 'transform 0s',
+                }}
               >
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1">
