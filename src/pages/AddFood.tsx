@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Barcode, Search, Clock, Camera } from "lucide-react";
+import { ArrowLeft, Barcode, Search, Clock, Camera, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,6 +89,8 @@ const AddFood = () => {
   const [searchResults, setSearchResults] = useState<FoodItemType[]>([]);
   const [localSearchResults, setLocalSearchResults] = useState<FoodItemType[]>([]);
   const [communityResults, setCommunityResults] = useState<FoodItemType[]>([]);
+  const [favorites, setFavorites] = useState<FoodItemType[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
   
   // Helper para obtener el nombre del alimento en el idioma actual
   const getFoodName = (food: FoodItemType): string => {
@@ -98,10 +100,84 @@ const AddFood = () => {
     }
     return food.name;
   };
+
+  const getFoodKey = (food: Partial<FoodItemType>): string => {
+    return food.barcode || food.id || `${food.name}:${food.brand || ''}:${food.servingUnit}:${food.servingSize}`;
+  };
+
+  const historyToFoodItem = (item: HistoryItem): FoodItemType => ({
+    id: `history-${item.name}-${item.brand || ''}-${item.servingSize}-${item.servingUnit}`,
+    name: item.name,
+    brand: item.brand || undefined,
+    category: 'otros',
+    tags: [],
+    calories: item.calories,
+    protein: item.protein,
+    fat: item.fat,
+    carbs: item.carbs,
+    micronutrients: { vitamins: [], minerals: [] },
+    servingSize: item.servingSize,
+    servingUnit: item.servingUnit,
+    barcode: (item as any)?.barcode || undefined,
+    searchTerms: [],
+    lastUpdated: undefined,
+  });
+
+  const persistFavorites = (list: FoodItemType[]) => {
+    if (!user?.id) return;
+    setFavorites(list);
+    localStorage.setItem(`favorites_${user.id}`, JSON.stringify(list));
+  };
+
+  const toggleFavorite = (food: FoodItemType, opts?: { confirmRemoval?: boolean }) => {
+    if (!user?.id) {
+      toast.error(t('addFood.loginRequired', { defaultValue: 'Inicia sesión para guardar favoritos' }));
+      return;
+    }
+    const key = getFoodKey(food);
+    const exists = favorites.some(f => getFoodKey(f) === key);
+
+    if (exists) {
+      if (opts?.confirmRemoval && !window.confirm(t('addFood.removeFavoriteConfirm', { defaultValue: '¿Quitar de Mis alimentos?' }))) {
+        return;
+      }
+      persistFavorites(favorites.filter(f => getFoodKey(f) !== key));
+      return;
+    }
+
+    persistFavorites([...favorites, food]);
+  };
+
+  const isFavorite = (food: Partial<FoodItemType>) => {
+    const key = getFoodKey(food);
+    return favorites.some(f => getFoodKey(f) === key);
+  };
   
   useEffect(() => {
     setFoodHistory(getFoodHistory());
   }, []);
+
+  // Cargar favoritos por usuario
+  useEffect(() => {
+    if (!user?.id) {
+      setFavorites([]);
+      return;
+    }
+    try {
+      const stored = localStorage.getItem(`favorites_${user.id}`);
+      setFavorites(stored ? JSON.parse(stored) : []);
+    } catch {
+      setFavorites([]);
+    }
+  }, [user?.id]);
+
+  // Reset view when se abre la pantalla con otro meal/fecha
+  useEffect(() => {
+    setShowFavorites(false);
+    setManualEntry(false);
+    setSelectedFood(null);
+    setIsPhotoResult(false);
+  }, [meal, selectedDate]);
   
   // Cargar base de datos de alimentos y recargar cuando cambie el idioma
   useEffect(() => {
@@ -938,28 +1014,120 @@ const AddFood = () => {
           </StatsCard>
         )}
 
-        {/* Manual Entry Option */}
-        {!selectedFood && !manualEntry && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setManualEntry(true);
-              setIsPhotoResult(false);
-              setManualNutritionInputs({
-                calories: manualFood.calories ? String(manualFood.calories) : "",
-                protein: manualFood.protein ? String(manualFood.protein) : "",
-                fat: manualFood.fat ? String(manualFood.fat) : "",
-                carbs: manualFood.carbs ? String(manualFood.carbs) : "",
-              });
-            }}
-            className="w-full"
-          >
-            {t('addFood.manualEntry')}
-          </Button>
+        {/* Manual Entry / Favorites */}
+        {!selectedFood && (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Button
+                variant={manualEntry ? "default" : "outline"}
+                className="w-1/2"
+                onClick={() => {
+                  setShowFavorites(false);
+                  setSelectedFood(null);
+                  setServingAmount(100);
+                  setServingAmountInput('100');
+                  setManualFood({
+                    name: "",
+                    calories: 0,
+                    protein: 0,
+                    fat: 0,
+                    carbs: 0,
+                    servingSize: 100,
+                    servingUnit: "g",
+                    barcode: undefined,
+                    brand: undefined,
+                  });
+                  setManualEntry(true);
+                  setIsPhotoResult(false);
+                  setManualNutritionInputs({
+                    calories: "",
+                    protein: "",
+                    fat: "",
+                    carbs: "",
+                  });
+                }}
+              >
+                {t('addFood.manualEntry')}
+              </Button>
+              <Button
+                variant={showFavorites ? "default" : "outline"}
+                className="w-1/2"
+                onClick={() => {
+                  setManualEntry(false);
+                  setSelectedFood(null);
+                  setIsPhotoResult(false);
+                  setShowFavorites((prev) => !prev);
+                }}
+              >
+                {t('addFood.myFoods', { defaultValue: 'Mis alimentos' })}
+              </Button>
+            </div>
+
+            {showFavorites && !manualEntry && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    {t('addFood.myFoods', { defaultValue: 'Mis alimentos' })}
+                  </h3>
+                  <Button size="sm" variant="ghost" onClick={() => setShowFavorites(false)}>
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+                {favorites.length === 0 ? (
+                  <p className="text-center py-6 text-muted-foreground text-sm">
+                    {t('addFood.noFavorites', { defaultValue: 'Aún no tienes alimentos guardados.' })}
+                  </p>
+                ) : (
+                  favorites.map((food) => (
+                    <StatsCard
+                      key={getFoodKey(food)}
+                      className="cursor-pointer hover:border-primary transition-colors"
+                      onClick={() => handleSelectFromDatabase(food)}
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
+                          {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {food.calories} kcal · P: {food.protein}g · G: {food.fat}g · C: {food.carbs}g
+                          </p>
+                          <p className="text-xs text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectFromDatabase(food);
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(food, { confirmRemoval: true });
+                            }}
+                          >
+                            <Star
+                              className={`w-4 h-4 ${isFavorite(food) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </StatsCard>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Search Results - mostrar resultados de la base de datos */}
-        {!selectedFood && !manualEntry && searchQuery && searchResults.length > 0 && (
+        {!selectedFood && !manualEntry && !showFavorites && searchQuery && searchResults.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-muted-foreground">
               {t('addFood.results')} ({searchResults.length})
@@ -970,14 +1138,36 @@ const AddFood = () => {
                 className="cursor-pointer hover:border-primary transition-colors" 
                 onClick={() => handleSelectFromDatabase(food)}
               >
-                <div className="flex justify-between items-start">
-                  <div>
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1">
                     <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
                     {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
                     <p className="text-sm text-muted-foreground mt-1">
-                      {food.calories} kcal · P: {food.protein}g · G: {food.fat}g · C: {food.carbs}g
+                      {food.calories} kcal Жњ P: {food.protein}g Жњ G: {food.fat}g Жњ C: {food.carbs}g
                     </p>
                     <p className="text-xs text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectFromDatabase(food);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(food);
+                      }}
+                    >
+                      <Star className={`w-4 h-4 ${isFavorite(food) ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
+                    </Button>
                   </div>
                 </div>
               </StatsCard>
@@ -985,7 +1175,7 @@ const AddFood = () => {
           </div>
         )}
 
-        {!selectedFood && !manualEntry && searchQuery && searchResults.length === 0 && databaseFoods.length > 0 && (
+        {!selectedFood && !manualEntry && !showFavorites && searchQuery && searchResults.length === 0 && databaseFoods.length > 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <p>{t('addFood.noResults', { query: searchQuery })}</p>
             <p className="text-sm mt-1">{t('addFood.tryOther')}</p>
@@ -993,7 +1183,7 @@ const AddFood = () => {
         )}
         
         {/* Food History */}
-        {!selectedFood && !manualEntry && !searchQuery && foodHistory.length > 0 && (
+        {!selectedFood && !manualEntry && !showFavorites && !searchQuery && foodHistory.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <Clock className="w-4 h-4" />
@@ -1005,7 +1195,7 @@ const AddFood = () => {
                 className="cursor-pointer hover:bg-secondary/50 transition-colors" 
                 onClick={() => handleHistoryItemClick(item)}
               >
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-3">
                   <div className="flex-1">
                     <h4 className="font-semibold text-foreground">{item.name}</h4>
                     {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
@@ -1016,7 +1206,31 @@ const AddFood = () => {
                       {item.servingSize} {item.servingUnit} · {item.meal}
                     </p>
                   </div>
-                  <Button size="sm" variant="ghost">{t('addFood.add')}</Button>
+                  <div className="flex flex-col items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleHistoryItemClick(item);
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const food = historyToFoodItem(item);
+                        toggleFavorite(food);
+                      }}
+                    >
+                      <Star
+                        className={`w-4 h-4 ${isFavorite(historyToFoodItem(item)) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
+                      />
+                    </Button>
+                  </div>
                 </div>
               </StatsCard>
             ))}
@@ -1093,3 +1307,4 @@ const AddFood = () => {
 };
 
 export default AddFood;
+
