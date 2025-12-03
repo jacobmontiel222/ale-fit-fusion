@@ -10,6 +10,7 @@ interface ProfileData {
   target_weight: number | null;
   avatar_icon: string;
   avatar_color: string;
+  share_foods_with_community: boolean;
 }
 
 export const useProfile = () => {
@@ -38,7 +39,7 @@ export const useProfile = () => {
         supabase.auth.getUser(),
         supabase
           .from('profiles')
-          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color')
+          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color, share_foods_with_community')
           .eq('id', user.id)
           .maybeSingle(),
         supabase
@@ -64,6 +65,7 @@ export const useProfile = () => {
         target_weight: profileData?.target_weight ?? null,
         avatar_icon: profileData?.avatar_icon || 'apple',
         avatar_color: profileData?.avatar_color || '#10B981',
+        share_foods_with_community: profileData?.share_foods_with_community ?? false,
       };
     },
     enabled: !!user?.id,
@@ -73,15 +75,24 @@ export const useProfile = () => {
     mutationFn: async (data: Partial<ProfileData>) => {
       if (!user?.id) throw new Error('No user');
 
+      const updateData: Record<string, any> = {};
+      if (data.height !== undefined) updateData.height = data.height;
+      if (data.current_weight !== undefined) updateData.current_weight = data.current_weight;
+      if (data.target_weight !== undefined) updateData.target_weight = data.target_weight;
+      if (data.avatar_icon !== undefined) updateData.avatar_icon = data.avatar_icon;
+      if (data.avatar_color !== undefined) updateData.avatar_color = data.avatar_color;
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.share_foods_with_community !== undefined) {
+        updateData.share_foods_with_community = data.share_foods_with_community;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return data;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          height: data.height,
-          current_weight: data.current_weight,
-          target_weight: data.target_weight,
-          avatar_icon: data.avatar_icon,
-          avatar_color: data.avatar_color,
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;

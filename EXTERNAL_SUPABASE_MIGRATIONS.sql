@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Columna para controlar si el usuario comparte nuevos alimentos con la comunidad
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS share_foods_with_community BOOLEAN NOT NULL DEFAULT FALSE;
+
 -- 2. Tabla de objetivos nutricionales
 CREATE TABLE IF NOT EXISTS public.nutrition_goals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

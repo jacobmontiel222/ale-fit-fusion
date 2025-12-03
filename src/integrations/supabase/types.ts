@@ -353,6 +353,7 @@ export type Database = {
           height: number | null
           id: string
           name: string
+          share_foods_with_community: boolean | null
           target_weight: number | null
           updated_at: string
         }
@@ -365,6 +366,7 @@ export type Database = {
           height?: number | null
           id: string
           name: string
+          share_foods_with_community?: boolean | null
           target_weight?: number | null
           updated_at?: string
         }
@@ -377,6 +379,7 @@ export type Database = {
           height?: number | null
           id?: string
           name?: string
+          share_foods_with_community?: boolean | null
           target_weight?: number | null
           updated_at?: string
         }

@@ -15,6 +15,16 @@ import { useTheme } from "next-themes";
 import { useProfile } from "@/hooks/useProfile";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProfileData {
   name: string;
@@ -23,6 +33,7 @@ interface ProfileData {
   target_weight: number | null;
   avatar_icon: string;
   avatar_color: string;
+  share_foods_with_community: boolean;
 }
 
 const Profile = () => {
@@ -37,7 +48,8 @@ const Profile = () => {
     current_weight: null,
     target_weight: null,
     avatar_icon: 'apple',
-    avatar_color: '#10B981'
+    avatar_color: '#10B981',
+    share_foods_with_community: false
   });
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
@@ -45,6 +57,8 @@ const Profile = () => {
   const [smartReminders, setSmartReminders] = useState(false);
   const [biometricAuth, setBiometricAuth] = useState(true);
   const [autoBackup, setAutoBackup] = useState(false);
+  const [shareWithCommunity, setShareWithCommunity] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { profile, updateProfile, isUpdating } = useProfile();
@@ -59,6 +73,14 @@ const Profile = () => {
       setEditData(profile);
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (profile?.share_foods_with_community !== undefined && profile?.share_foods_with_community !== null) {
+      setShareWithCommunity(profile.share_foods_with_community);
+    } else {
+      setShareWithCommunity(false);
+    }
+  }, [profile?.share_foods_with_community]);
 
   const handleEditProfile = () => {
     setIsEditing(true);
@@ -93,6 +115,38 @@ const Profile = () => {
 
   const handleThemeToggle = (checked: boolean) => {
     setTheme(checked ? 'dark' : 'light');
+  };
+
+  const persistSharePreference = async (value: boolean) => {
+    const previous = shareWithCommunity;
+    setShareWithCommunity(value);
+
+    try {
+      await updateProfile({ share_foods_with_community: value });
+      toast.success(value ? t('profile.shareWithCommunityEnabled') : t('profile.shareWithCommunityDisabled'));
+    } catch (error) {
+      console.error('Error updating share preference', error);
+      setShareWithCommunity(previous);
+      toast.error(t('profile.shareWithCommunityError'));
+    }
+  };
+
+  const handleShareToggle = (checked: boolean) => {
+    if (checked) {
+      setShowShareDialog(true);
+    } else {
+      persistSharePreference(false);
+    }
+  };
+
+  const handleConfirmShare = () => {
+    setShowShareDialog(false);
+    persistSharePreference(true);
+  };
+
+  const handleCancelShareDialog = () => {
+    setShowShareDialog(false);
+    setShareWithCommunity(false);
   };
 
   const handleExport = () => {
@@ -315,6 +369,21 @@ const Profile = () => {
               <span className="text-foreground">{t('profile.exportData')}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </button>
+            <div className="flex justify-between items-center gap-4">
+              <div>
+                <Label htmlFor="share-community" className="text-foreground cursor-pointer">
+                  {t('profile.shareWithCommunity')}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('profile.shareWithCommunityDescription')}
+                </p>
+              </div>
+              <Switch
+                id="share-community"
+                checked={shareWithCommunity}
+                onCheckedChange={handleShareToggle}
+              />
+            </div>
             <div className="flex justify-between items-center">
               <Label htmlFor="auto-backup" className="text-foreground cursor-pointer">{t('profile.autoBackup')}</Label>
               <Switch id="auto-backup" checked={autoBackup} onCheckedChange={setAutoBackup} />
@@ -368,6 +437,25 @@ const Profile = () => {
           {t('profile.logout')}
         </Button>
       </div>
+
+      <AlertDialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('profile.shareWithCommunity')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('profile.shareWithCommunityDialog')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelShareDialog}>
+              {t('profile.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmShare}>
+              {t('profile.enable')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AvatarSelector
         open={showAvatarSelector}
