@@ -21,12 +21,12 @@ export const MyRoutinesDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
+        <DialogHeader className="pb-2">
           <DialogTitle>{t("gym.myRoutines")}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
           {isLoading ? (
             <p className="text-center text-muted-foreground py-6">
               {t("common.loading")}

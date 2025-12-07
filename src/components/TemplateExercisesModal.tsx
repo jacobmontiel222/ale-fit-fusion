@@ -103,14 +103,14 @@ export const TemplateExercisesModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
+        <DialogHeader className="pb-2">
           <DialogTitle>
             {templateName} - {t('gym.exercisesLabel')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
           {/* Current Exercises */}
           {exercises.length > 0 && (
             <div className="space-y-2">

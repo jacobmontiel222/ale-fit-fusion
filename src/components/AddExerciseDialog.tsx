@@ -70,11 +70,11 @@ export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="max-h-[85vh] flex flex-col">
+        <DialogHeader className="pb-2">
           <DialogTitle>{t('gym.addExercise')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="exercise-name">{t('gym.exerciseName')}</Label>
             <Input
@@ -99,7 +99,7 @@ export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }
             </Select>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="pt-2">
           <Button variant="outline" onClick={onClose}>
             {t('common.cancel')}
           </Button>

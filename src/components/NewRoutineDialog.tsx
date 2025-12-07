@@ -81,12 +81,12 @@ export const NewRoutineDialog = ({ open, onClose }: NewRoutineDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
+      <DialogContent className="max-w-sm max-h-[85vh] flex flex-col">
+        <DialogHeader className="pb-2">
           <DialogTitle>{t("gym.newRoutine")}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4 py-2">
           <div className="space-y-2">
             <Label>{t("gym.templateName")}</Label>
             <Input
@@ -152,7 +152,7 @@ export const NewRoutineDialog = ({ open, onClose }: NewRoutineDialogProps) => {
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 pt-2">
           <Button variant="outline" onClick={onClose}>
             {t("common.cancel")}
           </Button>

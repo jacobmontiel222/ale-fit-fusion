@@ -135,12 +135,12 @@ export const ReorderExercisesModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
+        <DialogHeader className="pb-2">
           <DialogTitle>{t('gym.reorderExercises') || 'Reordenar ejercicios'}</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-2 py-4">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-2 py-4">
           {orderedExercises.map((exercise, index) => (
             <div
               key={exercise.id}
@@ -164,7 +164,7 @@ export const ReorderExercisesModal = ({
           ))}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-2">
           <Button variant="outline" onClick={onClose} className="flex-1">
             {t('common.cancel') || 'Cancelar'}
           </Button>
