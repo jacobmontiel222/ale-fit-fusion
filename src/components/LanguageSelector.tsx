@@ -10,16 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 
 const languages = [
-  { code: 'es', nameKey: 'languages.es', flag: '🇪🇸' },
-  { code: 'en', nameKey: 'languages.en', flag: '🇺🇸' },
-  { code: 'fr', nameKey: 'languages.fr', flag: '🇫🇷' },
-  { code: 'de', nameKey: 'languages.de', flag: '🇩🇪' },
-  { code: 'it', nameKey: 'languages.it', flag: '🇮🇹' },
-  { code: 'pt', nameKey: 'languages.pt', flag: '🇵🇹' },
-  { code: 'pl', nameKey: 'languages.pl', flag: '🇵🇱' },
-  { code: 'sq', nameKey: 'languages.sq', flag: '🇦🇱' },
-  { code: 'de-CH', nameKey: 'languages.de-CH', flag: '🇨🇭' },
-  { code: 'el', nameKey: 'languages.el', flag: '🇬🇷' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'sq', name: 'Shqip', flag: '🇦🇱' },
+  { code: 'de-CH', name: 'Schweizerdeutsch', flag: '🇨🇭' },
+  { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
 ];
 
 interface LanguageSelectorProps {
@@ -57,7 +57,7 @@ export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) 
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{language.flag}</span>
-                <span className="text-base">{t(language.nameKey)}</span>
+                <span className="text-base">{language.name}</span>
               </div>
               {selectedLanguage === language.code && (
                 <Check className="w-5 h-5" />
