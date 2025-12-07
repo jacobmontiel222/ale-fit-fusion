@@ -164,7 +164,7 @@
   "languages": {
     "es": "Spanisch",
     "en": "Englisch",
-    "fr": "Franz?sisch",
+    "fr": "Französisch",
     "de": "Deutsch",
     "it": "Italienisch",
     "pt": "Portugiesisch",
@@ -172,7 +172,7 @@
     "sq": "Albanisch",
     "de-CH": "Schweizerdeutsch",
     "el": "Griechisch",
-    "selectLanguage": "Sprache w?hlen"
+    "selectLanguage": "Sprache wählen"
   },
   "analytics": {
     "title": "Analytik",
