@@ -347,5 +347,66 @@
     "savedSuccess": "{{name}} zapisano pomy?lnie",
     "unexpectedError": "Nieoczekiwany b??d podczas zapisywania przepisu",
     "loginRequired": "Musisz si? zalogowa?, aby zapisywa? przepisy"
+  },
+  "auth": {
+    "languageButton": "Zmień język",
+    "login": {
+      "title": "Witamy w FitYourself",
+      "subtitle": "Zacznijmy Twoją fitnessową podróż.",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Hasło",
+      "button": "Zaloguj się",
+      "loading": "Logowanie...",
+      "forgot": "Zapomniałeś hasła?",
+      "signupCta": "Utwórz konto",
+      "orContinue": "Lub kontynuuj z",
+      "toastTitle": "Błąd logowania",
+      "errors": {
+        "invalidCredentials": "Nieprawidłowy email lub hasło.",
+        "emailNotConfirmed": "Potwierdź swój email zanim się zalogujesz.",
+        "invalidPath": "Błąd konfiguracji. Sprawdź adresy przekierowań w Supabase.",
+        "invalidGrant": "Nieprawidłowe dane logowania. Sprawdź email i hasło.",
+        "redirect": "Błąd przekierowania. Skontaktuj się z administratorem.",
+        "default": "Wystąpił błąd. Spróbuj ponownie."
+      }
+    },
+    "signup": {
+      "title": "Utwórz konto",
+      "subtitle": "Rozpocznij swoją fitnessową podróż już dziś.",
+      "namePlaceholder": "Imię",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Hasło",
+      "confirmPasswordPlaceholder": "Potwierdź hasło",
+      "passwordRequirementsTitle": "Hasło musi zawierać:",
+      "reqMinLength": "Co najmniej 8 znaków",
+      "reqUppercase": "Jedną wielką literę",
+      "reqNumber": "Jedną cyfrę",
+      "reqMatch": "Hasła są zgodne",
+      "button": "Utwórz konto",
+      "loading": "Tworzenie konta...",
+      "haveAccount": "Masz już konto?",
+      "loginCta": "Zaloguj się",
+      "toasts": {
+        "invalidPasswordTitle": "Nieprawidłowe hasło",
+        "invalidPasswordDesc": "Hasło musi spełniać wszystkie wymagania.",
+        "mismatchTitle": "Hasła się nie zgadzają",
+        "mismatchDesc": "Upewnij się, że oba hasła są takie same.",
+        "errorTitle": "Błąd tworzenia konta",
+        "successTitle": "Konto utworzone!",
+        "successDesc": "Twoje konto zostało pomyślnie utworzone."
+      }
+    },
+    "terms": {
+      "agree": "Kontynuując, akceptujesz nasze",
+      "termsOfService": "Warunki korzystania z usługi",
+      "and": "oraz",
+      "privacyPolicy": "Politykę prywatności"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Wkrótce dostępne",
+      "comingSoonDescription": "Logowanie przez {{provider}} będzie wkrótce dostępne."
+    }
   }
 }

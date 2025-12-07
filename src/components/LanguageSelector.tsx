@@ -31,8 +31,8 @@ export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) 
   const { i18n, t } = useTranslation();
   const normalizeLang = (code: string) => {
     const lower = code.toLowerCase();
-    if (lower === 'de-ch') return 'de-CH';
-    return code.split('-')[0];
+    if (lower === "de-ch") return "de-CH";
+    return code.split("-")[0];
   };
   const [selectedLanguage, setSelectedLanguage] = useState(normalizeLang(i18n.language));
 
@@ -50,7 +50,7 @@ export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('languages.selectLanguage')}</DialogTitle>
+          <DialogTitle>{t("languages.selectLanguage")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           {languages.map((language) => (
@@ -61,12 +61,12 @@ export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) 
               onClick={() => handleLanguageChange(language.code)}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{language.flag}</span>
+                <span className="text-2xl" aria-hidden>
+                  {language.flag}
+                </span>
                 <span className="text-base">{language.name}</span>
               </div>
-              {selectedLanguage === language.code && (
-                <Check className="w-5 h-5" />
-              )}
+              {selectedLanguage === language.code && <Check className="w-5 h-5" />}
             </Button>
           ))}
         </div>

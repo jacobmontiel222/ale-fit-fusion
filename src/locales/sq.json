@@ -379,5 +379,66 @@
     "savedSuccess": "{{name}} u ruajt me sukses",
     "unexpectedError": "Gabim i papritur gjatë ruajtjes së recetës",
     "loginRequired": "Duhet të hyni për të ruajtur receta"
+  },
+  "auth": {
+    "languageButton": "Ndrysho gjuhën",
+    "login": {
+      "title": "Mirë se erdhët në FitYourself",
+      "subtitle": "Le të fillojmë udhëtimin tuaj të fitnesit.",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Fjalëkalimi",
+      "button": "Hyni",
+      "loading": "Po hyn...",
+      "forgot": "Keni harruar fjalëkalimin?",
+      "signupCta": "Krijo llogari",
+      "orContinue": "Ose vazhdo me",
+      "toastTitle": "Gabim në hyrje",
+      "errors": {
+        "invalidCredentials": "Email ose fjalëkalim i pasaktë.",
+        "emailNotConfirmed": "Ju lutem konfirmoni email-in përpara se të hyni.",
+        "invalidPath": "Gabim konfigurimi. Kontrolloni URL-të e ridrejtimit në Supabase.",
+        "invalidGrant": "Kredenciale të pavlefshme. Kontrolloni email-in dhe fjalëkalimin.",
+        "redirect": "Gabim ridrejtimi. Kontaktoni administratorin.",
+        "default": "Ndodhi një gabim. Provoni përsëri."
+      }
+    },
+    "signup": {
+      "title": "Krijo llogari",
+      "subtitle": "Filloni udhëtimin tuaj të fitnesit sot.",
+      "namePlaceholder": "Emri",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Fjalëkalimi",
+      "confirmPasswordPlaceholder": "Konfirmo fjalëkalimin",
+      "passwordRequirementsTitle": "Fjalëkalimi duhet të përmbajë:",
+      "reqMinLength": "Të paktën 8 karaktere",
+      "reqUppercase": "Një shkronjë të madhe",
+      "reqNumber": "Një numër",
+      "reqMatch": "Fjalëkalimet përputhen",
+      "button": "Krijo llogari",
+      "loading": "Duke krijuar llogarinë...",
+      "haveAccount": "Keni tashmë një llogari?",
+      "loginCta": "Hyni",
+      "toasts": {
+        "invalidPasswordTitle": "Fjalëkalim i pavlefshëm",
+        "invalidPasswordDesc": "Fjalëkalimi duhet t'i përmbushë të gjitha kërkesat.",
+        "mismatchTitle": "Fjalëkalimet nuk përputhen",
+        "mismatchDesc": "Sigurohuni që të dy fjalëkalimet të jenë njësoj.",
+        "errorTitle": "Gabim në krijimin e llogarisë",
+        "successTitle": "Llogaria u krijua!",
+        "successDesc": "Llogaria juaj u krijua me sukses."
+      }
+    },
+    "terms": {
+      "agree": "Duke vazhduar, ju pranoni",
+      "termsOfService": "Kushtet e shërbimit",
+      "and": "dhe",
+      "privacyPolicy": "Politikën e privatësisë"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Së shpejti",
+      "comingSoonDescription": "Autentikimi me {{provider}} do të jetë së shpejti i disponueshëm."
+    }
   }
 }

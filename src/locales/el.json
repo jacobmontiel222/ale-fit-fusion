@@ -379,5 +379,66 @@
     "savedSuccess": "Το {{name}} αποθηκεύτηκε με επιτυχία",
     "unexpectedError": "Μη αναμενόμενο σφάλμα κατά την αποθήκευση της συνταγής",
     "loginRequired": "?????? ?? ?????????? ??? ?? ???????????? ????????"
+  },
+  "auth": {
+    "languageButton": "Αλλαγή γλώσσας",
+    "login": {
+      "title": "Καλώς ήρθατε στο FitYourself",
+      "subtitle": "Ας ξεκινήσουμε το ταξίδι fitness σου.",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Κωδικός πρόσβασης",
+      "button": "Σύνδεση",
+      "loading": "Σύνδεση...",
+      "forgot": "Ξεχάσατε τον κωδικό;",
+      "signupCta": "Δημιουργία λογαριασμού",
+      "orContinue": "Ή συνεχίστε με",
+      "toastTitle": "Σφάλμα σύνδεσης",
+      "errors": {
+        "invalidCredentials": "Λανθασμένο email ή κωδικός.",
+        "emailNotConfirmed": "Παρακαλώ επιβεβαιώστε το email πριν συνδεθείτε.",
+        "invalidPath": "Σφάλμα διαμόρφωσης. Ελέγξτε τα URL ανακατεύθυνσης στο Supabase.",
+        "invalidGrant": "Μη έγκυρα διαπιστευτήρια. Ελέγξτε email και κωδικό.",
+        "redirect": "Σφάλμα ανακατεύθυνσης. Επικοινωνήστε με τον διαχειριστή.",
+        "default": "Παρουσιάστηκε σφάλμα. Δοκιμάστε ξανά."
+      }
+    },
+    "signup": {
+      "title": "Δημιουργία λογαριασμού",
+      "subtitle": "Ξεκίνα το ταξίδι fitness σου σήμερα.",
+      "namePlaceholder": "Όνομα",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Κωδικός πρόσβασης",
+      "confirmPasswordPlaceholder": "Επιβεβαίωση κωδικού",
+      "passwordRequirementsTitle": "Ο κωδικός πρέπει να περιέχει:",
+      "reqMinLength": "Τουλάχιστον 8 χαρακτήρες",
+      "reqUppercase": "Ένα κεφαλαίο γράμμα",
+      "reqNumber": "Έναν αριθμό",
+      "reqMatch": "Οι κωδικοί ταιριάζουν",
+      "button": "Δημιουργία λογαριασμού",
+      "loading": "Δημιουργία λογαριασμού...",
+      "haveAccount": "Έχετε ήδη λογαριασμό;",
+      "loginCta": "Σύνδεση",
+      "toasts": {
+        "invalidPasswordTitle": "Μη έγκυρος κωδικός",
+        "invalidPasswordDesc": "Ο κωδικός πρέπει να πληροί όλες τις απαιτήσεις.",
+        "mismatchTitle": "Οι κωδικοί δεν ταιριάζουν",
+        "mismatchDesc": "Βεβαιωθείτε ότι οι δύο κωδικοί είναι ίδιοι.",
+        "errorTitle": "Σφάλμα δημιουργίας λογαριασμού",
+        "successTitle": "Ο λογαριασμός δημιουργήθηκε!",
+        "successDesc": "Ο λογαριασμός σας δημιουργήθηκε με επιτυχία."
+      }
+    },
+    "terms": {
+      "agree": "Συνεχίζοντας, αποδέχεστε τους",
+      "termsOfService": "Όρους Παροχής Υπηρεσιών",
+      "and": "και",
+      "privacyPolicy": "Πολιτική Απορρήτου"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Σύντομα διαθέσιμο",
+      "comingSoonDescription": "Η σύνδεση με {{provider}} θα είναι σύντομα διαθέσιμη."
+    }
   }
 }

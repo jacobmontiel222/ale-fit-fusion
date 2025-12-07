@@ -379,5 +379,66 @@
     "savedSuccess": "{{name}} was saved successfully",
     "unexpectedError": "Unexpected error saving the recipe",
     "loginRequired": "You must sign in to save recipes"
+  },
+  "auth": {
+    "languageButton": "Change language",
+    "login": {
+      "title": "Welcome to FitYourself",
+      "subtitle": "Let's get started on your fitness journey.",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "button": "Log In",
+      "loading": "Signing in...",
+      "forgot": "Forgot password?",
+      "signupCta": "Sign Up",
+      "orContinue": "Or continue with",
+      "toastTitle": "Login error",
+      "errors": {
+        "invalidCredentials": "Incorrect email or password.",
+        "emailNotConfirmed": "Please confirm your email before signing in.",
+        "invalidPath": "Configuration error. Check redirect URLs in Supabase.",
+        "invalidGrant": "Invalid credentials. Check your email and password.",
+        "redirect": "Redirect error. Contact the administrator.",
+        "default": "Something went wrong. Please try again."
+      }
+    },
+    "signup": {
+      "title": "Create Account",
+      "subtitle": "Start your fitness journey today.",
+      "namePlaceholder": "Name",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Password",
+      "confirmPasswordPlaceholder": "Confirm Password",
+      "passwordRequirementsTitle": "Password must contain:",
+      "reqMinLength": "At least 8 characters",
+      "reqUppercase": "One uppercase letter",
+      "reqNumber": "One number",
+      "reqMatch": "Passwords match",
+      "button": "Sign Up",
+      "loading": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "loginCta": "Log In",
+      "toasts": {
+        "invalidPasswordTitle": "Invalid password",
+        "invalidPasswordDesc": "The password must meet all requirements.",
+        "mismatchTitle": "Passwords do not match",
+        "mismatchDesc": "Make sure both passwords are the same.",
+        "errorTitle": "Error creating account",
+        "successTitle": "Account created!",
+        "successDesc": "Your account has been created successfully."
+      }
+    },
+    "terms": {
+      "agree": "By continuing, you agree to our",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Coming soon",
+      "comingSoonDescription": "Authentication with {{provider}} will be available soon."
+    }
   }
 }

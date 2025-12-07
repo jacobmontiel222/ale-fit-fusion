@@ -347,5 +347,66 @@
     "savedSuccess": "{{name}} foi salva com sucesso",
     "unexpectedError": "Erro inesperado ao salvar a receita",
     "loginRequired": "Voc? precisa entrar para salvar receitas"
+  },
+  "auth": {
+    "languageButton": "Mudar idioma",
+    "login": {
+      "title": "Bem-vindo ao FitYourself",
+      "subtitle": "Vamos começar sua jornada fitness.",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Senha",
+      "button": "Entrar",
+      "loading": "Iniciando sessão...",
+      "forgot": "Esqueceu a senha?",
+      "signupCta": "Criar conta",
+      "orContinue": "Ou continue com",
+      "toastTitle": "Erro ao iniciar sessão",
+      "errors": {
+        "invalidCredentials": "Email ou senha incorretos.",
+        "emailNotConfirmed": "Confirme seu email antes de entrar.",
+        "invalidPath": "Erro de configuração. Verifique as URLs de redirecionamento no Supabase.",
+        "invalidGrant": "Credenciais inválidas. Verifique seu email e senha.",
+        "redirect": "Erro de redirecionamento. Contate o administrador.",
+        "default": "Ocorreu um erro. Tente novamente."
+      }
+    },
+    "signup": {
+      "title": "Criar conta",
+      "subtitle": "Comece sua jornada fitness hoje.",
+      "namePlaceholder": "Nome",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Senha",
+      "confirmPasswordPlaceholder": "Confirmar senha",
+      "passwordRequirementsTitle": "A senha deve conter:",
+      "reqMinLength": "No mínimo 8 caracteres",
+      "reqUppercase": "Uma letra maiúscula",
+      "reqNumber": "Um número",
+      "reqMatch": "As senhas coincidem",
+      "button": "Criar conta",
+      "loading": "Criando conta...",
+      "haveAccount": "Já tem uma conta?",
+      "loginCta": "Entrar",
+      "toasts": {
+        "invalidPasswordTitle": "Senha inválida",
+        "invalidPasswordDesc": "A senha deve cumprir todos os requisitos.",
+        "mismatchTitle": "As senhas não coincidem",
+        "mismatchDesc": "Certifique-se de que as duas senhas sejam iguais.",
+        "errorTitle": "Erro ao criar conta",
+        "successTitle": "Conta criada!",
+        "successDesc": "Sua conta foi criada com sucesso."
+      }
+    },
+    "terms": {
+      "agree": "Ao continuar, você concorda com nossos",
+      "termsOfService": "Termos de serviço",
+      "and": "e",
+      "privacyPolicy": "Política de privacidade"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Em breve",
+      "comingSoonDescription": "A autenticação com {{provider}} estará disponível em breve."
+    }
   }
 }

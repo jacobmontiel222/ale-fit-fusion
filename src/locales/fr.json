@@ -347,5 +347,66 @@
     "savedSuccess": "{{name}} a ?t? enregistr?e avec succ?s",
     "unexpectedError": "Erreur inattendue lors de l'enregistrement de la recette",
     "loginRequired": "Vous devez vous connecter pour enregistrer des recettes"
+  },
+  "auth": {
+    "languageButton": "Changer de langue",
+    "login": {
+      "title": "Bienvenue sur FitYourself",
+      "subtitle": "Commençons votre parcours fitness.",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Mot de passe",
+      "button": "Se connecter",
+      "loading": "Connexion...",
+      "forgot": "Mot de passe oublié ?",
+      "signupCta": "Créer un compte",
+      "orContinue": "Ou continuer avec",
+      "toastTitle": "Erreur de connexion",
+      "errors": {
+        "invalidCredentials": "Email ou mot de passe incorrect.",
+        "emailNotConfirmed": "Veuillez confirmer votre email avant de vous connecter.",
+        "invalidPath": "Erreur de configuration. Vérifiez les URL de redirection dans Supabase.",
+        "invalidGrant": "Identifiants invalides. Vérifiez votre email et votre mot de passe.",
+        "redirect": "Erreur de redirection. Contactez l'administrateur.",
+        "default": "Une erreur est survenue. Réessayez."
+      }
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Commencez votre parcours fitness dès aujourd'hui.",
+      "namePlaceholder": "Nom",
+      "emailPlaceholder": "E-mail",
+      "passwordPlaceholder": "Mot de passe",
+      "confirmPasswordPlaceholder": "Confirmer le mot de passe",
+      "passwordRequirementsTitle": "Le mot de passe doit contenir :",
+      "reqMinLength": "Au moins 8 caractères",
+      "reqUppercase": "Une lettre majuscule",
+      "reqNumber": "Un chiffre",
+      "reqMatch": "Les mots de passe correspondent",
+      "button": "Créer un compte",
+      "loading": "Création du compte...",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "loginCta": "Se connecter",
+      "toasts": {
+        "invalidPasswordTitle": "Mot de passe invalide",
+        "invalidPasswordDesc": "Le mot de passe doit remplir toutes les exigences.",
+        "mismatchTitle": "Les mots de passe ne correspondent pas",
+        "mismatchDesc": "Vérifiez que les deux mots de passe sont identiques.",
+        "errorTitle": "Erreur lors de la création du compte",
+        "successTitle": "Compte créé !",
+        "successDesc": "Votre compte a été créé avec succès."
+      }
+    },
+    "terms": {
+      "agree": "En continuant, vous acceptez nos",
+      "termsOfService": "Conditions d'utilisation",
+      "and": "et",
+      "privacyPolicy": "Politique de confidentialité"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Bientôt disponible",
+      "comingSoonDescription": "L'authentification avec {{provider}} sera bientôt disponible."
+    }
   }
 }

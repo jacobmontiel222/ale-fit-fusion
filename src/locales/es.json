@@ -379,5 +379,66 @@
     "savedSuccess": "{{name}} se ha guardado correctamente",
     "unexpectedError": "Error inesperado al guardar la receta",
     "loginRequired": "Debes iniciar sesi?n para guardar recetas"
+  },
+  "auth": {
+    "languageButton": "Cambiar idioma",
+    "login": {
+      "title": "Bienvenido a FitYourself",
+      "subtitle": "Comencemos tu viaje fitness.",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Contraseña",
+      "button": "Iniciar sesión",
+      "loading": "Iniciando sesión...",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "signupCta": "Crear cuenta",
+      "orContinue": "O continúa con",
+      "toastTitle": "Error al iniciar sesión",
+      "errors": {
+        "invalidCredentials": "Email o contraseña incorrectos.",
+        "emailNotConfirmed": "Por favor confirma tu email antes de iniciar sesión.",
+        "invalidPath": "Error de configuración. Verifica las URLs de redirección en Supabase.",
+        "invalidGrant": "Credenciales inválidas. Verifica tu email y contraseña.",
+        "redirect": "Error de redirección. Contacta al administrador.",
+        "default": "Ocurrió un error. Inténtalo de nuevo."
+      }
+    },
+    "signup": {
+      "title": "Crear cuenta",
+      "subtitle": "Empieza tu viaje fitness hoy.",
+      "namePlaceholder": "Nombre",
+      "emailPlaceholder": "Email",
+      "passwordPlaceholder": "Contraseña",
+      "confirmPasswordPlaceholder": "Confirmar contraseña",
+      "passwordRequirementsTitle": "La contraseña debe contener:",
+      "reqMinLength": "Mínimo 8 caracteres",
+      "reqUppercase": "Una letra mayúscula",
+      "reqNumber": "Un número",
+      "reqMatch": "Las contraseñas coinciden",
+      "button": "Crear cuenta",
+      "loading": "Creando cuenta...",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "loginCta": "Inicia sesión",
+      "toasts": {
+        "invalidPasswordTitle": "Contraseña inválida",
+        "invalidPasswordDesc": "La contraseña debe cumplir todos los requisitos.",
+        "mismatchTitle": "Las contraseñas no coinciden",
+        "mismatchDesc": "Verifica que ambas contraseñas sean iguales.",
+        "errorTitle": "Error al crear cuenta",
+        "successTitle": "¡Cuenta creada!",
+        "successDesc": "Tu cuenta ha sido creada exitosamente."
+      }
+    },
+    "terms": {
+      "agree": "Al continuar, aceptas nuestros",
+      "termsOfService": "Términos de servicio",
+      "and": "y",
+      "privacyPolicy": "Política de privacidad"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Próximamente",
+      "comingSoonDescription": "La autenticación con {{provider}} estará disponible pronto."
+    }
   }
 }

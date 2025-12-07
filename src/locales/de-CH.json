@@ -379,5 +379,66 @@
     "savedSuccess": "{{name}} wurde erfolgreich gespeichert",
     "unexpectedError": "Unerwarteter Fehler beim Speichern des Rezepts",
     "loginRequired": "Du musst dich anmelden, um Rezepte zu speichern"
+  },
+  "auth": {
+    "languageButton": "Sprache ändern",
+    "login": {
+      "title": "Willkommen bei FitYourself",
+      "subtitle": "Lass uns deine Fitnessreise starten.",
+      "emailPlaceholder": "E-Mail",
+      "passwordPlaceholder": "Passwort",
+      "button": "Anmelden",
+      "loading": "Wird angemeldet...",
+      "forgot": "Passwort vergessen?",
+      "signupCta": "Konto erstellen",
+      "orContinue": "Oder weiter mit",
+      "toastTitle": "Anmeldefehler",
+      "errors": {
+        "invalidCredentials": "Falsche E-Mail oder falsches Passwort.",
+        "emailNotConfirmed": "Bitte bestätige deine E-Mail, bevor du dich anmeldest.",
+        "invalidPath": "Konfigurationsfehler. Prüfe die Redirect-URLs in Supabase.",
+        "invalidGrant": "Ungültige Anmeldedaten. Prüfe E-Mail und Passwort.",
+        "redirect": "Weiterleitungsfehler. Kontaktiere den Administrator.",
+        "default": "Es ist ein Fehler aufgetreten. Versuche es erneut."
+      }
+    },
+    "signup": {
+      "title": "Konto erstellen",
+      "subtitle": "Starte noch heute deine Fitnessreise.",
+      "namePlaceholder": "Name",
+      "emailPlaceholder": "E-Mail",
+      "passwordPlaceholder": "Passwort",
+      "confirmPasswordPlaceholder": "Passwort bestätigen",
+      "passwordRequirementsTitle": "Das Passwort muss enthalten:",
+      "reqMinLength": "Mindestens 8 Zeichen",
+      "reqUppercase": "Einen Grossbuchstaben",
+      "reqNumber": "Eine Zahl",
+      "reqMatch": "Passwörter stimmen überein",
+      "button": "Konto erstellen",
+      "loading": "Konto wird erstellt...",
+      "haveAccount": "Du hast bereits ein Konto?",
+      "loginCta": "Anmelden",
+      "toasts": {
+        "invalidPasswordTitle": "Ungültiges Passwort",
+        "invalidPasswordDesc": "Das Passwort muss alle Anforderungen erfüllen.",
+        "mismatchTitle": "Passwörter stimmen nicht überein",
+        "mismatchDesc": "Stelle sicher, dass beide Passwörter gleich sind.",
+        "errorTitle": "Fehler beim Erstellen des Kontos",
+        "successTitle": "Konto erstellt!",
+        "successDesc": "Dein Konto wurde erfolgreich erstellt."
+      }
+    },
+    "terms": {
+      "agree": "Wenn du fortfährst, stimmst du unseren",
+      "termsOfService": "Nutzungsbedingungen",
+      "and": "und",
+      "privacyPolicy": "Datenschutzerklärung"
+    },
+    "social": {
+      "google": "Google",
+      "apple": "Apple",
+      "comingSoonTitle": "Bald verfügbar",
+      "comingSoonDescription": "Die Anmeldung mit {{provider}} ist bald verfügbar."
+    }
   }
 }
