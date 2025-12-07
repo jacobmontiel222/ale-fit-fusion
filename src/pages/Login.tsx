@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
+import appleWhite from "@/assets/apple-white.svg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -168,10 +169,8 @@ const Login = () => {
           onClick={handleAppleAuth}
           className="h-14 bg-[#1A1A1A] hover:bg-[#252525] text-white rounded-2xl text-base flex items-center justify-center gap-3"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="white">
-            <path d="M16.933 16.467c-.517.783-1.1 1.45-1.767 2.05-.883.8-1.6 1.333-2.133 1.583-.7.333-1.45.517-2.25.517-.783 0-1.733-.217-2.85-.667-1.1-.45-2.117-.667-3.033-.667-.95 0-1.967.217-3.05.667-1.083.433-1.95.667-2.6.7-.65.05-1.283-.133-1.917-.55-.65-.417-1.317-1.067-2-1.933C-3.317 16.7-4 15.05-4 13.217c0-1.7.367-3.167 1.1-4.4.733-1.233 1.717-2.2 2.95-2.9 1.233-.7 2.567-1.067 4-1.117.8-.033 1.85.167 3.15.583 1.3.417 2.133.617 2.5.617.35 0 1.317-.233 2.883-.7 1.483-.433 2.733-.617 3.767-.55 2.783.2 4.867 1.183 6.25 2.983-2.483 1.517-3.717 3.633-3.7 6.35.017 2.117.783 3.883 2.3 5.3.683.65 1.45 1.167 2.3 1.533-.183.533-.383 1.05-.6 1.55zM13.3 1.133c0 1.65-.6 3.2-1.8 4.633-1.45 1.7-3.2 2.683-5.1 2.533-.033-.267-.05-.55-.05-.85 0-1.583.683-3.283 1.9-4.667C8.867 2.417 9.55 1.917 10.35 1.5c.8-.417 1.55-.667 2.25-.733.033.283.05.567.05.85l-.35.517z"/>
-          </svg>
-          {t("auth.social.apple")}
+          <img src={appleWhite} alt="" className="w-6 h-6" aria-hidden />
+          <span className="text-white">{t("auth.social.apple")}</span>
         </Button>
       </div>
 
