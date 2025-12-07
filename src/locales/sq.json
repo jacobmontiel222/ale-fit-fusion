@@ -117,7 +117,7 @@
     "save": "Ruaj",
     "saving": "Po ruan...",
     "motto": "Le ta bëjmë këtë",
-    "personalInfo": "Informacion personal",
+    "personalInfo": "Informacione personale",
     "height": "Lartësia",
     "currentWeight": "Pesha aktuale",
     "targetWeight": "Pesha e synuar",
@@ -164,7 +164,7 @@
   "languages": {
     "es": "Spanjisht",
     "en": "Anglisht",
-    "fr": "Fr?ngjisht",
+    "fr": "Frëngjisht",
     "de": "Gjermanisht",
     "it": "Italisht",
     "pt": "Portugeze",
@@ -172,7 +172,7 @@
     "sq": "Shqip",
     "de-CH": "Gjermanisht zvicerane",
     "el": "Greqisht",
-    "selectLanguage": "Zgjidh gjuh?n"
+    "selectLanguage": "Zgjidh gjuhën"
   },
   "analytics": {
     "title": "Analiza",
@@ -378,6 +378,6 @@
     "ingredientsError": "Gabim gjatë ruajtjes së përbërësve",
     "savedSuccess": "{{name}} u ruajt me sukses",
     "unexpectedError": "Gabim i papritur gjatë ruajtjes së recetës",
-    "loginRequired": "Duhet t? hyni p?r t? ruajtur receta"
+    "loginRequired": "Duhet të hyni për të ruajtur receta"
   }
 }
