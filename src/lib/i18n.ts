@@ -9,6 +9,9 @@ import de from '@/locales/de.json';
 import it from '@/locales/it.json';
 import pt from '@/locales/pt.json';
 import pl from '@/locales/pl.json';
+import sq from '@/locales/sq.json';
+import deCH from '@/locales/de-CH.json';
+import el from '@/locales/el.json';
 
 i18n
   .use(LanguageDetector)
@@ -22,6 +25,9 @@ i18n
       it: { translation: it },
       pt: { translation: pt },
       pl: { translation: pl },
+      sq: { translation: sq },
+      'de-CH': { translation: deCH },
+      el: { translation: el },
     },
     fallbackLng: 'es',
     interpolation: {

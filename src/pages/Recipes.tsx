@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 interface RecipeItem {
   id: string;
@@ -51,12 +52,18 @@ interface Recipe {
 const Recipes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [recipeToAdd, setRecipeToAdd] = useState<Recipe | null>(null);
+  const mealOptions = [
+    { storage: 'Desayuno', label: t('meals.breakfast') },
+    { storage: 'Comida', label: t('meals.lunch') },
+    { storage: 'Cena', label: t('meals.dinner') },
+  ];
 
   useEffect(() => {
     loadRecipes();
@@ -80,7 +87,7 @@ const Recipes = () => {
 
       if (error) {
         console.error('Error loading recipes:', error);
-        toast.error('Error al cargar las recetas');
+        toast.error(t('recipes.loadError'));
         return;
       }
 
@@ -123,7 +130,7 @@ const Recipes = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error al cargar las recetas');
+      toast.error(t('recipes.loadError'));
     } finally {
       setLoading(false);
     }
@@ -140,15 +147,15 @@ const Recipes = () => {
         .eq('user_id', user.id);
 
       if (error) {
-        toast.error('Error al eliminar la receta');
+        toast.error(t('recipes.deleteError'));
         console.error(error);
         return;
       }
 
-      toast.success('Receta eliminada correctamente');
+      toast.success(t('recipes.deleteSuccess'));
       setRecipes(recipes.filter((r) => r.id !== recipeToDelete));
     } catch (error) {
-      toast.error('Error al eliminar la receta');
+      toast.error(t('recipes.deleteError'));
       console.error(error);
     } finally {
       setDeleteDialogOpen(false);
@@ -166,7 +173,7 @@ const Recipes = () => {
     setAddDialogOpen(true);
   };
 
-  const handleAddToMeal = async (mealType: string) => {
+  const handleAddToMeal = async (mealOption: { storage: string; label: string }) => {
     if (!recipeToAdd || !user) return;
 
     try {
@@ -176,7 +183,7 @@ const Recipes = () => {
       const mealEntries = recipeToAdd.items.map(item => ({
         user_id: user.id,
         date: today,
-        meal_type: mealType,
+        meal_type: mealOption.storage,
         food_name: item.food_name,
         amount: item.amount,
         unit: item.unit,
@@ -192,16 +199,16 @@ const Recipes = () => {
         .insert(mealEntries);
 
       if (error) {
-        toast.error('Error al añadir la receta');
+        toast.error(t('recipes.addError'));
         console.error(error);
         return;
       }
 
-      toast.success(`Receta añadida a ${mealType}`);
+      toast.success(t('recipes.addedToMeal', { meal: mealOption.label }));
       setAddDialogOpen(false);
       setRecipeToAdd(null);
     } catch (error) {
-      toast.error('Error al añadir la receta');
+      toast.error(t('recipes.addError'));
       console.error(error);
     }
   };
@@ -220,18 +227,18 @@ const Recipes = () => {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">Mis Recetas</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('recipes.title')}</h1>
           </div>
           <Button onClick={() => navigate('/create-recipe')}>
             <Plus className="w-4 h-4 mr-2" />
-            Nueva
+            {t('recipes.new')}
           </Button>
         </div>
 
         {/* Loading State */}
         {loading && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Cargando recetas...</p>
+            <p className="text-muted-foreground">{t('recipes.loading')}</p>
           </div>
         )}
 
@@ -240,14 +247,14 @@ const Recipes = () => {
           <StatsCard className="text-center py-12">
             <ChefHat className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              No tienes recetas guardadas
+              {t('recipes.emptyTitle')}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Crea tu primera receta para empezar
+              {t('recipes.emptyDescription')}
             </p>
             <Button onClick={() => navigate('/create-recipe')}>
               <Plus className="w-4 h-4 mr-2" />
-              Crear receta
+              {t('recipes.create')}
             </Button>
           </StatsCard>
         )}
@@ -263,11 +270,14 @@ const Recipes = () => {
                       {recipe.name}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(recipe.created_at).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {new Date(recipe.created_at).toLocaleDateString(
+                        i18n.language === 'en' ? 'en-US' : i18n.language,
+                        {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        }
+                      )}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -276,7 +286,7 @@ const Recipes = () => {
                       onClick={() => openAddDialog(recipe)}
                     >
                       <Plus className="w-4 h-4 mr-1" />
-                      Añadir
+                      {t('recipes.add')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -293,25 +303,25 @@ const Recipes = () => {
                 <div className="bg-secondary/50 rounded-lg p-3 mb-3">
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Calorías: </span>
+                      <span className="text-muted-foreground">{t('recipes.calories')}: </span>
                       <span className="font-semibold text-foreground">
                         {Math.round(recipe.totals.calories)} kcal
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Proteínas: </span>
+                      <span className="text-muted-foreground">{t('recipes.proteins')}: </span>
                       <span className="font-semibold text-foreground">
                         {recipe.totals.protein.toFixed(1)}g
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Grasas: </span>
+                      <span className="text-muted-foreground">{t('recipes.fats')}: </span>
                       <span className="font-semibold text-foreground">
                         {recipe.totals.fat.toFixed(1)}g
                       </span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Carbos: </span>
+                      <span className="text-muted-foreground">{t('recipes.carbs')}: </span>
                       <span className="font-semibold text-foreground">
                         {recipe.totals.carbs.toFixed(1)}g
                       </span>
@@ -322,11 +332,11 @@ const Recipes = () => {
                 {/* Ingredients */}
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">
-                    Ingredientes ({recipe.items.length})
+                    {t('recipes.ingredients', { count: recipe.items.length })}
                   </p>
                   {recipe.items.map((item) => (
                     <div key={item.id} className="text-xs text-muted-foreground">
-                      • {item.food_name} ({item.amount} {item.unit})
+                      - {item.food_name} ({item.amount} {item.unit})
                     </div>
                   ))}
                 </div>
@@ -340,48 +350,39 @@ const Recipes = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar receta?</AlertDialogTitle>
+            <AlertDialogTitle>{t('recipes.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. La receta será eliminada permanentemente.
+              {t('recipes.deleteDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteRecipe}>
-              Eliminar
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add to Meal Dialog */}
+            {/* Add to Meal Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Añadir receta a comida</DialogTitle>
+            <DialogTitle>{t('recipes.addToMealTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 pt-4">
             <p className="text-sm text-muted-foreground mb-4">
-              ¿A qué comida quieres añadir "{recipeToAdd?.name}"?
+              {t('recipes.addToMealQuestion', { name: recipeToAdd?.name })}
             </p>
-            <Button
-              className="w-full"
-              onClick={() => handleAddToMeal('Desayuno')}
-            >
-              Desayuno
-            </Button>
-            <Button
-              className="w-full"
-              onClick={() => handleAddToMeal('Comida')}
-            >
-              Comida
-            </Button>
-            <Button
-              className="w-full"
-              onClick={() => handleAddToMeal('Cena')}
-            >
-              Cena
-            </Button>
+            {mealOptions.map((option) => (
+              <Button
+                key={option.storage}
+                className="w-full"
+                onClick={() => handleAddToMeal(option)}
+              >
+                {option.label}
+              </Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>

@@ -8,6 +8,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface RecipeItem {
   name: string;
@@ -22,6 +23,7 @@ interface RecipeItem {
 const CreateRecipe = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [recipeName, setRecipeName] = useState("");
   const [items, setItems] = useState<RecipeItem[]>([]);
 
@@ -66,17 +68,17 @@ const CreateRecipe = () => {
 
   const handleSaveRecipe = async () => {
     if (!user) {
-      toast.error("Debes iniciar sesión para guardar recetas");
+      toast.error(t('recipes.loginRequired'));
       return;
     }
 
     if (!recipeName.trim()) {
-      toast.error("Por favor, añade un nombre a la receta");
+      toast.error(t('recipes.nameMissing'));
       return;
     }
 
     if (items.length === 0) {
-      toast.error("Por favor, añade al menos un alimento");
+      toast.error(t('recipes.itemsMissing'));
       return;
     }
 
@@ -92,7 +94,7 @@ const CreateRecipe = () => {
         .single();
 
       if (recipeError || !recipe) {
-        toast.error("Error al guardar la receta");
+        toast.error(t('recipes.saveError'));
         console.error(recipeError);
         return;
       }
@@ -117,7 +119,7 @@ const CreateRecipe = () => {
       if (itemsError) {
         // Si falla al guardar los items, eliminar la receta
         await supabase.from('recipes').delete().eq('id', recipe.id);
-        toast.error("Error al guardar los ingredientes");
+        toast.error(t('recipes.ingredientsError'));
         console.error(itemsError);
         return;
       }
@@ -126,10 +128,10 @@ const CreateRecipe = () => {
       sessionStorage.removeItem("pendingRecipeItems");
       sessionStorage.removeItem("pendingRecipeName");
 
-      toast.success(`${recipeName} se ha guardado correctamente`);
+      toast.success(t('recipes.savedSuccess', { name: recipeName }));
       navigate("/recipes");
     } catch (error) {
-      toast.error("Error inesperado al guardar la receta");
+      toast.error(t('recipes.unexpectedError'));
       console.error(error);
     }
   };
@@ -153,16 +155,16 @@ const CreateRecipe = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">Crear receta</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('recipes.createTitle')}</h1>
         </div>
 
         {/* Recipe Name */}
         <StatsCard>
           <div>
-            <Label htmlFor="recipeName">Nombre de la receta</Label>
+            <Label htmlFor="recipeName">{t('recipes.nameLabel')}</Label>
             <Input
               id="recipeName"
-              placeholder="Ej: Pollo con arroz"
+              placeholder={t('recipes.namePlaceholder')}
               value={recipeName}
               onChange={(e) => setRecipeName(e.target.value)}
             />
@@ -176,13 +178,13 @@ const CreateRecipe = () => {
           variant="outline"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Añadir alimento
+          {t('recipes.addFood')}
         </Button>
 
         {/* Food Items List */}
         {items.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground">Alimentos</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground">{t('recipes.itemsTitle')}</h3>
             {items.map((item, index) => (
               <StatsCard key={index} className="py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -212,22 +214,22 @@ const CreateRecipe = () => {
         {/* Totals */}
         {items.length > 0 && (
           <StatsCard>
-            <h3 className="font-semibold text-foreground mb-3">Totales de la receta</h3>
+            <h3 className="font-semibold text-foreground mb-3">{t('recipes.totals')}</h3>
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Calorías</span>
+                <span className="text-muted-foreground">{t('recipes.calories')}</span>
                 <span className="font-semibold">{totals.calories} kcal</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Proteínas</span>
+                <span className="text-muted-foreground">{t('recipes.proteins')}</span>
                 <span className="font-semibold">{totals.protein.toFixed(1)} g</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Grasas</span>
+                <span className="text-muted-foreground">{t('recipes.fats')}</span>
                 <span className="font-semibold">{totals.fat.toFixed(1)} g</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Carbohidratos</span>
+                <span className="text-muted-foreground">{t('recipes.carbs')}</span>
                 <span className="font-semibold">{totals.carbs.toFixed(1)} g</span>
               </div>
             </div>
@@ -236,7 +238,7 @@ const CreateRecipe = () => {
 
         {/* Save Button */}
         <Button onClick={handleSaveRecipe} className="w-full">
-          Guardar receta
+          {t('recipes.save')}
         </Button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
-import { es, enUS, fr, de, it, pt, pl, type Locale } from "date-fns/locale";
+import { es, enUS, fr, de, it, pt, pl, el as elLocale, sq as sqLocale, type Locale } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -20,6 +20,9 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
     it: it,
     pt: pt,
     pl: pl,
+    'de-CH': de,
+    el: elLocale,
+    sq: sqLocale,
   };
 
   const currentLocale = localeMap[i18n.language] || es;

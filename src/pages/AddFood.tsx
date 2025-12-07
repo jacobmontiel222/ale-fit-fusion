@@ -138,14 +138,14 @@ const AddFood = () => {
 
   const toggleFavorite = (food: FoodItemType, opts?: { confirmRemoval?: boolean }) => {
     if (!user?.id) {
-      toast.error(t('addFood.loginRequired', { defaultValue: 'Inicia sesión para guardar favoritos' }));
+      toast.error(t('addFood.loginRequiredFavorites'));
       return;
     }
     const key = getFoodKey(food);
     const exists = favorites.some(f => getFoodKey(f) === key);
 
     if (exists) {
-      if (opts?.confirmRemoval && !window.confirm(t('addFood.removeFavoriteConfirm', { defaultValue: '¿Quitar de Mis alimentos?' }))) {
+      if (opts?.confirmRemoval && !window.confirm(t('addFood.removeFavoriteConfirm'))) {
         return;
       }
       persistFavorites(favorites.filter(f => getFoodKey(f) !== key));
@@ -396,7 +396,7 @@ const AddFood = () => {
 
   const requestCameraPermission = async (): Promise<boolean> => {
     if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error("La cámara no está disponible en este dispositivo.");
+      toast.error(t('addFood.cameraUnavailable'));
       return false;
     }
 
@@ -485,10 +485,10 @@ const AddFood = () => {
         calories: String(calories ?? ""),
       });
 
-      toast.success(t('addFood.photoSuccess', { defaultValue: 'Datos de la foto cargados' }));
+      toast.success(t('addFood.photoSuccess'));
     } catch (error) {
       console.error("Error uploading photo", error);
-      toast.error(t('addFood.photoError', { defaultValue: 'No se pudo analizar la foto' }));
+      toast.error(t('addFood.photoError'));
     } finally {
       setIsUploadingPhoto(false);
       if (event.target) {
@@ -538,7 +538,7 @@ const AddFood = () => {
 
     const hasPermission = await ensureCameraPermission();
     if (!hasPermission) {
-      toast.error("Autoriza la c?mara para escanear c?digos.");
+      toast.error(t('addFood.cameraAuthorize'));
       setScannerOpen(false);
       setScanning(false);
       return;
@@ -580,7 +580,7 @@ const AddFood = () => {
           const productData = Array.isArray(data) ? data[0] : data;
           
           if (productData?.error) {
-            toast.error("No hay coincidencias para este c?digo.");
+            toast.error(t('addFood.barcodeNoMatches'));
             setIsProcessingScan(false);
             setScannerOpen(false);
             processingScanRef.current = false;
@@ -588,7 +588,7 @@ const AddFood = () => {
           }
           
           const item: FoodItem = {
-            name: productData.name ?? "Producto",
+            name: productData.name ?? t('addFood.defaultProductName'),
             brand: productData.brand ?? "",
             calories: productData.per_100g?.kcal ?? 0,
             protein: productData.per_100g?.protein ?? 0,  // Sin el sufijo _g
@@ -601,19 +601,19 @@ const AddFood = () => {
           setSelectedFood(item);
           setServingAmount(item.servingSize);
           setManualEntry(false);
-          toast.success(`${item.name} detectado`);
+          toast.success(t('addFood.scanDetected', { item: item.name }));
           setIsProcessingScan(false);
           setScannerOpen(false);
           processingScanRef.current = false;
         } catch {
-          toast.error("Fallo al consultar el producto.");
+          toast.error(t('addFood.scanLookupError'));
           setIsProcessingScan(false);
           setScannerOpen(false);
           processingScanRef.current = false;
         }
       });
     } catch (error) {
-      toast.error("Autoriza la c?mara o usa HTTPS.");
+      toast.error(t('addFood.cameraHttps'));
       setScannerOpen(false);
       setScanning(false);
     }
@@ -631,13 +631,13 @@ const AddFood = () => {
 
   const handleAddFood = async () => {
     if (!user) {
-      toast.error("Debes iniciar sesión para añadir comidas");
+      toast.error(t('addFood.loginRequiredMeals'));
       return;
     }
 
     const foodToAdd = selectedFood || manualFood;
     if (!Number.isFinite(servingAmount) || servingAmount <= 0) {
-      toast.error("Introduce una cantidad válida mayor que 0");
+      toast.error(t('addFood.invalidAmount'));
       return;
     }
     const adjustedMacros = calculateAdjustedMacros(foodToAdd, servingAmount);
@@ -696,7 +696,7 @@ const AddFood = () => {
       });
 
     if (error) {
-      toast.error("Error al añadir el alimento");
+      toast.error(t('addFood.addError'));
       console.error(error);
       return;
     }
@@ -708,7 +708,7 @@ const AddFood = () => {
     // Trigger meals update event
     window.dispatchEvent(new CustomEvent('mealsUpdated'));
     
-    toast.success(`${foodToAdd.name} añadido a ${meal}`);
+    toast.success(t('addFood.addSuccess', { food: foodToAdd.name, meal }));
     navigate("/comidas");
   };
   
@@ -742,11 +742,11 @@ const AddFood = () => {
   // Añadir alimento desde la base de datos
   const handleAddFromDatabase = async (food: FoodItemType, amount: number) => {
     if (!user) {
-      toast.error("Debes iniciar sesión para añadir comidas");
+      toast.error(t('addFood.loginRequiredMeals'));
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Introduce una cantidad válida mayor que 0");
+      toast.error(t('addFood.invalidAmount'));
       return;
     }
 
@@ -834,7 +834,7 @@ const AddFood = () => {
       });
 
     if (error) {
-      toast.error("Error al añadir el alimento");
+      toast.error(t('addFood.addError'));
       console.error(error);
       return;
     }
@@ -842,7 +842,7 @@ const AddFood = () => {
     // Trigger meals update event
     window.dispatchEvent(new CustomEvent('mealsUpdated'));
     
-    toast.success(`${food.name} añadido a ${meal}`);
+    toast.success(t('addFood.addSuccess', { food: food.name, meal }));
     navigate("/comidas");
   };
 
@@ -875,7 +875,7 @@ const AddFood = () => {
               className="pl-9"
             />
           </div>
-          <Button onClick={handleOpenCamera} size="icon" variant="outline" disabled={isUploadingPhoto} title={t('addFood.photoCapture', { defaultValue: 'Foto de comida' })}>
+          <Button onClick={handleOpenCamera} size="icon" variant="outline" disabled={isUploadingPhoto} title={t('addFood.photoCapture')}>
             <Camera className="w-4 h-4" />
           </Button>
           <Button onClick={startScanner} size="icon" title={t('addFood.scanBarcode')}>
@@ -900,7 +900,7 @@ const AddFood = () => {
                 <Input
                   id="foodName"
                   value={selectedFood?.name || manualFood.name}
-                  placeholder={isPhotoResult ? t('addFood.photoNamePlaceholder', { defaultValue: "Añadir nombre del plato" }) : undefined}
+                  placeholder={isPhotoResult ? t('addFood.photoNamePlaceholder') : undefined}
                   onChange={(e) => {
                     if (selectedFood) {
                       setSelectedFood({ ...selectedFood, name: e.target.value });
@@ -1124,7 +1124,7 @@ const AddFood = () => {
                   setShowFavorites((prev) => !prev);
                 }}
               >
-                {t('addFood.myFoods', { defaultValue: 'Mis alimentos' })}
+                {t('addFood.myFoods')}
               </Button>
             </div>
 
@@ -1132,7 +1132,7 @@ const AddFood = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-muted-foreground">
-                    {t('addFood.myFoods', { defaultValue: 'Mis alimentos' })}
+                    {t('addFood.myFoods')}
                   </h3>
                   <Button size="sm" variant="ghost" onClick={() => setShowFavorites(false)}>
                     {t('common.cancel')}
@@ -1140,7 +1140,7 @@ const AddFood = () => {
                 </div>
                 {favorites.length === 0 ? (
                   <p className="text-center py-6 text-muted-foreground text-sm">
-                    {t('addFood.noFavorites', { defaultValue: 'Aún no tienes alimentos guardados.' })}
+                    {t('addFood.noFavorites')}
                   </p>
                 ) : (
                   favorites.map((food) => (
@@ -1389,10 +1389,10 @@ const AddFood = () => {
               <div className={`${PROCESSING_SPINNER_SIZE} border-4 border-white/30 border-t-white rounded-full animate-spin`} />
               <div className="text-center space-y-1">
                 <p className="text-lg font-semibold">
-                  {t('addFood.processingBarcode', { defaultValue: "Escaneando código de barras..." })}
+                  {t('addFood.processingBarcode')}
                 </p>
                 <p className="text-sm text-white/80">
-                  {t('addFood.processingWait', { defaultValue: "Procesando información..." })}
+                  {t('addFood.processingWait')}
                 </p>
               </div>
             </div>
@@ -1405,10 +1405,10 @@ const AddFood = () => {
           <div className={`${PROCESSING_SPINNER_SIZE} border-4 border-white/30 border-t-white rounded-full animate-spin`} />
           <div className="text-center space-y-1">
             <p className="text-lg font-semibold">
-              {t('addFood.processingPhoto', { defaultValue: "Analizando tu comida..." })}
+              {t('addFood.processingPhoto')}
             </p>
             <p className="text-sm text-white/80">
-              {t('addFood.processingWait', { defaultValue: "Procesando información de la foto..." })}
+              {t('addFood.processingPhotoWait')}
             </p>
           </div>
         </div>

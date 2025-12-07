@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
 import {
@@ -10,13 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 
 const languages = [
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'es', nameKey: 'languages.es', flag: '🇪🇸' },
+  { code: 'en', nameKey: 'languages.en', flag: '🇺🇸' },
+  { code: 'fr', nameKey: 'languages.fr', flag: '🇫🇷' },
+  { code: 'de', nameKey: 'languages.de', flag: '🇩🇪' },
+  { code: 'it', nameKey: 'languages.it', flag: '🇮🇹' },
+  { code: 'pt', nameKey: 'languages.pt', flag: '🇵🇹' },
+  { code: 'pl', nameKey: 'languages.pl', flag: '🇵🇱' },
+  { code: 'sq', nameKey: 'languages.sq', flag: '🇦🇱' },
+  { code: 'de-CH', nameKey: 'languages.de-CH', flag: '🇨🇭' },
+  { code: 'el', nameKey: 'languages.el', flag: '🇬🇷' },
 ];
 
 interface LanguageSelectorProps {
@@ -27,6 +30,10 @@ interface LanguageSelectorProps {
 export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) => {
   const { i18n, t } = useTranslation();
   const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+
+  useEffect(() => {
+    setSelectedLanguage(i18n.language);
+  }, [i18n.language]);
 
   const handleLanguageChange = (languageCode: string) => {
     setSelectedLanguage(languageCode);
@@ -50,7 +57,7 @@ export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) 
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{language.flag}</span>
-                <span className="text-base">{language.name}</span>
+                <span className="text-base">{t(language.nameKey)}</span>
               </div>
               {selectedLanguage === language.code && (
                 <Check className="w-5 h-5" />
