@@ -63,6 +63,11 @@ const Profile = () => {
   const [mounted, setMounted] = useState(false);
   const { profile, updateProfile, isUpdating } = useProfile();
   const { t, i18n } = useTranslation();
+  const normalizeLang = (code: string) => {
+    const lower = code.toLowerCase();
+    if (lower === 'de-ch') return 'de-CH';
+    return code.split('-')[0];
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -333,7 +338,7 @@ const Profile = () => {
               onClick={() => setShowLanguageSelector(true)}
             >
               <span className="text-foreground">{t('profile.language')}</span>
-              <span className="text-muted-foreground">{t(`languages.${i18n.language}`)}</span>
+              <span className="text-muted-foreground">{t(`languages.${normalizeLang(i18n.language)}`)}</span>
             </button>
           </div>
         </StatsCard>

@@ -10,16 +10,16 @@ import {
 import { Button } from "@/components/ui/button";
 
 const languages = [
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
-  { code: 'sq', name: 'Shqip', flag: '🇦🇱' },
-  { code: 'de-CH', name: 'Schweizerdeutsch', flag: '🇨🇭' },
-  { code: 'el', name: 'Ελληνικά', flag: '🇬🇷' },
+  { code: "es", name: "Español", flag: "🇪🇸" },
+  { code: "en", name: "English", flag: "🇺🇸" },
+  { code: "fr", name: "Français", flag: "🇫🇷" },
+  { code: "de", name: "Deutsch", flag: "🇩🇪" },
+  { code: "it", name: "Italiano", flag: "🇮🇹" },
+  { code: "pt", name: "Português", flag: "🇵🇹" },
+  { code: "pl", name: "Polski", flag: "🇵🇱" },
+  { code: "sq", name: "Shqip", flag: "🇦🇱" },
+  { code: "de-CH", name: "Schweizerdeutsch", flag: "🇨🇭" },
+  { code: "el", name: "Ελληνικά", flag: "🇬🇷" },
 ];
 
 interface LanguageSelectorProps {
@@ -29,10 +29,15 @@ interface LanguageSelectorProps {
 
 export const LanguageSelector = ({ open, onOpenChange }: LanguageSelectorProps) => {
   const { i18n, t } = useTranslation();
-  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language);
+  const normalizeLang = (code: string) => {
+    const lower = code.toLowerCase();
+    if (lower === 'de-ch') return 'de-CH';
+    return code.split('-')[0];
+  };
+  const [selectedLanguage, setSelectedLanguage] = useState(normalizeLang(i18n.language));
 
   useEffect(() => {
-    setSelectedLanguage(i18n.language);
+    setSelectedLanguage(normalizeLang(i18n.language));
   }, [i18n.language]);
 
   const handleLanguageChange = (languageCode: string) => {
