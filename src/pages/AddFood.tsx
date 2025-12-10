@@ -1296,7 +1296,7 @@ const AddFood = () => {
                       />
                     </div>
                     <StatsCard 
-                      className="cursor-pointer hover:bg-secondary/60 transition-colors px-3 py-2 h-full"
+                      className="cursor-pointer hover:bg-secondary/60 transition-colors px-3 py-1 h-full"
                       onClick={() => handleHistoryItemClick(item)}
                       onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
                       onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
