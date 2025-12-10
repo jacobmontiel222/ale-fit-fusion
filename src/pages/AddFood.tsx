@@ -1255,7 +1255,7 @@ const AddFood = () => {
               <Clock className="w-4 h-4" />
               <h3>{t('addFood.recentHistory')}</h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2">
               {displayedHistory.map((item) => {
                 const offset = historySwipeOffset[item.id] || 0;
                 const progress = Math.min(Math.abs(offset) / SWIPE_DELETE_THRESHOLD, 1);
@@ -1296,7 +1296,7 @@ const AddFood = () => {
                       />
                     </div>
                     <StatsCard 
-                      className="cursor-pointer hover:bg-secondary/60 transition-colors p-3 h-full"
+                      className="cursor-pointer hover:bg-secondary/60 transition-colors px-3 py-2 h-full"
                       onClick={() => handleHistoryItemClick(item)}
                       onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
                       onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
@@ -1314,15 +1314,17 @@ const AddFood = () => {
                         opacity: removing ? 0 : 1,
                       }}
                     >
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <h4 className="text-sm font-semibold text-foreground leading-tight truncate">{item.name}</h4>
-                          {item.brand && <p className="text-[11px] text-muted-foreground truncate">{item.brand}</p>}
-                          <p className="text-xs text-muted-foreground font-medium">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold text-foreground leading-tight truncate">{item.name}</h4>
+                            {item.brand && <span className="text-[11px] text-muted-foreground truncate">· {item.brand}</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground font-semibold">
                             {item.calories} kcal | {item.protein}P {item.fat}G {item.carbs}C
                           </p>
                         </div>
-                        <div className="flex flex-col items-center gap-2">
+                        <div className="flex flex-col items-center gap-1">
                           <Button
                             size="icon"
                             variant="ghost"
