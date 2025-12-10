@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Barcode, Search, Clock, Camera, Plus, Star, Trash2 } from "lucide-react";
+import { ArrowLeft, Barcode, Search, Clock, Camera, Plus, Star, Trash2, ClipboardPen, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +98,8 @@ const AddFood = () => {
   const [historyRemoving, setHistoryRemoving] = useState<Record<string, boolean>>({});
   const historyTouchStart = useReactRef<Record<string, number>>({});
   const historySwipeTriggered = useReactRef(false);
+  const historyForCurrentMeal = foodHistory.filter(item => item.meal === meal);
+  const displayedHistory = historyForCurrentMeal.slice(0, 8);
   
   // Helper para obtener el nombre del alimento en el idioma actual
   const getFoodName = (food: FoodItemType): string => {
@@ -864,15 +866,15 @@ const AddFood = () => {
           </h1>
         </div>
 
-        {/* Search and Scan */}
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
+        {/* Search and Controls */}
+        <div className="flex items-center gap-2 flex-nowrap">
+          <div className="flex-1 min-w-[140px] max-w-[220px] relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder={t('addFood.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-10"
             />
           </div>
           <Button onClick={handleOpenCamera} size="icon" variant="outline" disabled={isUploadingPhoto} title={t('addFood.photoCapture')}>
@@ -880,6 +882,55 @@ const AddFood = () => {
           </Button>
           <Button onClick={startScanner} size="icon" title={t('addFood.scanBarcode')}>
             <Barcode className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={manualEntry ? "default" : "outline"}
+            size="icon"
+            className="h-10 w-10"
+            title={t('addFood.manualEntry')}
+            aria-label={t('addFood.manualEntry')}
+            onClick={() => {
+              setShowFavorites(false);
+              setSelectedFood(null);
+              setServingAmount(100);
+              setServingAmountInput('100');
+              setManualFood({
+                name: "",
+                calories: 0,
+                protein: 0,
+                fat: 0,
+                carbs: 0,
+                servingSize: 100,
+                servingUnit: "g",
+                barcode: undefined,
+                brand: undefined,
+              });
+              setManualEntry(true);
+              setIsPhotoResult(false);
+              setManualNutritionInputs({
+                calories: "",
+                protein: "",
+                fat: "",
+                carbs: "",
+              });
+            }}
+          >
+            <ClipboardPen className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={showFavorites ? "default" : "outline"}
+            size="icon"
+            className="h-10 w-10"
+            title={t('addFood.myFoods')}
+            aria-label={t('addFood.myFoods')}
+            onClick={() => {
+              setManualEntry(false);
+              setSelectedFood(null);
+              setIsPhotoResult(false);
+              setShowFavorites((prev) => !prev);
+            }}
+          >
+            <Bookmark className="w-4 h-4" />
           </Button>
           <input
             ref={photoInputRef}
@@ -1079,114 +1130,64 @@ const AddFood = () => {
           </StatsCard>
         )}
 
-        {/* Manual Entry / Favorites */}
-        {!selectedFood && (
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <Button
-                variant={manualEntry ? "default" : "outline"}
-                className="w-1/2"
-                onClick={() => {
-                  setShowFavorites(false);
-                  setSelectedFood(null);
-                  setServingAmount(100);
-                  setServingAmountInput('100');
-                  setManualFood({
-                    name: "",
-                    calories: 0,
-                    protein: 0,
-                    fat: 0,
-                    carbs: 0,
-                    servingSize: 100,
-                    servingUnit: "g",
-                    barcode: undefined,
-                    brand: undefined,
-                  });
-                  setManualEntry(true);
-                  setIsPhotoResult(false);
-                  setManualNutritionInputs({
-                    calories: "",
-                    protein: "",
-                    fat: "",
-                    carbs: "",
-                  });
-                }}
-              >
-                {t('addFood.manualEntry')}
-              </Button>
-              <Button
-                variant={showFavorites ? "default" : "outline"}
-                className="w-1/2"
-                onClick={() => {
-                  setManualEntry(false);
-                  setSelectedFood(null);
-                  setIsPhotoResult(false);
-                  setShowFavorites((prev) => !prev);
-                }}
-              >
+        {/* Favorites list */}
+        {!selectedFood && showFavorites && !manualEntry && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-muted-foreground">
                 {t('addFood.myFoods')}
+              </h3>
+              <Button size="sm" variant="ghost" onClick={() => setShowFavorites(false)}>
+                {t('common.cancel')}
               </Button>
             </div>
-
-            {showFavorites && !manualEntry && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-muted-foreground">
-                    {t('addFood.myFoods')}
-                  </h3>
-                  <Button size="sm" variant="ghost" onClick={() => setShowFavorites(false)}>
-                    {t('common.cancel')}
-                  </Button>
-                </div>
-                {favorites.length === 0 ? (
-                  <p className="text-center py-6 text-muted-foreground text-sm">
-                    {t('addFood.noFavorites')}
-                  </p>
-                ) : (
-                  favorites.map((food) => (
-                    <StatsCard
-                      key={getFoodKey(food)}
-                      className="cursor-pointer hover:border-primary transition-colors"
-                      onClick={() => handleSelectFromDatabase(food)}
-                    >
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
-                          {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {food.calories} kcal · P: {food.protein}g · G: {food.fat}g · C: {food.carbs}g
-                          </p>
-                          <p className="text-xs text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
-                        </div>
-                        <div className="flex flex-col items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectFromDatabase(food);
-                            }}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleFavorite(food, { confirmRemoval: true });
-                            }}
-                          >
-                            <Star
-                              className={`w-4 h-4 ${isFavorite(food) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
-                            />
-                          </Button>
-                        </div>
-                      </div>
-                    </StatsCard>
-                  ))
-                )}
-              </div>
+            {favorites.length === 0 ? (
+              <p className="text-center py-6 text-muted-foreground text-sm">
+                {t('addFood.noFavorites')}
+              </p>
+            ) : (
+              favorites.map((food) => (
+                <StatsCard
+                  key={getFoodKey(food)}
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectFromDatabase(food)}
+                >
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
+                      {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {food.calories} kcal · P: {food.protein}g · G: {food.fat}g · C: {food.carbs}g
+                      </p>
+                      <p className="text-xs text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectFromDatabase(food);
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(food, { confirmRemoval: true });
+                        }}
+                      >
+                        <Star
+                          className={`w-4 h-4 ${isFavorite(food) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
+                        />
+                      </Button>
+                    </div>
+                  </div>
+                </StatsCard>
+              ))
             )}
           </div>
         )}
@@ -1248,111 +1249,110 @@ const AddFood = () => {
         )}
         
         {/* Food History */}
-        {!selectedFood && !manualEntry && !showFavorites && !searchQuery && foodHistory.length > 0 && (
+        {!selectedFood && !manualEntry && !showFavorites && !searchQuery && displayedHistory.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <Clock className="w-4 h-4" />
               <h3>{t('addFood.recentHistory')}</h3>
             </div>
-            {foodHistory.slice(0, 10).map((item) => {
-              const offset = historySwipeOffset[item.id] || 0;
-              const progress = Math.min(Math.abs(offset) / SWIPE_DELETE_THRESHOLD, 1);
-              const removing = historyRemoving[item.id];
+            <div className="grid grid-cols-2 gap-2">
+              {displayedHistory.map((item) => {
+                const offset = historySwipeOffset[item.id] || 0;
+                const progress = Math.min(Math.abs(offset) / SWIPE_DELETE_THRESHOLD, 1);
+                const removing = historyRemoving[item.id];
 
-              return (
-                <div
-                  key={item.id}
-                  className="relative overflow-hidden"
-                  style={{
-                    maxHeight: removing ? 0 : 500,
-                    opacity: removing ? 0 : 1,
-                    transition: removing
-                      ? 'max-height 0.25s ease, opacity 0.2s ease'
-                      : 'max-height 0.25s ease',
-                  }}
-                >
+                return (
                   <div
-                    className="absolute inset-y-0 right-0 flex items-center pr-4"
+                    key={item.id}
+                    className="relative overflow-hidden h-full"
                     style={{
-                      width: `${Math.max(64, Math.abs(offset))}px`,
-                      backgroundColor:
-                        Math.abs(offset) >= SWIPE_DELETE_THRESHOLD
-                          ? '#ef4444'
-                          : `rgba(239, 68, 68, ${progress * 0.7})`,
-                      justifyContent: 'flex-end',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    <Trash2
-                      className="w-5 h-5"
-                      style={{
-                        color: 'white',
-                        opacity: progress,
-                        transform: `scale(${0.8 + 0.4 * progress})`,
-                        transition: 'opacity 0.1s ease, transform 0.1s ease',
-                      }}
-                    />
-                  </div>
-                  <StatsCard 
-                    className="cursor-pointer hover:bg-secondary/50 transition-colors" 
-                    onClick={() => handleHistoryItemClick(item)}
-                    onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
-                    onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
-                    onTouchEnd={(e) => handleHistorySwipeEnd(item.id, e.changedTouches[0]?.clientX || 0)}
-                    onMouseDown={(e) => handleHistorySwipeStart(item.id, e.clientX)}
-                    onMouseMove={(e) => handleHistorySwipeMove(item.id, e.clientX)}
-                    onMouseUp={(e) => handleHistorySwipeEnd(item.id, e.clientX)}
-                    style={{
-                      transform: removing ? 'translateX(-120%)' : `translateX(${offset}px)`,
-                      transition: removing
-                        ? 'transform 0.2s ease, opacity 0.2s ease'
-                        : offset === 0
-                          ? 'transform 0.15s ease-out'
-                          : 'transform 0s',
+                      maxHeight: removing ? 0 : 500,
                       opacity: removing ? 0 : 1,
+                      transition: removing
+                        ? 'max-height 0.25s ease, opacity 0.2s ease'
+                        : 'max-height 0.25s ease',
                     }}
                   >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground">{item.name}</h4>
-                        {item.brand && <p className="text-xs text-muted-foreground">{item.brand}</p>}
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {item.calories} kcal ?? P: {item.protein}g ?? G: {item.fat}g ?? C: {item.carbs}g
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.servingSize} {item.servingUnit} ?? {item.meal}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleHistoryItemClick(item);
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const food = historyToFoodItem(item);
-                            toggleFavorite(food);
-                          }}
-                        >
-                          <Star
-                            className={`w-4 h-4 ${isFavorite(historyToFoodItem(item)) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
-                          />
-                        </Button>
-                      </div>
+                    <div
+                      className="absolute inset-y-0 right-0 flex items-center pr-3"
+                      style={{
+                        width: `${Math.max(48, Math.abs(offset))}px`,
+                        backgroundColor:
+                          Math.abs(offset) >= SWIPE_DELETE_THRESHOLD
+                            ? '#ef4444'
+                            : `rgba(239, 68, 68, ${progress * 0.7})`,
+                        justifyContent: 'flex-end',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <Trash2
+                        className="w-5 h-5"
+                        style={{
+                          color: 'white',
+                          opacity: progress,
+                          transform: `scale(${0.8 + 0.4 * progress})`,
+                          transition: 'opacity 0.1s ease, transform 0.1s ease',
+                        }}
+                      />
                     </div>
-                  </StatsCard>
-                </div>
-              );
-            })}
+                    <StatsCard 
+                      className="cursor-pointer hover:bg-secondary/60 transition-colors p-3 h-full"
+                      onClick={() => handleHistoryItemClick(item)}
+                      onTouchStart={(e) => handleHistorySwipeStart(item.id, e.touches[0]?.clientX || 0)}
+                      onTouchMove={(e) => handleHistorySwipeMove(item.id, e.touches[0]?.clientX || 0)}
+                      onTouchEnd={(e) => handleHistorySwipeEnd(item.id, e.changedTouches[0]?.clientX || 0)}
+                      onMouseDown={(e) => handleHistorySwipeStart(item.id, e.clientX)}
+                      onMouseMove={(e) => handleHistorySwipeMove(item.id, e.clientX)}
+                      onMouseUp={(e) => handleHistorySwipeEnd(item.id, e.clientX)}
+                      style={{
+                        transform: removing ? 'translateX(-120%)' : `translateX(${offset}px)`,
+                        transition: removing
+                          ? 'transform 0.2s ease, opacity 0.2s ease'
+                          : offset === 0
+                            ? 'transform 0.15s ease-out'
+                            : 'transform 0s',
+                        opacity: removing ? 0 : 1,
+                      }}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <h4 className="text-sm font-semibold text-foreground leading-tight truncate">{item.name}</h4>
+                          {item.brand && <p className="text-[11px] text-muted-foreground truncate">{item.brand}</p>}
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {item.calories} kcal | {item.protein}P {item.fat}G {item.carbs}C
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleHistoryItemClick(item);
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const food = historyToFoodItem(item);
+                              toggleFavorite(food);
+                            }}
+                          >
+                            <Star
+                              className={`w-4 h-4 ${isFavorite(historyToFoodItem(item)) ? 'text-primary fill-primary' : 'text-muted-foreground'}`}
+                            />
+                          </Button>
+                        </div>
+                      </div>
+                    </StatsCard>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -1426,5 +1426,3 @@ const AddFood = () => {
 };
 
 export default AddFood;
-
-
