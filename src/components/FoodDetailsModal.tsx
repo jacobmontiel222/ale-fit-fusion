@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FoodItem, FoodCategory, FoodTag } from '@/types/food';
+import { useTranslation } from 'react-i18next';
 
 interface FoodDetailsModalProps {
   food: FoodItem | null;
@@ -47,6 +48,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
   const [amountInput, setAmountInput] = useState('100');
   const [editableFood, setEditableFood] = useState<FoodItem | null>(food);
   const UNIT_OPTIONS = ['g', 'ml', 'unidad'];
+  const { t } = useTranslation();
 
   useEffect(() => {
     setEditableFood(food);
@@ -102,24 +104,24 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               {editable ? (
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Nombre</Label>
+                    <Label className="text-sm font-semibold">{t('foodDetails.name')}</Label>
                     <Input
                       value={editableFood?.name || ''}
                       onChange={(e) => handleTextChange('name')(e.target.value)}
-                      placeholder="Ej. Pechuga de pollo"
+                      placeholder={t('foodDetails.namePlaceholder')}
                     />
                   </div>
                   <div className="flex gap-3">
                     <div className="flex-1 space-y-2">
-                      <Label className="text-sm font-semibold">Marca (opcional)</Label>
+                      <Label className="text-sm font-semibold">{t('foodDetails.brandOptional')}</Label>
                       <Input
                         value={editableFood?.brand || ''}
                         onChange={(e) => handleTextChange('brand')(e.target.value)}
-                        placeholder="Ej. Marca"
+                        placeholder={t('foodDetails.brandPlaceholder')}
                       />
                     </div>
                     <div className="w-36 space-y-2">
-                      <Label className="text-sm font-semibold">Unidad base</Label>
+                      <Label className="text-sm font-semibold">{t('foodDetails.baseUnit')}</Label>
                       <select
                         className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm"
                         value={editableFood?.servingUnit || 'g'}
@@ -161,8 +163,8 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
         <ScrollArea className="flex-1 px-6 py-4 max-h-[calc(100vh-120px)] h-[calc(100vh-140px)] pb-32 overflow-y-auto">
           <Tabs defaultValue="macros" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="macros">Macronutrientes</TabsTrigger>
-              <TabsTrigger value="micros">Micronutrientes</TabsTrigger>
+              <TabsTrigger value="macros">{t('foodDetails.macrosTab')}</TabsTrigger>
+              <TabsTrigger value="micros">{t('foodDetails.microsTab')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="macros" className="mt-4 space-y-4">
@@ -170,7 +172,9 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Calorías (por 100 {currentFood.servingUnit || 'g'})</Label>
+                      <Label className="text-sm text-muted-foreground">
+                        {t('foodDetails.caloriesPer100', { unit: currentFood.servingUnit || 'g' })}
+                      </Label>
                       <Input
                         value={editableFood?.calories ?? 0}
                         inputMode="decimal"
@@ -179,7 +183,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Proteínas (g)</Label>
+                      <Label className="text-sm text-muted-foreground">{t('foodDetails.protein')}</Label>
                       <Input
                         value={editableFood?.protein ?? 0}
                         inputMode="decimal"
@@ -190,7 +194,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Grasas (g)</Label>
+                      <Label className="text-sm text-muted-foreground">{t('foodDetails.fat')}</Label>
                       <Input
                         value={editableFood?.fat ?? 0}
                         inputMode="decimal"
@@ -199,7 +203,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Carbohidratos (g)</Label>
+                      <Label className="text-sm text-muted-foreground">{t('foodDetails.carbs')}</Label>
                       <Input
                         value={editableFood?.carbs ?? 0}
                         inputMode="decimal"
@@ -210,7 +214,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Fibra (g)</Label>
+                      <Label className="text-sm text-muted-foreground">{t('foodDetails.fiber')}</Label>
                       <Input
                         value={editableFood?.fiber ?? 0}
                         inputMode="decimal"
@@ -219,7 +223,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-sm text-muted-foreground">Azúcares (g)</Label>
+                      <Label className="text-sm text-muted-foreground">{t('foodDetails.sugar')}</Label>
                       <Input
                         value={editableFood?.sugar ?? 0}
                         inputMode="decimal"
@@ -235,7 +239,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               )}
               <div className="space-y-2">
                 <Label htmlFor="amount" className="text-base font-semibold">
-                  Cantidad a añadir
+                  {t('foodDetails.amountToAdd')}
                 </Label>
                 <div className="flex items-center gap-3">
                   <Input
@@ -261,11 +265,11 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               </div>
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-foreground">
-                  Macros calculados para {amount || 0} {currentFood.servingUnit}
+                  {t('foodDetails.calculatedFor', { amount: amount || 0, unit: currentFood.servingUnit })}
                 </div>
                 <div className="p-4 rounded-lg bg-secondary/30">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">Calorías</span>
+                    <span className="font-semibold">{t('foodDetails.calories')}</span>
                     <span className="text-lg font-bold">{adjustedMacros.calories} kcal</span>
                   </div>
                 </div>
@@ -274,26 +278,26 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               {/* Macronutrientes principales */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Proteínas</span>
+                  <span className="text-muted-foreground">{t('foodDetails.protein')}</span>
                   <span className="font-semibold">{adjustedMacros.protein} g</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Grasas</span>
+                  <span className="text-muted-foreground">{t('foodDetails.fat')}</span>
                   <span className="font-semibold">{adjustedMacros.fat} g</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Carbohidratos</span>
+                  <span className="text-muted-foreground">{t('foodDetails.carbs')}</span>
                   <span className="font-semibold">{adjustedMacros.carbs} g</span>
                 </div>
                 {adjustedMacros.fiber !== undefined && (
                   <div className="flex items-center justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Fibra</span>
+                    <span className="text-muted-foreground">{t('foodDetails.fiber')}</span>
                     <span className="font-semibold">{adjustedMacros.fiber} g</span>
                   </div>
                 )}
                 {adjustedMacros.sugar !== undefined && (
                   <div className="flex items-center justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Azúcares</span>
+                    <span className="text-muted-foreground">{t('foodDetails.sugar')}</span>
                     <span className="font-semibold">{adjustedMacros.sugar} g</span>
                   </div>
                 )}
@@ -306,7 +310,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Info className="w-4 h-4" />
-                    Vitaminas
+                    {t('foodDetails.vitamins')}
                   </h4>
                   <div className="space-y-2">
                     {currentFood.micronutrients.vitamins.map((vitamin, idx) => (
@@ -333,7 +337,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Info className="w-4 h-4" />
-                    Minerales
+                    {t('foodDetails.minerals')}
                   </h4>
                   <div className="space-y-2">
                     {currentFood.micronutrients.minerals.map((mineral, idx) => (
@@ -358,14 +362,14 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               {currentFood.micronutrients.vitamins.length === 0 && 
                currentFood.micronutrients.minerals.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No hay información de micronutrientes disponible</p>
+                  <p>{t('foodDetails.noMicros')}</p>
                 </div>
               )}
             </TabsContent>
           </Tabs>
           <div className="mt-8 pb-4">
             <Button onClick={handleAdd} className="w-full" size="lg" disabled={amount <= 0}>
-              Añadir {amount} {currentFood.servingUnit}
+              {t('foodDetails.addAmount', { amount, unit: currentFood.servingUnit })}
             </Button>
           </div>
         </ScrollArea>

@@ -336,6 +336,28 @@
       "sin-lactosa": "Sin lactosa"
     }
   },
+  "foodDetails": {
+    "name": "Nombre",
+    "namePlaceholder": "Ej. Pechuga de pollo",
+    "brandOptional": "Marca (opcional)",
+    "brandPlaceholder": "Ej. Marca",
+    "baseUnit": "Unidad base",
+    "macrosTab": "Macronutrientes",
+    "microsTab": "Micronutrientes",
+    "caloriesPer100": "Calorías (por 100 {{unit}})",
+    "protein": "Proteínas (g)",
+    "fat": "Grasas (g)",
+    "carbs": "Carbohidratos (g)",
+    "fiber": "Fibra (g)",
+    "sugar": "Azúcares (g)",
+    "amountToAdd": "Cantidad a añadir",
+    "calculatedFor": "Macros calculados para {{amount}} {{unit}}",
+    "calories": "Calorías",
+    "vitamins": "Vitaminas",
+    "minerals": "Minerales",
+    "noMicros": "No hay información de micronutrientes disponible",
+    "addAmount": "Añadir {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Pregúntame sobre tu entrenamiento o nutrición…",

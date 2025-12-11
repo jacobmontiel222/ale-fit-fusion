@@ -304,6 +304,28 @@
       "sin-lactosa": "Bez laktozy"
     }
   },
+  "foodDetails": {
+    "name": "Nazwa",
+    "namePlaceholder": "np. Pierś z kurczaka",
+    "brandOptional": "Marka (opcjonalnie)",
+    "brandPlaceholder": "np. Marka",
+    "baseUnit": "Jednostka bazowa",
+    "macrosTab": "Makroelementy",
+    "microsTab": "Mikroelementy",
+    "caloriesPer100": "Kalorie (na 100 {{unit}})",
+    "protein": "Białko (g)",
+    "fat": "Tłuszcze (g)",
+    "carbs": "Węglowodany (g)",
+    "fiber": "Błonnik (g)",
+    "sugar": "Cukry (g)",
+    "amountToAdd": "Ilość do dodania",
+    "calculatedFor": "Wyliczone makra dla {{amount}} {{unit}}",
+    "calories": "Kalorie",
+    "vitamins": "Witaminy",
+    "minerals": "Minerały",
+    "noMicros": "Brak dostępnych informacji o mikroelementach",
+    "addAmount": "Dodaj {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Zapytaj o swój trening lub dietę…",

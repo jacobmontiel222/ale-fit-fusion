@@ -304,6 +304,28 @@
       "sin-lactosa": "Senza lattosio"
     }
   },
+  "foodDetails": {
+    "name": "Nome",
+    "namePlaceholder": "Es. Petto di pollo",
+    "brandOptional": "Marca (opzionale)",
+    "brandPlaceholder": "Es. Marca",
+    "baseUnit": "Unità base",
+    "macrosTab": "Macronutrienti",
+    "microsTab": "Micronutrienti",
+    "caloriesPer100": "Calorie (per 100 {{unit}})",
+    "protein": "Proteine (g)",
+    "fat": "Grassi (g)",
+    "carbs": "Carboidrati (g)",
+    "fiber": "Fibre (g)",
+    "sugar": "Zuccheri (g)",
+    "amountToAdd": "Quantità da aggiungere",
+    "calculatedFor": "Macro calcolati per {{amount}} {{unit}}",
+    "calories": "Calorie",
+    "vitamins": "Vitamine",
+    "minerals": "Minerali",
+    "noMicros": "Nessuna informazione sui micronutrienti disponibile",
+    "addAmount": "Aggiungi {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Chiedimi del tuo allenamento o nutrizione…",

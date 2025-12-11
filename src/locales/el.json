@@ -336,6 +336,28 @@
       "sin-lactosa": "Χωρίς λακτόζη"
     }
   },
+  "foodDetails": {
+    "name": "Όνομα",
+    "namePlaceholder": "π.χ. Στήθος κοτόπουλο",
+    "brandOptional": "Μάρκα (προαιρετικό)",
+    "brandPlaceholder": "π.χ. Μάρκα",
+    "baseUnit": "Βασική μονάδα",
+    "macrosTab": "Μακροθρεπτικά",
+    "microsTab": "Μικροθρεπτικά",
+    "caloriesPer100": "Θερμίδες (ανά 100 {{unit}})",
+    "protein": "Πρωτεΐνες (g)",
+    "fat": "Λίπη (g)",
+    "carbs": "Υδατάνθρακες (g)",
+    "fiber": "Ίνες (g)",
+    "sugar": "Σάκχαρα (g)",
+    "amountToAdd": "Ποσότητα για προσθήκη",
+    "calculatedFor": "Υπολογισμένα macros για {{amount}} {{unit}}",
+    "calories": "Θερμίδες",
+    "vitamins": "Βιταμίνες",
+    "minerals": "Μεταλλικά στοιχεία",
+    "noMicros": "Δεν υπάρχουν διαθέσιμες πληροφορίες μικροθρεπτικών",
+    "addAmount": "Προσθήκη {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Ρωτήστε με για την προπόνηση ή τη διατροφή σας…",

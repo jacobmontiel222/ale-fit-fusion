@@ -304,6 +304,28 @@
       "sin-lactosa": "Sans lactose"
     }
   },
+  "foodDetails": {
+    "name": "Nom",
+    "namePlaceholder": "Ex. Blanc de poulet",
+    "brandOptional": "Marque (optionnel)",
+    "brandPlaceholder": "Ex. Marque",
+    "baseUnit": "Unité de base",
+    "macrosTab": "Macronutriments",
+    "microsTab": "Micronutriments",
+    "caloriesPer100": "Calories (pour 100 {{unit}})",
+    "protein": "Protéines (g)",
+    "fat": "Lipides (g)",
+    "carbs": "Glucides (g)",
+    "fiber": "Fibres (g)",
+    "sugar": "Sucres (g)",
+    "amountToAdd": "Quantité à ajouter",
+    "calculatedFor": "Macros calculés pour {{amount}} {{unit}}",
+    "calories": "Calories",
+    "vitamins": "Vitamines",
+    "minerals": "Minéraux",
+    "noMicros": "Aucune information sur les micronutriments disponible",
+    "addAmount": "Ajouter {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Posez-moi des questions sur votre entraînement ou nutrition…",

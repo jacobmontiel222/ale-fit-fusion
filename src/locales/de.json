@@ -304,6 +304,28 @@
       "sin-lactosa": "Laktosefrei"
     }
   },
+  "foodDetails": {
+    "name": "Name",
+    "namePlaceholder": "z.B. Hähnchenbrust",
+    "brandOptional": "Marke (optional)",
+    "brandPlaceholder": "z.B. Marke",
+    "baseUnit": "Basiseinheit",
+    "macrosTab": "Makronährstoffe",
+    "microsTab": "Mikronährstoffe",
+    "caloriesPer100": "Kalorien (pro 100 {{unit}})",
+    "protein": "Eiweiß (g)",
+    "fat": "Fette (g)",
+    "carbs": "Kohlenhydrate (g)",
+    "fiber": "Ballaststoffe (g)",
+    "sugar": "Zucker (g)",
+    "amountToAdd": "Menge hinzufügen",
+    "calculatedFor": "Makros berechnet für {{amount}} {{unit}}",
+    "calories": "Kalorien",
+    "vitamins": "Vitamine",
+    "minerals": "Mineralstoffe",
+    "noMicros": "Keine Mikronährstoffinformationen verfügbar",
+    "addAmount": "Hinzufügen von {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Frag mich über dein Training oder Ernährung…",

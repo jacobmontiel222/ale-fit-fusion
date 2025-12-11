@@ -336,6 +336,28 @@
       "sin-lactosa": "Pa laktozë"
     }
   },
+  "foodDetails": {
+    "name": "Emri",
+    "namePlaceholder": "p.sh. Gjoks pule",
+    "brandOptional": "Markë (opsionale)",
+    "brandPlaceholder": "p.sh. Markë",
+    "baseUnit": "Njësia bazë",
+    "macrosTab": "Makronutrientë",
+    "microsTab": "Mikronutrientë",
+    "caloriesPer100": "Kalori (për 100 {{unit}})",
+    "protein": "Proteina (g)",
+    "fat": "Yndyrna (g)",
+    "carbs": "Karbohidrate (g)",
+    "fiber": "Fibra (g)",
+    "sugar": "Sheqerna (g)",
+    "amountToAdd": "Sasia për shtim",
+    "calculatedFor": "Makrot e llogaritura për {{amount}} {{unit}}",
+    "calories": "Kalori",
+    "vitamins": "Vitamina",
+    "minerals": "Minerale",
+    "noMicros": "Nuk ka informacion për mikronutrientët",
+    "addAmount": "Shto {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Më pyesni për stërvitjen ose ushqimin tuaj…",

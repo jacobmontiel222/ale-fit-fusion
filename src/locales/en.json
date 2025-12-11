@@ -336,6 +336,28 @@
       "sin-lactosa": "Lactose free"
     }
   },
+  "foodDetails": {
+    "name": "Name",
+    "namePlaceholder": "e.g. Chicken breast",
+    "brandOptional": "Brand (optional)",
+    "brandPlaceholder": "e.g. Brand",
+    "baseUnit": "Base unit",
+    "macrosTab": "Macronutrients",
+    "microsTab": "Micronutrients",
+    "caloriesPer100": "Calories (per 100 {{unit}})",
+    "protein": "Protein (g)",
+    "fat": "Fat (g)",
+    "carbs": "Carbs (g)",
+    "fiber": "Fiber (g)",
+    "sugar": "Sugars (g)",
+    "amountToAdd": "Amount to add",
+    "calculatedFor": "Calculated macros for {{amount}} {{unit}}",
+    "calories": "Calories",
+    "vitamins": "Vitamins",
+    "minerals": "Minerals",
+    "noMicros": "No micronutrient information available",
+    "addAmount": "Add {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Ask me about your training or nutrition…",

@@ -304,6 +304,28 @@
       "sin-lactosa": "Sem lactose"
     }
   },
+  "foodDetails": {
+    "name": "Nome",
+    "namePlaceholder": "Ex.: Peito de frango",
+    "brandOptional": "Marca (opcional)",
+    "brandPlaceholder": "Ex.: Marca",
+    "baseUnit": "Unidade base",
+    "macrosTab": "Macronutrientes",
+    "microsTab": "Micronutrientes",
+    "caloriesPer100": "Calorias (por 100 {{unit}})",
+    "protein": "Proteína (g)",
+    "fat": "Gorduras (g)",
+    "carbs": "Carboidratos (g)",
+    "fiber": "Fibras (g)",
+    "sugar": "Açúcares (g)",
+    "amountToAdd": "Quantidade a adicionar",
+    "calculatedFor": "Macros calculados para {{amount}} {{unit}}",
+    "calories": "Calorias",
+    "vitamins": "Vitaminas",
+    "minerals": "Minerais",
+    "noMicros": "Não há informações de micronutrientes disponíveis",
+    "addAmount": "Adicionar {{amount}} {{unit}}"
+  },
   "fityai": {
     "title": "FityAI",
     "placeholder": "Pergunte-me sobre seu treino ou nutrição…",
