@@ -156,7 +156,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4 max-h-[85vh] pb-10">
+        <ScrollArea className="flex-1 px-6 py-4 max-h-[85vh] pb-10 overflow-y-auto snap-none overscroll-contain">
           <Tabs defaultValue="macros" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="macros">Macronutrientes</TabsTrigger>
