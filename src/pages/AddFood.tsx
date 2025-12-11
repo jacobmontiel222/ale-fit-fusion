@@ -1149,22 +1149,25 @@ const AddFood = () => {
               favorites.map((food) => (
                 <StatsCard
                   key={getFoodKey(food)}
-                  className="cursor-pointer hover:border-primary transition-colors"
+                  className="cursor-pointer hover:bg-secondary/60 transition-colors px-3 py-0.5 h-full"
                   onClick={() => handleSelectFromDatabase(food)}
                 >
-                  <div className="flex justify-between items-start gap-3">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-foreground">{getFoodName(food)}</h4>
-                      {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {food.calories} kcal · P: {food.protein}g · G: {food.fat}g · C: {food.carbs}g
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-semibold text-foreground leading-tight truncate">{getFoodName(food)}</h4>
+                        {food.brand && <span className="text-[11px] text-muted-foreground truncate">· {food.brand}</span>}
+                      </div>
+                      <p className="text-xs text-muted-foreground font-semibold">
+                        {food.calories} kcal | {food.protein}P {food.fat}G {food.carbs}C
                       </p>
-                      <p className="text-xs text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
+                      <p className="text-[11px] text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
                     </div>
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-1">
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectFromDatabase(food);
@@ -1175,6 +1178,7 @@ const AddFood = () => {
                       <Button
                         size="icon"
                         variant="ghost"
+                        className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleFavorite(food, { confirmRemoval: true });
