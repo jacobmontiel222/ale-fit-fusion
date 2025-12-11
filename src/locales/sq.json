@@ -352,6 +352,7 @@
     "sugar": "Sheqerna (g)",
     "amountToAdd": "Sasia për shtim",
     "calculatedFor": "Makrot e llogaritura për {{amount}} {{unit}}",
+    "per100Instruction": "Shkruaj vlerat për çdo 100 {{unit}}. Pastaj rregullo sasinë e racionit.",
     "calories": "Kalori",
     "vitamins": "Vitamina",
     "minerals": "Minerale",

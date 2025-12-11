@@ -233,7 +233,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Introduce valores por cada 100 {currentFood.servingUnit}. Luego ajusta la cantidad de la ración.
+                    {t('foodDetails.per100Instruction', { unit: currentFood.servingUnit })}
                   </p>
                 </div>
               )}

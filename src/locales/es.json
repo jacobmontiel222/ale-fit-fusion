@@ -352,6 +352,7 @@
     "sugar": "Azúcares (g)",
     "amountToAdd": "Cantidad a añadir",
     "calculatedFor": "Macros calculados para {{amount}} {{unit}}",
+    "per100Instruction": "Introduce valores por cada 100 {{unit}}. Luego ajusta la cantidad de la ración.",
     "calories": "Calorías",
     "vitamins": "Vitaminas",
     "minerals": "Minerales",

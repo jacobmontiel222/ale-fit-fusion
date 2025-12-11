@@ -320,6 +320,7 @@
     "sugar": "Zuccheri (g)",
     "amountToAdd": "Quantità da aggiungere",
     "calculatedFor": "Macro calcolati per {{amount}} {{unit}}",
+    "per100Instruction": "Inserisci i valori per 100 {{unit}}. Poi regola la quantità della porzione.",
     "calories": "Calorie",
     "vitamins": "Vitamine",
     "minerals": "Minerali",

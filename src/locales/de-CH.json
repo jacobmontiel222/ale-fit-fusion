@@ -352,6 +352,7 @@
     "sugar": "Zucker (g)",
     "amountToAdd": "Menge hinzufügen",
     "calculatedFor": "Makros berechnet für {{amount}} {{unit}}",
+    "per100Instruction": "Gib d Werte pro 100 {{unit}} ii. Pass nachher d Portion a.",
     "calories": "Kalorien",
     "vitamins": "Vitamine",
     "minerals": "Mineralstoffe",

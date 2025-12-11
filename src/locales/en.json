@@ -352,6 +352,7 @@
     "sugar": "Sugars (g)",
     "amountToAdd": "Amount to add",
     "calculatedFor": "Calculated macros for {{amount}} {{unit}}",
+    "per100Instruction": "Enter values per 100 {{unit}}. Then adjust the serving amount.",
     "calories": "Calories",
     "vitamins": "Vitamins",
     "minerals": "Minerals",
