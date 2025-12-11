@@ -59,22 +59,6 @@ const AddFood = () => {
   const [servingAmount, setServingAmount] = useState(100);
   const [servingAmountInput, setServingAmountInput] = useState('100');
   const [manualEntry, setManualEntry] = useState(false);
-  const [isPhotoResult, setIsPhotoResult] = useState(false);
-  const [manualFood, setManualFood] = useState<FoodItem>({
-    name: "",
-    calories: 0,
-    protein: 0,
-    fat: 0,
-    carbs: 0,
-    servingSize: 100,
-    servingUnit: "g",
-  });
-  const [manualNutritionInputs, setManualNutritionInputs] = useState({
-    calories: "",
-    protein: "",
-    fat: "",
-    carbs: "",
-  });
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [isProcessingScan, setIsProcessingScan] = useState(false);
@@ -94,6 +78,7 @@ const AddFood = () => {
   const [communityResults, setCommunityResults] = useState<FoodItemType[]>([]);
   const [favorites, setFavorites] = useState<FoodItemType[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [detailsEditable, setDetailsEditable] = useState(false);
   const [historySwipeOffset, setHistorySwipeOffset] = useState<Record<string, number>>({});
   const [historyRemoving, setHistoryRemoving] = useState<Record<string, boolean>>({});
   const historyTouchStart = useReactRef<Record<string, number>>({});
@@ -130,6 +115,26 @@ const AddFood = () => {
     barcode: (item as any)?.barcode || undefined,
     searchTerms: [],
     lastUpdated: undefined,
+  });
+
+  const buildEditableFood = (seed?: Partial<FoodItemType>): FoodItemType => ({
+    id: seed?.id || `manual-${Date.now()}`,
+    name: seed?.name || '',
+    brand: seed?.brand,
+    category: seed?.category || 'otros',
+    tags: seed?.tags || [],
+    calories: seed?.calories ?? 0,
+    protein: seed?.protein ?? 0,
+    fat: seed?.fat ?? 0,
+    carbs: seed?.carbs ?? 0,
+    fiber: seed?.fiber,
+    sugar: seed?.sugar,
+    micronutrients: seed?.micronutrients || { vitamins: [], minerals: [] },
+    servingSize: seed?.servingSize ?? 100,
+    servingUnit: seed?.servingUnit || 'g',
+    barcode: seed?.barcode,
+    searchTerms: seed?.searchTerms || [],
+    lastUpdated: seed?.lastUpdated,
   });
 
   const persistFavorites = (list: FoodItemType[]) => {
@@ -239,7 +244,6 @@ const AddFood = () => {
     setShowFavorites(false);
     setManualEntry(false);
     setSelectedFood(null);
-    setIsPhotoResult(false);
   }, [meal, selectedDate]);
   
   // Cargar base de datos de alimentos y recargar cuando cambie el idioma
@@ -465,26 +469,12 @@ const AddFood = () => {
         throw new Error("Invalid response");
       }
 
-      setSelectedFood(null);
-      setManualEntry(true);
-      setIsPhotoResult(true);
-      setServingAmount(100);
-      setServingAmountInput("100");
-
-      setManualFood((prev) => ({
-        ...prev,
+      openManualModal({
         name: "",
         protein: Number(protein) || 0,
         fat: Number(fat) || 0,
         carbs: Number(carbs) || 0,
         calories: Number(calories) || 0,
-      }));
-
-      setManualNutritionInputs({
-        protein: String(protein ?? ""),
-        fat: String(fat ?? ""),
-        carbs: String(carbs ?? ""),
-        calories: String(calories ?? ""),
       });
 
       toast.success(t('addFood.photoSuccess'));
@@ -536,7 +526,6 @@ const AddFood = () => {
   const startScanner = async () => {
     processingScanRef.current = false;
     setIsProcessingScan(false);
-    setIsPhotoResult(false);
 
     const hasPermission = await ensureCameraPermission();
     if (!hasPermission) {
@@ -637,8 +626,12 @@ const AddFood = () => {
       return;
     }
 
-    const foodToAdd = selectedFood || manualFood;
+    const foodToAdd = selectedFood;
     if (!Number.isFinite(servingAmount) || servingAmount <= 0) {
+      toast.error(t('addFood.invalidAmount'));
+      return;
+    }
+    if (!foodToAdd) {
       toast.error(t('addFood.invalidAmount'));
       return;
     }
@@ -719,26 +712,34 @@ const AddFood = () => {
       historySwipeTriggered.current = false;
       return;
     }
-    setSelectedFood({
-      name: item.name,
-      brand: item.brand,
-      calories: item.calories,
-      protein: item.protein,
-      fat: item.fat,
-      carbs: item.carbs,
-      servingSize: item.servingSize,
-      servingUnit: item.servingUnit,
-    });
-    setServingAmount(item.servingSize);
-    setServingAmountInput(String(item.servingSize));
-    setManualEntry(false);
-    setIsPhotoResult(false);
+    const food = historyToFoodItem(item);
+    handleSelectFromDatabase(food);
   };
   
   // Manejar selección de alimento desde la base de datos
   const handleSelectFromDatabase = (food: FoodItemType) => {
+    setDetailsEditable(false);
+    setManualEntry(false);
     setSelectedDatabaseFood(food);
     setShowDetailsModal(true);
+  };
+
+  const openManualModal = (seed?: Partial<FoodItemType>) => {
+    setShowFavorites(false);
+    setSelectedFood(null);
+    setDetailsEditable(true);
+    setManualEntry(true);
+    setSelectedDatabaseFood(buildEditableFood(seed));
+    setShowDetailsModal(true);
+  };
+
+  const handleDetailsOpenChange = (open: boolean) => {
+    setShowDetailsModal(open);
+    if (!open) {
+      setSelectedDatabaseFood(null);
+      setDetailsEditable(false);
+      setManualEntry(false);
+    }
   };
   
   // Añadir alimento desde la base de datos
@@ -890,29 +891,7 @@ const AddFood = () => {
             title={t('addFood.manualEntry')}
             aria-label={t('addFood.manualEntry')}
             onClick={() => {
-              setShowFavorites(false);
-              setSelectedFood(null);
-              setServingAmount(100);
-              setServingAmountInput('100');
-              setManualFood({
-                name: "",
-                calories: 0,
-                protein: 0,
-                fat: 0,
-                carbs: 0,
-                servingSize: 100,
-                servingUnit: "g",
-                barcode: undefined,
-                brand: undefined,
-              });
-              setManualEntry(true);
-              setIsPhotoResult(false);
-              setManualNutritionInputs({
-                calories: "",
-                protein: "",
-                fat: "",
-                carbs: "",
-              });
+              openManualModal();
             }}
           >
             <ClipboardPen className="w-4 h-4" />
@@ -926,7 +905,6 @@ const AddFood = () => {
             onClick={() => {
               setManualEntry(false);
               setSelectedFood(null);
-              setIsPhotoResult(false);
               setShowFavorites((prev) => !prev);
             }}
           >
@@ -942,27 +920,20 @@ const AddFood = () => {
           />
         </div>
 
-        {/* Selected or Manual Food */}
-        {(selectedFood || manualEntry) && (
+        {/* Selected Food (escaneado o elegido) */}
+        {selectedFood && (
           <StatsCard>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="foodName">{t('addFood.productName')}</Label>
                 <Input
                   id="foodName"
-                  value={selectedFood?.name || manualFood.name}
-                  placeholder={isPhotoResult ? t('addFood.photoNamePlaceholder') : undefined}
-                  onChange={(e) => {
-                    if (selectedFood) {
-                      setSelectedFood({ ...selectedFood, name: e.target.value });
-                    } else {
-                      setManualFood({ ...manualFood, name: e.target.value });
-                    }
-                  }}
+                  value={selectedFood?.name || ""}
+                  onChange={(e) => setSelectedFood(selectedFood ? { ...selectedFood, name: e.target.value } : null)}
                 />
               </div>
 
-              {selectedFood && selectedFood.brand && !isPhotoResult && (
+              {selectedFood && selectedFood.brand && (
                 <div>
                   <Label htmlFor="brand">{t('addFood.brand')}</Label>
                   <Input
@@ -973,134 +944,45 @@ const AddFood = () => {
                 </div>
               )}
 
-              {!isPhotoResult && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="amount">{t('addFood.amount')}</Label>
-                    <Input
-                      id="amount"
-                      type="text"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.,]?[0-9]*"
-                      value={servingAmountInput}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="amount">{t('addFood.amount')}</Label>
+                  <Input
+                    id="amount"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    value={servingAmountInput}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
                         const cleaned = raw.replace(/^0+(?=\d)/, '');
-                          setServingAmountInput(cleaned);
-                          const parsed = parseFloat(cleaned.replace(',', '.'));
-                          if (!isNaN(parsed)) setServingAmount(parsed);
-                        }
-                      }}
-                      onBlur={() => {
-                        if (servingAmountInput === '') {
-                          setServingAmountInput('0');
-                          setServingAmount(0);
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="unit">{t('addFood.unit')}</Label>
-                    <Input
-                      id="unit"
-                      value={selectedFood?.servingUnit || manualFood.servingUnit}
-                      onChange={(e) => {
-                        if (selectedFood) {
-                          setSelectedFood({ ...selectedFood, servingUnit: e.target.value });
-                        } else {
-                          setManualFood({ ...manualFood, servingUnit: e.target.value });
-                        }
-                      }}
-                    />
-                  </div>
+                        setServingAmountInput(cleaned);
+                        const parsed = parseFloat(cleaned.replace(',', '.'));
+                        if (!isNaN(parsed)) setServingAmount(parsed);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (servingAmountInput === '') {
+                        setServingAmountInput('0');
+                        setServingAmount(0);
+                      }
+                    }}
+                  />
                 </div>
-              )}
-
-              {manualEntry && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>{t('addFood.calories')}</Label>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.,]?[0-9]*"
-                      value={manualNutritionInputs.calories}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
-                          setManualNutritionInputs((prev) => ({ ...prev, calories: raw }));
-                          const parsed = parseFloat(raw.replace(',', '.'));
-                          setManualFood((prev) => ({
-                            ...prev,
-                            calories: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t('addFood.protein')}</Label>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.,]?[0-9]*"
-                      value={manualNutritionInputs.protein}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
-                          setManualNutritionInputs((prev) => ({ ...prev, protein: raw }));
-                          const parsed = parseFloat(raw.replace(',', '.'));
-                          setManualFood((prev) => ({
-                            ...prev,
-                            protein: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t('addFood.fat')}</Label>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.,]?[0-9]*"
-                      value={manualNutritionInputs.fat}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
-                          setManualNutritionInputs((prev) => ({ ...prev, fat: raw }));
-                          const parsed = parseFloat(raw.replace(',', '.'));
-                          setManualFood((prev) => ({
-                            ...prev,
-                            fat: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <Label>{t('addFood.carbs')}</Label>
-                    <Input
-                      type="text"
-                      inputMode="decimal"
-                      pattern="[0-9]*[.,]?[0-9]*"
-                      value={manualNutritionInputs.carbs}
-                      onChange={(e) => {
-                        const raw = e.target.value;
-                        if (/^[0-9]*[.,]?[0-9]*$/.test(raw) || raw === "") {
-                          setManualNutritionInputs((prev) => ({ ...prev, carbs: raw }));
-                          const parsed = parseFloat(raw.replace(',', '.'));
-                          setManualFood((prev) => ({
-                            ...prev,
-                            carbs: raw === "" || Number.isNaN(parsed) ? 0 : parsed,
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="unit">{t('addFood.unit')}</Label>
+                  <Input
+                    id="unit"
+                    value={selectedFood?.servingUnit || ''}
+                    onChange={(e) => {
+                      if (selectedFood) {
+                        setSelectedFood({ ...selectedFood, servingUnit: e.target.value });
+                      }
+                    }}
+                  />
                 </div>
-              )}
+              </div>
 
               {selectedFood && (
                 <div className="bg-muted/30 rounded-lg p-3 space-y-1">
@@ -1426,8 +1308,9 @@ const AddFood = () => {
       <FoodDetailsModal
         food={selectedDatabaseFood}
         open={showDetailsModal}
-        onOpenChange={setShowDetailsModal}
+        onOpenChange={handleDetailsOpenChange}
         onAddFood={handleAddFromDatabase}
+        editable={detailsEditable}
       />
     </div>
   );

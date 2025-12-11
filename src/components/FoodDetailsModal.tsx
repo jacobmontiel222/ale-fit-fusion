@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ interface FoodDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddFood: (food: FoodItem, amount: number) => void;
+  editable?: boolean;
 }
 
 const CATEGORIES: { value: FoodCategory; label: string }[] = [
@@ -42,84 +43,120 @@ const TAGS: { value: FoodTag; label: string }[] = [
   { value: 'sin-lactosa', label: 'Sin lactosa' },
 ];
 
-export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDetailsModalProps) {
+export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable = false }: FoodDetailsModalProps) {
   const [amountInput, setAmountInput] = useState('100');
+  const [editableFood, setEditableFood] = useState<FoodItem | null>(food);
+  const UNIT_OPTIONS = ['g', 'ml', 'unidad'];
 
-  if (!food) return null;
+  useEffect(() => {
+    setEditableFood(food);
+    setAmountInput('100');
+  }, [food]);
+
+  const currentFood = editable ? editableFood : food;
+
+  if (!currentFood) return null;
 
   const amount = Math.max(0, parseFloat(amountInput.replace(',', '.')) || 0);
   const multiplier = amount / 100;
 
   const adjustedMacros = {
-    calories: Math.round(food.calories * multiplier),
-    protein: Math.round(food.protein * multiplier * 10) / 10,
-    fat: Math.round(food.fat * multiplier * 10) / 10,
-    carbs: Math.round(food.carbs * multiplier * 10) / 10,
-    fiber: food.fiber ? Math.round(food.fiber * multiplier * 10) / 10 : undefined,
-    sugar: food.sugar ? Math.round(food.sugar * multiplier * 10) / 10 : undefined,
+    calories: Math.round(currentFood.calories * multiplier),
+    protein: Math.round(currentFood.protein * multiplier * 10) / 10,
+    fat: Math.round(currentFood.fat * multiplier * 10) / 10,
+    carbs: Math.round(currentFood.carbs * multiplier * 10) / 10,
+    fiber: currentFood.fiber ? Math.round(currentFood.fiber * multiplier * 10) / 10 : undefined,
+    sugar: currentFood.sugar ? Math.round(currentFood.sugar * multiplier * 10) / 10 : undefined,
   };
 
   const handleAdd = () => {
-    onAddFood(food, amount);
+    if (!currentFood) return;
+    onAddFood(currentFood, amount);
     onOpenChange(false);
+  };
+
+  const handleNumberChange = (field: keyof FoodItem) => (value: string) => {
+    if (!editableFood) return;
+    if (!/^[0-9]*[.,]?[0-9]*$/.test(value)) return;
+    const parsed = parseFloat(value.replace(',', '.'));
+    setEditableFood({
+      ...editableFood,
+      [field]: Number.isFinite(parsed) ? parsed : 0,
+    });
+  };
+
+  const handleTextChange = (field: keyof FoodItem) => (value: string) => {
+    if (!editableFood) return;
+    setEditableFood({
+      ...editableFood,
+      [field]: value,
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <DialogTitle className="text-2xl mb-2">{food.name}</DialogTitle>
-              {food.brand && (
-                <p className="text-sm text-muted-foreground">{food.brand}</p>
+              {editable ? (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Nombre</Label>
+                    <Input
+                      value={editableFood?.name || ''}
+                      onChange={(e) => handleTextChange('name')(e.target.value)}
+                      placeholder="Ej. Pechuga de pollo"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-1 space-y-2">
+                      <Label className="text-sm font-semibold">Marca (opcional)</Label>
+                      <Input
+                        value={editableFood?.brand || ''}
+                        onChange={(e) => handleTextChange('brand')(e.target.value)}
+                        placeholder="Ej. Marca"
+                      />
+                    </div>
+                    <div className="w-36 space-y-2">
+                      <Label className="text-sm font-semibold">Unidad base</Label>
+                      <select
+                        className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm"
+                        value={editableFood?.servingUnit || 'g'}
+                        onChange={(e) => handleTextChange('servingUnit')(e.target.value)}
+                      >
+                        {UNIT_OPTIONS.map((u) => (
+                          <option key={u} value={u}>{u}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <DialogTitle className="text-2xl mb-2">{currentFood.name}</DialogTitle>
+                  {currentFood.brand && (
+                    <p className="text-sm text-muted-foreground">{currentFood.brand}</p>
+                  )}
+                </>
               )}
-              <div className="flex items-center gap-2 mt-2">
-                <Badge variant="secondary">
-                  {CATEGORIES.find(c => c.value === food.category)?.label}
-                </Badge>
-                {food.tags.slice(0, 2).map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">
-                    {TAGS.find(t => t.value === tag)?.label || tag}
+              {!editable && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary">
+                    {CATEGORIES.find(c => c.value === currentFood.category)?.label}
                   </Badge>
-                ))}
-              </div>
+                  {currentFood.tags.slice(0, 2).map((tag) => (
+                    <Badge key={tag} variant="outline" className="text-xs">
+                      {TAGS.find(t => t.value === tag)?.label || tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4">
-          {/* Cantidad */}
-          <div className="mb-6">
-            <Label htmlFor="amount" className="text-base font-semibold mb-2 block">
-              Cantidad
-            </Label>
-            <div className="flex items-center gap-3">
-              <Input
-                id="amount"
-                type="text"
-                inputMode="decimal"
-                pattern="[0-9]*[.,]?[0-9]*"
-                value={amountInput}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
-                    const cleaned = raw.replace(/^0+(?=\d)/, '');
-                    setAmountInput(cleaned);
-                  }
-                }}
-                onBlur={() => {
-                  if (amountInput === '') setAmountInput('0');
-                }}
-                className="w-32"
-              />
-              <span className="text-muted-foreground">{food.servingUnit}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Valores nutricionales por 100 {food.servingUnit}
-            </p>
-          </div>
-
+        <ScrollArea className="flex-1 px-6 py-4 max-h-[85vh] pb-10">
           <Tabs defaultValue="macros" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="macros">Macronutrientes</TabsTrigger>
@@ -127,11 +164,111 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDe
             </TabsList>
 
             <TabsContent value="macros" className="mt-4 space-y-4">
-              {/* Calorías */}
-              <div className="p-4 rounded-lg bg-secondary/30">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">Calorías</span>
-                  <span className="text-lg font-bold">{adjustedMacros.calories} kcal</span>
+              {editable && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Calorías (por 100)</Label>
+                      <Input
+                        value={editableFood?.calories ?? 0}
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        onChange={(e) => handleNumberChange('calories')(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Proteínas (g)</Label>
+                      <Input
+                        value={editableFood?.protein ?? 0}
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        onChange={(e) => handleNumberChange('protein')(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Grasas (g)</Label>
+                      <Input
+                        value={editableFood?.fat ?? 0}
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        onChange={(e) => handleNumberChange('fat')(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Carbohidratos (g)</Label>
+                      <Input
+                        value={editableFood?.carbs ?? 0}
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        onChange={(e) => handleNumberChange('carbs')(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Fibra (g)</Label>
+                      <Input
+                        value={editableFood?.fiber ?? 0}
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        onChange={(e) => handleNumberChange('fiber')(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm text-muted-foreground">Azúcares (g)</Label>
+                      <Input
+                        value={editableFood?.sugar ?? 0}
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        onChange={(e) => handleNumberChange('sugar')(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Introduce valores por cada 100 {currentFood.servingUnit}. Luego ajusta la cantidad de la ración.
+                  </p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="amount" className="text-base font-semibold">
+                  Cantidad a añadir
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="amount"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    value={amountInput}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
+                        const cleaned = raw.replace(/^0+(?=\\d)/, '');
+                        setAmountInput(cleaned);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (amountInput === '') setAmountInput('0');
+                    }}
+                    className="w-32"
+                  />
+                  <span className="text-muted-foreground">{currentFood.servingUnit}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Primero define los datos por 100 {currentFood.servingUnit}. Después escribe la ración aquí para ver los macros calculados abajo.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-foreground">
+                  Macros calculados para {amount || 0} {currentFood.servingUnit}
+                </div>
+                <div className="p-4 rounded-lg bg-secondary/30">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Calorías</span>
+                    <span className="text-lg font-bold">{adjustedMacros.calories} kcal</span>
+                  </div>
                 </div>
               </div>
 
@@ -166,14 +303,14 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDe
 
             <TabsContent value="micros" className="mt-4 space-y-4">
               {/* Vitaminas */}
-              {food.micronutrients.vitamins.length > 0 && (
+              {currentFood.micronutrients.vitamins.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Info className="w-4 h-4" />
                     Vitaminas
                   </h4>
                   <div className="space-y-2">
-                    {food.micronutrients.vitamins.map((vitamin, idx) => (
+                    {currentFood.micronutrients.vitamins.map((vitamin, idx) => (
                       <div key={idx} className="flex items-center justify-between py-2 border-b border-border">
                         <span className="text-muted-foreground">{vitamin.name}</span>
                         <div className="text-right">
@@ -193,14 +330,14 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDe
               )}
 
               {/* Minerales */}
-              {food.micronutrients.minerals.length > 0 && (
+              {currentFood.micronutrients.minerals.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Info className="w-4 h-4" />
                     Minerales
                   </h4>
                   <div className="space-y-2">
-                    {food.micronutrients.minerals.map((mineral, idx) => (
+                    {currentFood.micronutrients.minerals.map((mineral, idx) => (
                       <div key={idx} className="flex items-center justify-between py-2 border-b border-border">
                         <span className="text-muted-foreground">{mineral.name}</span>
                         <div className="text-right">
@@ -219,8 +356,8 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood }: FoodDe
                 </div>
               )}
 
-              {food.micronutrients.vitamins.length === 0 && 
-               food.micronutrients.minerals.length === 0 && (
+              {currentFood.micronutrients.vitamins.length === 0 && 
+               currentFood.micronutrients.minerals.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>No hay información de micronutrientes disponible</p>
                 </div>
