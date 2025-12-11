@@ -56,20 +56,32 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
   }, [food]);
 
   const currentFood = editable ? editableFood : food;
-
-  if (!currentFood) return null;
-
+  const unitLower = (currentFood?.servingUnit || 'g').toLowerCase();
+  const baseQuantity = unitLower === 'unidad' ? 1 : 100;
   const amount = Math.max(0, parseFloat(amountInput.replace(',', '.')) || 0);
-  const multiplier = amount / 100;
+  const multiplier = amount / baseQuantity;
 
-  const adjustedMacros = {
-    calories: Math.round(currentFood.calories * multiplier),
-    protein: Math.round(currentFood.protein * multiplier * 10) / 10,
-    fat: Math.round(currentFood.fat * multiplier * 10) / 10,
-    carbs: Math.round(currentFood.carbs * multiplier * 10) / 10,
-    fiber: currentFood.fiber ? Math.round(currentFood.fiber * multiplier * 10) / 10 : undefined,
-    sugar: currentFood.sugar ? Math.round(currentFood.sugar * multiplier * 10) / 10 : undefined,
-  };
+  useEffect(() => {
+    setAmountInput(String(baseQuantity));
+  }, [baseQuantity]);
+
+  const adjustedMacros = currentFood
+    ? {
+        calories: Math.round(currentFood.calories * multiplier),
+        protein: Math.round(currentFood.protein * multiplier * 10) / 10,
+        fat: Math.round(currentFood.fat * multiplier * 10) / 10,
+        carbs: Math.round(currentFood.carbs * multiplier * 10) / 10,
+        fiber: currentFood.fiber ? Math.round(currentFood.fiber * multiplier * 10) / 10 : undefined,
+        sugar: currentFood.sugar ? Math.round(currentFood.sugar * multiplier * 10) / 10 : undefined,
+      }
+    : {
+        calories: 0,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        fiber: 0,
+        sugar: 0,
+      };
 
   const handleAdd = () => {
     if (!currentFood) return;
@@ -94,6 +106,8 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
       [field]: value,
     });
   };
+
+  if (!currentFood) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -173,7 +187,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-sm text-muted-foreground">
-                        {t('foodDetails.caloriesPer100', { unit: currentFood.servingUnit || 'g' })}
+                        {t('foodDetails.caloriesPerBase', { unit: currentFood.servingUnit || 'g', base: baseQuantity })}
                       </Label>
                       <Input
                         value={editableFood?.calories ?? 0}
@@ -233,7 +247,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t('foodDetails.per100Instruction', { unit: currentFood.servingUnit })}
+                    {t('foodDetails.perBaseInstruction', { unit: currentFood.servingUnit, base: baseQuantity })}
                   </p>
                 </div>
               )}
@@ -248,6 +262,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                     inputMode="decimal"
                     pattern="[0-9]*[.,]?[0-9]*"
                     value={amountInput}
+                    placeholder={String(baseQuantity)}
                     onChange={(e) => {
                       const raw = e.target.value;
                       if (/^[0-9]*[.,]?[0-9]*$/.test(raw)) {
