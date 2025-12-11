@@ -117,6 +117,24 @@ const AddFood = () => {
     lastUpdated: undefined,
   });
 
+  const scannedFoodToFoodItemType = (food: FoodItem): FoodItemType => ({
+    id: `scan-${food.name}-${food.brand || ''}-${Date.now()}`,
+    name: food.name,
+    brand: food.brand || undefined,
+    category: 'otros',
+    tags: [],
+    calories: food.calories,
+    protein: food.protein,
+    fat: food.fat,
+    carbs: food.carbs,
+    micronutrients: { vitamins: [], minerals: [] },
+    servingSize: food.servingSize,
+    servingUnit: food.servingUnit,
+    barcode: food.barcode,
+    searchTerms: [],
+    lastUpdated: undefined,
+  });
+
   const buildEditableFood = (seed?: Partial<FoodItemType>): FoodItemType => ({
     id: seed?.id || `manual-${Date.now()}`,
     name: seed?.name || '',
@@ -589,9 +607,10 @@ const AddFood = () => {
             servingUnit: "g",
           };
           
-          setSelectedFood(item);
-          setServingAmount(item.servingSize);
+          setSelectedFood(null);
           setManualEntry(false);
+          const mapped = scannedFoodToFoodItemType(item);
+          handleSelectFromDatabase(mapped);
           toast.success(t('addFood.scanDetected', { item: item.name }));
           setIsProcessingScan(false);
           setScannerOpen(false);
@@ -1040,10 +1059,10 @@ const AddFood = () => {
                         <h4 className="text-sm font-semibold text-foreground leading-tight truncate">{getFoodName(food)}</h4>
                         {food.brand && <span className="text-[11px] text-muted-foreground truncate">· {food.brand}</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground font-semibold">
-                        {food.calories} kcal | {food.protein}P {food.fat}G {food.carbs}C
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">{t('foodSearch.per')} {food.servingSize} {food.servingUnit}</p>
+                      <div className="text-xs text-muted-foreground font-semibold flex items-center gap-2">
+                        <span>{food.calories} kcal | {food.protein}P {food.fat}G {food.carbs}C</span>
+                        <span className="text-[11px] text-muted-foreground">({t('foodSearch.per')} {food.servingSize} {food.servingUnit})</span>
+                      </div>
                     </div>
                     <div className="flex flex-col items-center gap-1">
                       <Button

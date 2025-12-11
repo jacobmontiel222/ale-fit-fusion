@@ -142,9 +142,11 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               )}
               {!editable && (
                 <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary">
-                    {CATEGORIES.find(c => c.value === currentFood.category)?.label}
-                  </Badge>
+                  {CATEGORIES.find(c => c.value === currentFood.category)?.label !== 'Otros' && (
+                    <Badge variant="secondary">
+                      {CATEGORIES.find(c => c.value === currentFood.category)?.label}
+                    </Badge>
+                  )}
                   {currentFood.tags.slice(0, 2).map((tag) => (
                     <Badge key={tag} variant="outline" className="text-xs">
                       {TAGS.find(t => t.value === tag)?.label || tag}
@@ -256,9 +258,6 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                   />
                   <span className="text-muted-foreground">{currentFood.servingUnit}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Primero define los datos por 100 {currentFood.servingUnit}. Después escribe la ración aquí para ver los macros calculados abajo.
-                </p>
               </div>
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-foreground">
