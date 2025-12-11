@@ -156,7 +156,7 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 py-4 max-h-[85vh] pb-10 overflow-y-auto snap-none overscroll-contain">
+        <ScrollArea className="flex-1 px-6 py-4 max-h-[calc(100vh-140px)] pb-16 overflow-y-auto snap-none overscroll-contain">
           <Tabs defaultValue="macros" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="macros">Macronutrientes</TabsTrigger>
@@ -364,14 +364,12 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
               )}
             </TabsContent>
           </Tabs>
+          <div className="mt-6">
+            <Button onClick={handleAdd} className="w-full" size="lg" disabled={amount <= 0}>
+              Añadir {amount} {currentFood.servingUnit}
+            </Button>
+          </div>
         </ScrollArea>
-
-        {/* Footer con botón de añadir */}
-        <div className="px-6 py-4 border-t border-border">
-          <Button onClick={handleAdd} className="w-full" size="lg" disabled={amount <= 0}>
-            Añadir {amount} {food.servingUnit}
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
