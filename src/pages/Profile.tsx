@@ -34,6 +34,9 @@ interface ProfileData {
   avatar_icon: string;
   avatar_color: string;
   share_foods_with_community: boolean;
+  water_goal_ml?: number | null;
+  burn_goal_kcal?: number | null;
+  calories_goal?: number | null;
 }
 
 const Profile = () => {
@@ -49,7 +52,10 @@ const Profile = () => {
     target_weight: null,
     avatar_icon: 'apple',
     avatar_color: '#10B981',
-    share_foods_with_community: false
+    share_foods_with_community: false,
+    water_goal_ml: null,
+    burn_goal_kcal: null,
+    calories_goal: null,
   });
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
@@ -287,6 +293,13 @@ const Profile = () => {
                 </span>
               )}
             </div>
+          </div>
+        </StatsCard>
+
+        {/* Objetivos */}
+        <StatsCard>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('profile.goalsCard', 'Objetivos')}</h3>
+          <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-foreground">{t('profile.targetWeight')}</span>
               {isEditing ? (
@@ -294,15 +307,74 @@ const Profile = () => {
                   <Input
                     type="number"
                     step="0.1"
-                    value={editData.target_weight || ""}
-                    onChange={(e) => setEditData({ ...editData, target_weight: e.target.value ? Number(e.target.value) : null })}
-                    className="w-20 h-8 text-right"
-                    placeholder="0"
+                    value={editData.target_weight ?? ""}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, target_weight: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-24 h-8 text-right"
+                    placeholder="70"
                   />
                   <span className="text-muted-foreground">{t('profile.kg')}</span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">{profile?.target_weight || 0} {t('profile.kg')}</span>
+                <span className="text-muted-foreground">
+                  {profile?.target_weight != null ? `${profile.target_weight} ${t('profile.kg')}` : '--'}
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">{t('profile.waterGoal', 'Objetivo de agua')}</span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={editData.water_goal_ml ?? ""}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, water_goal_ml: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-28 h-8 text-right"
+                    placeholder="3000"
+                  />
+                  <span className="text-muted-foreground">ml</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">
+                  {profile?.water_goal_ml != null ? `${profile.water_goal_ml} ml` : '--'}
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">{t('profile.caloriesGoal', 'Objetivo de calorías')}</span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={editData.calories_goal ?? ""}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, calories_goal: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-28 h-8 text-right"
+                    placeholder="2000"
+                  />
+                  <span className="text-muted-foreground">kcal</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">
+                  {profile?.calories_goal != null ? `${profile.calories_goal} kcal` : '--'}
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">{t('profile.burnGoal', 'Objetivo de calorías quemadas')}</span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={editData.burn_goal_kcal ?? ""}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, burn_goal_kcal: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-28 h-8 text-right"
+                    placeholder="500"
+                  />
+                  <span className="text-muted-foreground">kcal</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">
+                  {profile?.burn_goal_kcal != null ? `${profile.burn_goal_kcal} kcal` : '--'}
+                </span>
               )}
             </div>
           </div>

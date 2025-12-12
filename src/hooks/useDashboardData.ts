@@ -14,12 +14,13 @@ export const useDashboardData = () => {
       if (!user?.id) throw new Error('No user');
 
       // Load all data in parallel
-      const [profileData, weightData, stepsData, nutritionData, waterData] = await Promise.all([
-        supabase.from('profiles').select('name').eq('id', user.id).maybeSingle(),
+      const [profileData, weightData, stepsData, nutritionData, waterData, goalsData] = await Promise.all([
+        supabase.from('profiles').select('name, water_goal_ml, burn_goal_kcal').eq('id', user.id).maybeSingle(),
         supabase.from('daily_weight').select('weight').eq('user_id', user.id).eq('date', today).maybeSingle(),
         supabase.from('daily_steps').select('steps').eq('user_id', user.id).eq('date', today).maybeSingle(),
         getTotals(today),
         supabase.from('daily_water_intake').select('ml_consumed').eq('user_id', user.id).eq('date', today).maybeSingle(),
+        supabase.from('nutrition_goals').select('calories_goal').eq('user_id', user.id).maybeSingle(),
       ]);
 
       return {
@@ -28,6 +29,9 @@ export const useDashboardData = () => {
         todaySteps: stepsData.data?.steps || 0,
         todayNutrition: nutritionData,
         todayWater: waterData.data?.ml_consumed || 0,
+        waterGoal: profileData.data?.water_goal_ml || 2000,
+        burnGoal: profileData.data?.burn_goal_kcal || 500,
+        caloriesGoal: goalsData.data?.calories_goal || nutritionData?.kcalTarget || 2000,
       };
     },
     enabled: !!user?.id,
@@ -36,5 +40,6 @@ export const useDashboardData = () => {
   return {
     data: query.data,
     isLoading: query.isLoading,
+    refetch: query.refetch,
   };
 };

@@ -11,6 +11,9 @@ interface ProfileData {
   avatar_icon: string;
   avatar_color: string;
   share_foods_with_community: boolean;
+  water_goal_ml?: number | null;
+  burn_goal_kcal?: number | null;
+  calories_goal?: number | null;
 }
 
 export const useProfile = () => {
@@ -28,6 +31,9 @@ export const useProfile = () => {
           target_weight: null,
           avatar_icon: 'apple',
           avatar_color: '#10B981',
+          water_goal_ml: null,
+          burn_goal_kcal: null,
+          calories_goal: null,
         };
       }
 
@@ -35,11 +41,12 @@ export const useProfile = () => {
         { data: authData },
         { data: profileData },
         { data: latestWeight },
+        { data: nutritionGoals },
       ] = await Promise.all([
         supabase.auth.getUser(),
         supabase
           .from('profiles')
-          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color, share_foods_with_community')
+          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color, share_foods_with_community, water_goal_ml, burn_goal_kcal')
           .eq('id', user.id)
           .maybeSingle(),
         supabase
@@ -49,6 +56,11 @@ export const useProfile = () => {
           .order('date', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('nutrition_goals')
+          .select('calories_goal')
+          .eq('user_id', user.id)
           .maybeSingle(),
       ]);
 
@@ -66,6 +78,9 @@ export const useProfile = () => {
         avatar_icon: profileData?.avatar_icon || 'apple',
         avatar_color: profileData?.avatar_color || '#10B981',
         share_foods_with_community: profileData?.share_foods_with_community ?? false,
+        water_goal_ml: profileData?.water_goal_ml ?? null,
+        burn_goal_kcal: profileData?.burn_goal_kcal ?? null,
+        calories_goal: nutritionGoals?.calories_goal ?? null,
       };
     },
     enabled: !!user?.id,
@@ -85,17 +100,28 @@ export const useProfile = () => {
       if (data.share_foods_with_community !== undefined) {
         updateData.share_foods_with_community = data.share_foods_with_community;
       }
+      if (data.water_goal_ml !== undefined) updateData.water_goal_ml = data.water_goal_ml;
+      if (data.burn_goal_kcal !== undefined) updateData.burn_goal_kcal = data.burn_goal_kcal;
 
-      if (Object.keys(updateData).length === 0) {
-        return data;
+      if (Object.keys(updateData).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(updateData)
+          .eq('id', user.id);
+
+        if (error) throw error;
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id);
+      if (data.calories_goal !== undefined) {
+        const { error: goalsError } = await supabase
+          .from('nutrition_goals')
+          .upsert({
+            user_id: user.id,
+            calories_goal: data.calories_goal,
+          }, { onConflict: 'user_id' });
 
-      if (error) throw error;
+        if (goalsError) throw goalsError;
+      }
       return data;
     },
     onSuccess: () => {

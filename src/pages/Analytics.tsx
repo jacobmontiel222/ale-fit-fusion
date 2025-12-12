@@ -46,6 +46,8 @@ const Analytics = () => {
   const [showAddWater, setShowAddWater] = useState(false);
   const [newWaterAmount, setNewWaterAmount] = useState("");
   const [newWaterDate, setNewWaterDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [targetWeightGoal, setTargetWeightGoal] = useState<number | null>(null);
+  const [savingSteps, setSavingSteps] = useState(false);
 
   // Color scheme
   const COLORS = {
@@ -58,6 +60,9 @@ const Analytics = () => {
   const [weightData, setWeightData] = useState<WeightEntry[]>([]);
   const [stepsData, setStepsData] = useState<StepsEntry[]>([]);
   const [waterData, setWaterData] = useState<WaterEntry[]>([]);
+  const [showAddSteps, setShowAddSteps] = useState(false);
+  const [newStepsAmount, setNewStepsAmount] = useState("");
+  const [newStepsDate, setNewStepsDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     const loadData = async () => {
@@ -95,9 +100,20 @@ const Analytics = () => {
       if (water) {
         setWaterData(water.map(w => ({ date: w.date, ml: w.ml_consumed })));
       }
+
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('target_weight')
+        .eq('id', user.id)
+        .maybeSingle();
+      setTargetWeightGoal(profileRow?.target_weight ?? null);
     };
 
     loadData();
+
+    const handleWaterUpdated = () => loadData();
+    window.addEventListener('waterUpdated', handleWaterUpdated);
+    return () => window.removeEventListener('waterUpdated', handleWaterUpdated);
   }, [user]);
 
   // Scroll to focused section and open add dialogs if needed
@@ -113,10 +129,58 @@ const Analytics = () => {
     if (shouldAddWeight && focusSection === 'weight') {
       setShowAddWeight(true);
     }
-    if (focusSection === 'water') {
-      // Could add auto-open for water dialog here if needed
+      if (focusSection === 'water') {
+        // Could add auto-open for water dialog here if needed
+      }
+    if (focusSection === 'steps') {
+      // Could auto-open steps dialog if needed
     }
   }, [focusSection, shouldAddWeight]);
+
+  const handleAddSteps = async () => {
+    if (!user?.id || !newStepsAmount || !newStepsDate) return;
+    setSavingSteps(true);
+    try {
+      const stepsValue = Number(newStepsAmount);
+      if (Number.isNaN(stepsValue) || stepsValue < 0) throw new Error('Invalid steps');
+
+      const { data: existing } = await supabase
+        .from('daily_steps')
+        .select('steps')
+        .eq('user_id', user.id)
+        .eq('date', newStepsDate)
+        .maybeSingle();
+
+      const newTotal = (existing?.steps || 0) + stepsValue;
+
+      const { error } = await supabase
+        .from('daily_steps')
+        .upsert({
+          user_id: user.id,
+          date: newStepsDate,
+          steps: newTotal,
+        }, { onConflict: 'user_id,date' });
+
+      if (error) throw error;
+
+      const { data: steps } = await supabase
+        .from('daily_steps')
+        .select('date, steps')
+        .eq('user_id', user.id)
+        .order('date', { ascending: true });
+      if (steps) setStepsData(steps.map(s => ({ date: s.date, steps: s.steps })));
+
+      setShowAddSteps(false);
+      setNewStepsAmount("");
+
+      // Notifica a otras pantallas para que refresquen pasos
+      window.dispatchEvent(new Event('stepsUpdated'));
+    } catch (e) {
+      console.error('Error saving steps', e);
+    } finally {
+      setSavingSteps(false);
+    }
+  };
 
   const getDateRange = (range: DateRange): { startDate: Date; endDate: Date } => {
     const today = new Date();
@@ -347,6 +411,19 @@ const Analytics = () => {
     ? (validWeightData[validWeightData.length - 1].kg - validWeightData[0].kg).toFixed(1)
     : "0.0";
 
+  const startWeight = validWeightData.length >= 1 ? validWeightData[0].kg : null;
+  const endWeight = validWeightData.length >= 1 ? validWeightData[validWeightData.length - 1].kg : null;
+  const weightTrendClass = (() => {
+    if (targetWeightGoal == null || startWeight == null || endWeight == null) {
+      return 'text-foreground';
+    }
+    const before = Math.abs(targetWeightGoal - startWeight);
+    const after = Math.abs(targetWeightGoal - endWeight);
+    if (after < before) return 'text-green-500';
+    if (after > before) return 'text-destructive';
+    return 'text-foreground';
+  })();
+
   const lastWeight = validWeightData.length > 0 
     ? validWeightData[validWeightData.length - 1]
     : null;
@@ -393,9 +470,8 @@ const Analytics = () => {
               <Scale className="w-5 h-5" style={{ color: COLORS.weight }} />
               <h2 className="text-xl font-semibold text-foreground">{t('analytics.weight')}</h2>
             </div>
-            <Button size="sm" onClick={() => setShowAddWeight(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t('common.add')}
+            <Button size="sm" onClick={() => setShowAddWeight(true)} aria-label={t('common.add')}>
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
 
@@ -492,7 +568,7 @@ const Analytics = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">{t('analytics.variation')}</p>
-              <p className={`text-lg font-semibold ${Number(weightDelta) < 0 ? 'text-accent' : 'text-foreground'}`}>
+              <p className={`text-lg font-semibold ${weightTrendClass}`}>
                 {Number(weightDelta) > 0 ? '+' : ''}{weightDelta} kg
               </p>
               <p className="text-xs text-muted-foreground">
@@ -513,6 +589,9 @@ const Analytics = () => {
               <Footprints className="w-5 h-5" style={{ color: COLORS.steps }} />
               <h2 className="text-xl font-semibold text-foreground">{t('analytics.steps')}</h2>
             </div>
+            <Button size="sm" onClick={() => setShowAddSteps(true)} aria-label={t('common.add')}>
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Range Selector */}
@@ -596,6 +675,45 @@ const Analytics = () => {
           </div>
         </StatsCard>
 
+        {/* Add Steps Dialog */}
+        <Dialog open={showAddSteps} onOpenChange={setShowAddSteps}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('analytics.addSteps', 'Añadir pasos')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="steps-date">{t('analytics.date')}</Label>
+                <Input
+                  id="steps-date"
+                  type="date"
+                  value={newStepsDate}
+                  onChange={(e) => setNewStepsDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="steps-amount">{t('analytics.steps')}</Label>
+                <Input
+                  id="steps-amount"
+                  type="number"
+                  inputMode="numeric"
+                  value={newStepsAmount}
+                  onChange={(e) => setNewStepsAmount(e.target.value)}
+                  placeholder="8000"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setShowAddSteps(false)} disabled={savingSteps}>
+                {t('common.cancel')}
+              </Button>
+              <Button onClick={handleAddSteps} disabled={savingSteps || !newStepsAmount}>
+                {savingSteps ? t('profile.saving') : t('common.add')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Water Card */}
         <StatsCard id="water">
           <div className="flex items-center justify-between mb-4">
@@ -603,9 +721,8 @@ const Analytics = () => {
               <Droplet className="w-5 h-5" style={{ color: COLORS.water }} />
               <h2 className="text-xl font-semibold text-foreground">{t('analytics.water')}</h2>
             </div>
-            <Button size="sm" onClick={() => setShowAddWater(true)}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t('common.add')}
+            <Button size="sm" onClick={() => setShowAddWater(true)} aria-label={t('common.add')}>
+              <Plus className="w-4 h-4" />
             </Button>
           </div>
 

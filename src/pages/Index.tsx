@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell, ArrowRight, Scale, Footprints, Flame, Dumbbell, User, Droplet, Bot } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
+import { ProgressRing } from "@/components/ProgressRing";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,11 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useTranslation } from "react-i18next";
 import { trackAnalyticsEvent, FITAI_OPEN_FROM_HOME_HEADER_EVENT, FITAI_OPEN_FROM_TAB_EVENT } from "@/lib/analytics";
 import { FITAI_UNREAD_KEY, getFitAIUnread, setFitAIUnread } from "@/lib/fitai";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeightEntry {
   date: string;
@@ -23,9 +29,13 @@ interface StepsEntry {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useDashboardData();
+  const { data, isLoading, refetch } = useDashboardData();
   const { t } = useTranslation();
   const [hasFitAIUnread, setHasFitAIUnread] = useState(false);
+  const { user } = useAuth();
+  const [showAddWater, setShowAddWater] = useState(false);
+  const [waterInput, setWaterInput] = useState("");
+  const [savingWater, setSavingWater] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -52,12 +62,18 @@ const Index = () => {
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener("fityai:unread-changed", customHandler);
+    const handleWaterUpdated = () => refetch();
+    const handleStepsUpdated = () => refetch();
+    window.addEventListener("waterUpdated", handleWaterUpdated);
+    window.addEventListener("stepsUpdated", handleStepsUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("fityai:unread-changed", customHandler);
+      window.removeEventListener("waterUpdated", handleWaterUpdated);
+      window.removeEventListener("stepsUpdated", handleStepsUpdated);
     };
-  }, []);
+  }, [refetch]);
 
   const handleOpenFitAI = () => {
     setFitAIUnread(false);
@@ -70,8 +86,6 @@ const Index = () => {
     navigate("/fityai");
   };
   
-  const kcalPerStep = 0.045;
-  
   // Use data from hook with defaults
   const userName = data?.userName || "Usuario";
   const todayWeight = data?.todayWeight ?? null;
@@ -82,9 +96,54 @@ const Index = () => {
     kcalTarget: 2000,
     macrosG: { protein: 0, fat: 0, carbs: 0 }
   };
+  const waterGoal = data?.waterGoal || 2000;
+  const burnGoal = data?.burnGoal || 500;
 
+  // Calorías por paso ajustadas por peso (fallback a constante si no hay peso)
+  const kcalPerStep = todayWeight
+    ? Math.min(0.08, Math.max(0.02, todayWeight * 0.00065))
+    : 0.045;
+  
   // Calculate exercise calories
   const exerciseKcal = Math.round(todaySteps * kcalPerStep);
+  const waterProgress = Math.min(todayWater / (waterGoal || 1), 1);
+  const burnProgress = Math.min(exerciseKcal / (burnGoal || 1), 1);
+
+  const handleSaveWater = async () => {
+    if (!user?.id) return;
+    const amount = Number(waterInput);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    setSavingWater(true);
+    try {
+      const todayISO = new Date().toISOString().split('T')[0];
+      const { data: existing } = await supabase
+        .from('daily_water_intake')
+        .select('ml_consumed')
+        .eq('user_id', user.id)
+        .eq('date', todayISO)
+        .maybeSingle();
+      const newTotal = (existing?.ml_consumed || 0) + amount;
+      const { error } = await supabase
+        .from('daily_water_intake')
+        .upsert(
+          {
+            user_id: user.id,
+            date: todayISO,
+            ml_consumed: newTotal,
+          },
+          { onConflict: 'user_id,date' },
+        );
+      if (error) throw error;
+      await refetch();
+      window.dispatchEvent(new Event('waterUpdated'));
+      setShowAddWater(false);
+      setWaterInput("");
+    } catch (err) {
+      console.error('Error saving water', err);
+    } finally {
+      setSavingWater(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -176,34 +235,55 @@ const Index = () => {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <div 
-                className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
-                onClick={() => navigate('/analytics?focus=water')}
+                className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-3 flex items-center gap-3"
+                onClick={() => setShowAddWater(true)}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Droplet 
-                    className="w-4 h-4" 
-                    style={{ color: '#60a5fa' }}
-                  />
-                  <p className="text-sm text-muted-foreground">{t('dashboard.waterConsumed')}</p>
+                <ProgressRing
+                  value={todayWater}
+                  max={waterGoal}
+                  size={60}
+                  strokeWidth={6}
+                  label={null}
+                  strokeColor="#60a5fa"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Droplet className="w-4 h-4" style={{ color: '#60a5fa' }} />
+                    <p className="text-sm text-muted-foreground">{t('dashboard.waterShort', 'Agua')}</p>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold leading-none" style={{ fontSize: 'clamp(1.2rem, 5vw, 1.4rem)' }}>
+                      {todayWater.toLocaleString('es-ES')}
+                    </span>
+                    <span className="text-xs text-muted-foreground">ml</span>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
-                  {todayWater.toLocaleString('es-ES')}
-                </p>
-                <p className="text-xs text-muted-foreground">ml</p>
               </div>
               
               <div 
-                className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-4"
+                className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-3 flex items-center gap-3"
                 onClick={() => navigate('/analytics?focus=steps')}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
-                  <p className="text-sm text-muted-foreground">{t('dashboard.burned')}</p>
+                <ProgressRing
+                  value={exerciseKcal}
+                  max={burnGoal}
+                  size={60}
+                  strokeWidth={6}
+                  label={null}
+                  strokeColor="#ff6b35"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Flame className="w-4 h-4" style={{ color: '#ff6b35' }} />
+                    <p className="text-sm text-muted-foreground">{t('dashboard.burned')}</p>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold leading-none" style={{ fontSize: 'clamp(1.2rem, 5vw, 1.4rem)' }}>
+                      {exerciseKcal.toLocaleString('es-ES')}
+                    </span>
+                    <span className="text-xs text-muted-foreground">kcal</span>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-foreground" style={{ fontSize: 'clamp(1.25rem, 5vw, 1.5rem)' }}>
-                  {exerciseKcal.toLocaleString('es-ES')}
-                </p>
-                <p className="text-xs text-muted-foreground">kcal</p>
               </div>
             </div>
           )}
@@ -341,6 +421,33 @@ const Index = () => {
       </div>
 
       <BottomNav />
+
+      {/* Add Water Dialog */}
+      <Dialog open={showAddWater} onOpenChange={setShowAddWater}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dashboard.waterShort', 'Agua')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              id="water-amount"
+              type="number"
+              inputMode="numeric"
+              value={waterInput}
+              onChange={(e) => setWaterInput(e.target.value)}
+              placeholder="300"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowAddWater(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleSaveWater} disabled={!waterInput || savingWater}>
+              {savingWater ? t('profile.saving') : t('common.add')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
