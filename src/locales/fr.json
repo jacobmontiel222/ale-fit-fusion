@@ -54,6 +54,22 @@
     "recipesDescription": "Créez et sauvegardez vos recettes personnalisées.",
     "editMacros": "Modifier macros"
   },
+  "macrosModal": {
+    "title": "Modifier l'objectif de macros",
+    "description": "Définissez vos macronutriments en pourcentage. Ils doivent totaliser exactement 100 %.",
+    "caloriesLabel": "Objectif calorique quotidien",
+    "kcalPerDay": "kcal par jour",
+    "totalLabel": "Total des macros :",
+    "totalUnder": "Il manque {{value}} %",
+    "totalOver": "Il y a {{value}} % en trop",
+    "percentOfTotal": "% du total",
+    "protein": "Protéines",
+    "fat": "Lipides",
+    "carbs": "Glucides",
+    "help": "Quand vous modifiez protéines ou lipides, les glucides s'ajustent automatiquement pour rester à 100 %.",
+    "validation": "Les pourcentages doivent totaliser exactement 100 % avant d'enregistrer.",
+    "save": "Enregistrer les modifications"
+  },
   "addFood": {
     "title": "Ajouter à {{meal}}",
     "searchPlaceholder": "Rechercher un aliment...",

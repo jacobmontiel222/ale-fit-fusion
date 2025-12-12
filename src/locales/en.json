@@ -56,6 +56,22 @@
     "recipesDescription": "Create and save your custom recipes.",
     "editMacros": "Edit macros"
   },
+  "macrosModal": {
+    "title": "Edit macro goal",
+    "description": "Set your macronutrients as percentages. They must add up to exactly 100%.",
+    "caloriesLabel": "Daily calorie goal",
+    "kcalPerDay": "kcal per day",
+    "totalLabel": "Total macros:",
+    "totalUnder": "Missing {{value}}%",
+    "totalOver": "Over by {{value}}%",
+    "percentOfTotal": "% of total",
+    "protein": "Protein",
+    "fat": "Fat",
+    "carbs": "Carbs",
+    "help": "When you change protein or fat, carbs adjust automatically to keep 100%.",
+    "validation": "Percentages must add up to exactly 100% before saving.",
+    "save": "Save changes"
+  },
   "addFood": {
     "title": "Add to {{meal}}",
     "searchPlaceholder": "Search food...",

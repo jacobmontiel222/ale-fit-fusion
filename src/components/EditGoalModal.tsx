@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface MacroGoals {
   calories: number;
@@ -22,6 +23,7 @@ interface EditGoalModalProps {
 }
 
 export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: EditGoalModalProps) => {
+  const { t } = useTranslation();
   // Use string for inputs to allow empty state
   const [caloriesInput, setCaloriesInput] = useState(String(currentGoals.calories));
   
@@ -140,9 +142,9 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar objetivo de macros</DialogTitle>
+          <DialogTitle>{t('macrosModal.title')}</DialogTitle>
           <DialogDescription>
-            Define tus macronutrientes en porcentajes. Deben sumar exactamente 100%.
+            {t('macrosModal.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -150,7 +152,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
           {/* Calories Goal */}
           <div className="p-4 rounded-lg bg-muted/50 border border-border">
             <Label htmlFor="calories" className="text-base font-semibold">
-              Objetivo calórico diario
+              {t('macrosModal.caloriesLabel')}
             </Label>
             <Input
               id="calories"
@@ -162,7 +164,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
               step={50}
               className="mt-2 text-lg font-bold"
             />
-            <p className="text-xs text-muted-foreground mt-1">kcal por día</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('macrosModal.kcalPerDay')}</p>
           </div>
 
           {/* Percentage Sum Indicator */}
@@ -170,14 +172,17 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             isValid ? 'bg-green-500/10 border-green-500/50' : 'bg-orange-500/10 border-orange-500/50'
           }`}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Total de macros:</span>
+              <span className="text-sm font-medium">{t('macrosModal.totalLabel')}</span>
               <span className={`text-lg font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
                 {totalPct.toFixed(1)}%
               </span>
             </div>
             {!isValid && (
               <p className="text-xs text-muted-foreground mt-1">
-                {totalPct < 100 ? `Faltan ${(100 - totalPct).toFixed(1)}%` : `Sobran ${(totalPct - 100).toFixed(1)}%`}
+                {totalPct < 100 
+                  ? t('macrosModal.totalUnder', { value: (100 - totalPct).toFixed(1) })
+                  : t('macrosModal.totalOver', { value: (totalPct - 100).toFixed(1) })
+                }
               </p>
             )}
           </div>
@@ -188,7 +193,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <div className="space-y-2 p-4 rounded-lg border border-border">
               <Label htmlFor="protein" className="text-base font-medium flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--protein))' }}></span>
-                Proteínas
+                {t('macrosModal.protein')}
               </Label>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
@@ -202,7 +207,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                     step={1}
                     className="text-lg font-semibold"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">% del total</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('macrosModal.percentOfTotal')}</p>
                 </div>
                 <div className="text-right pb-1">
                   <p className="text-sm font-medium text-foreground">{proteinGrams}g</p>
@@ -215,7 +220,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <div className="space-y-2 p-4 rounded-lg border border-border">
               <Label htmlFor="fat" className="text-base font-medium flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--fat))' }}></span>
-                Grasas
+                {t('macrosModal.fat')}
               </Label>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
@@ -229,7 +234,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                     step={1}
                     className="text-lg font-semibold"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">% del total</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('macrosModal.percentOfTotal')}</p>
                 </div>
                 <div className="text-right pb-1">
                   <p className="text-sm font-medium text-foreground">{fatGrams}g</p>
@@ -242,7 +247,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <div className="space-y-2 p-4 rounded-lg border border-border">
               <Label htmlFor="carbs" className="text-base font-medium flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--carbs))' }}></span>
-                Carbohidratos
+                {t('macrosModal.carbs')}
               </Label>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
@@ -256,7 +261,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
                     step={1}
                     className="text-lg font-semibold"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">% del total</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('macrosModal.percentOfTotal')}</p>
                 </div>
                 <div className="text-right pb-1">
                   <p className="text-sm font-medium text-foreground">{carbsGrams}g</p>
@@ -270,7 +275,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Al modificar proteínas o grasas, los carbohidratos se ajustan automáticamente para mantener 100%.
+              {t('macrosModal.help')}
             </AlertDescription>
           </Alert>
 
@@ -279,7 +284,7 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Los porcentajes deben sumar exactamente 100% para poder guardar.
+                {t('macrosModal.validation')}
               </AlertDescription>
             </Alert>
           )}
@@ -287,10 +292,10 @@ export const EditGoalModal = ({ open, onOpenChange, currentGoals, onSave }: Edit
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4 border-t border-border">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSave} disabled={!isValid}>
-              Guardar cambios
+              {t('macrosModal.save')}
             </Button>
           </div>
         </div>

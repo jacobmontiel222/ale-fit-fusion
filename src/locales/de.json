@@ -54,6 +54,22 @@
     "recipesDescription": "Erstelle und speichere deine eigenen Rezepte.",
     "editMacros": "Makros bearbeiten"
   },
+  "macrosModal": {
+    "title": "Makro-Ziel bearbeiten",
+    "description": "Lege deine Makronährstoffe als Prozentsätze fest. Sie müssen genau 100 % ergeben.",
+    "caloriesLabel": "Tägliches Kalorienziel",
+    "kcalPerDay": "kcal pro Tag",
+    "totalLabel": "Makros gesamt:",
+    "totalUnder": "{{value}}% fehlen",
+    "totalOver": "{{value}}% zu viel",
+    "percentOfTotal": "% vom Gesamtwert",
+    "protein": "Proteine",
+    "fat": "Fette",
+    "carbs": "Kohlenhydrate",
+    "help": "Wenn du Protein oder Fett änderst, passen sich die Kohlenhydrate automatisch an, um 100 % zu halten.",
+    "validation": "Die Prozentsätze müssen genau 100 % ergeben, bevor du speichern kannst.",
+    "save": "Änderungen speichern"
+  },
   "addFood": {
     "title": "Zu {{meal}} hinzufügen",
     "searchPlaceholder": "Lebensmittel suchen...",

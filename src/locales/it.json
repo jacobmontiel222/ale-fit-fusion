@@ -54,6 +54,22 @@
     "recipesDescription": "Crea e salva le tue ricette personalizzate.",
     "editMacros": "Modifica macro"
   },
+  "macrosModal": {
+    "title": "Modifica obiettivo macro",
+    "description": "Imposta i macronutrienti in percentuale. Devono sommare esattamente al 100%.",
+    "caloriesLabel": "Obiettivo calorico giornaliero",
+    "kcalPerDay": "kcal al giorno",
+    "totalLabel": "Totale macro:",
+    "totalUnder": "Mancano {{value}}%",
+    "totalOver": "In eccesso di {{value}}%",
+    "percentOfTotal": "% del totale",
+    "protein": "Proteine",
+    "fat": "Grassi",
+    "carbs": "Carboidrati",
+    "help": "Quando modifichi proteine o grassi, i carboidrati si regolano automaticamente per mantenere il 100%.",
+    "validation": "Le percentuali devono sommare esattamente al 100% prima di salvare.",
+    "save": "Salva modifiche"
+  },
   "addFood": {
     "title": "Aggiungi a {{meal}}",
     "searchPlaceholder": "Cerca cibo...",

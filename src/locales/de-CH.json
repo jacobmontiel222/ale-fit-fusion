@@ -56,6 +56,22 @@
     "recipesDescription": "Erstellen und speichern Sie Ihre individuellen Rezepte.",
     "editMacros": "Bearbeiten Sie Makros"
   },
+  "macrosModal": {
+    "title": "Makro-Ziel bearbeite",
+    "description": "Setz dini Makros als Prozente. Si muesse genau 100 % ergä.",
+    "caloriesLabel": "Tägliches Kalorieziel",
+    "kcalPerDay": "kcal pro Tag",
+    "totalLabel": "Makros total:",
+    "totalUnder": "{{value}}% fehlä",
+    "totalOver": "{{value}}% z vill",
+    "percentOfTotal": "% vom Total",
+    "protein": "Protein",
+    "fat": "Fett",
+    "carbs": "Kohlenhydrat",
+    "help": "Wänn du Protein oder Fett änderisch, passe sich d Kohlenhydrat automatisch a, dass s 100 % bliibt.",
+    "validation": "D Prozente müend genau 100 % ergä, bevor gspeicheret wird.",
+    "save": "Änderige speichere"
+  },
   "addFood": {
     "title": "Zu {{meal}} hinzufügen",
     "searchPlaceholder": "Essen suchen...",

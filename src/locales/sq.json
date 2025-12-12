@@ -56,6 +56,22 @@
     "recipesDescription": "Krijoni dhe ruani recetat tuaja të personalizuara.",
     "editMacros": "Redakto makro"
   },
+  "macrosModal": {
+    "title": "Redakto qëllimin e makros",
+    "description": "Cakto makronutrientët në përqindje. Duhet të jenë saktësisht 100%.",
+    "caloriesLabel": "Objektivi ditor i kalorive",
+    "kcalPerDay": "kcal në ditë",
+    "totalLabel": "Totali i makros:",
+    "totalUnder": "Mungojnë {{value}}%",
+    "totalOver": "Tejkalojnë {{value}}%",
+    "percentOfTotal": "% e totalit",
+    "protein": "Proteina",
+    "fat": "Yndyrna",
+    "carbs": "Karbohidrate",
+    "help": "Kur ndryshoni proteina ose yndyrna, karbohidratet përshtaten automatikisht për të mbajtur 100%.",
+    "validation": "Përqindjet duhet të jenë saktësisht 100% përpara ruajtjes.",
+    "save": "Ruaj ndryshimet"
+  },
   "addFood": {
     "title": "Shto te {{meal}}",
     "searchPlaceholder": "Kërko ushqim...",

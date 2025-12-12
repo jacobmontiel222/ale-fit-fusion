@@ -54,6 +54,22 @@
     "recipesDescription": "Twórz i zapisuj swoje własne przepisy.",
     "editMacros": "Edytuj makro"
   },
+  "macrosModal": {
+    "title": "Edytuj cel makro",
+    "description": "Ustaw makroskładniki w procentach. Muszą sumować się dokładnie do 100%.",
+    "caloriesLabel": "Dzienne zapotrzebowanie kaloryczne",
+    "kcalPerDay": "kcal dziennie",
+    "totalLabel": "Suma makro:",
+    "totalUnder": "Brakuje {{value}}%",
+    "totalOver": "Nadmiar {{value}}%",
+    "percentOfTotal": "% całości",
+    "protein": "Białko",
+    "fat": "Tłuszcze",
+    "carbs": "Węglowodany",
+    "help": "Zmiana białka lub tłuszczu automatycznie dostosuje węglowodany, aby utrzymać 100%.",
+    "validation": "Procenty muszą sumować się dokładnie do 100% przed zapisaniem.",
+    "save": "Zapisz zmiany"
+  },
   "addFood": {
     "title": "Dodaj do {{meal}}",
     "searchPlaceholder": "Szukaj jedzenia...",
