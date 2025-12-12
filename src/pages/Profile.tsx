@@ -110,8 +110,15 @@ const Profile = () => {
   const handleSaveProfile = async () => {
     if (!user?.id) return;
 
+    const trimmedName = (editData.name || '').trim();
+    if (!trimmedName) {
+      toast.error(t('profile.nameRequired'));
+      return;
+    }
+
     try {
-      await updateProfile(editData);
+      await updateProfile({ ...editData, name: trimmedName });
+      setEditData((prev) => ({ ...prev, name: trimmedName }));
       setIsEditing(false);
       toast.success(t('profile.profileUpdated'));
     } catch (error) {
@@ -232,9 +239,28 @@ const Profile = () => {
               </button>
             )}
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-1">
-            {profile?.name || 'Usuario'}
-          </h2>
+          {!isEditing ? (
+            <h2 className="text-2xl font-bold text-foreground mb-1 text-center">
+              {profile?.name || 'Usuario'}
+            </h2>
+          ) : (
+            <div className="w-full max-w-xs mb-1">
+              <Label htmlFor="name" className="sr-only">
+                {t('profile.name')}
+              </Label>
+              <Input
+                id="name"
+                value={editData.name || ''}
+                onChange={(e) => setEditData({ ...editData, name: e.target.value.slice(0, 24) })}
+                maxLength={24}
+                placeholder={t('profile.namePlaceholder')}
+                className="text-center text-lg font-semibold"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1 text-center">
+                {editData.name?.length || 0}/24
+              </p>
+            </div>
+          )}
           <p className="text-muted-foreground mb-4">{t('profile.motto')}</p>
           {!isEditing ? (
             <Button variant="secondary" className="w-48" onClick={handleEditProfile}>
