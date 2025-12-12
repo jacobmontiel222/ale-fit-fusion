@@ -24,20 +24,14 @@ export const BottomNav = () => {
             <button
               key={index}
               onClick={() => navigate(item.path)}
-              className="flex flex-col items-center gap-1 transition-colors"
+              aria-label={item.label}
+              className="flex-1 flex items-center justify-center transition-colors"
             >
               <item.icon 
                 className={`w-6 h-6 ${
                   isActive ? "text-foreground" : "text-muted-foreground"
                 }`}
               />
-              <span 
-                className={`text-xs ${
-                  isActive ? "text-foreground" : "text-muted-foreground"
-                }`}
-              >
-                {item.label}
-              </span>
             </button>
           );
         })}
