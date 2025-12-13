@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight, Trash2, CalendarIcon } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
@@ -15,15 +15,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
-import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 const Comidas = () => {
   const navigate = useNavigate();
-  const { getTotals, refreshTotals } = useNutrition();
+  const { getTotals } = useNutrition();
   const { user } = useAuth();
   const { goals: nutritionGoals, updateGoals } = useNutritionGoals();
-  const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -42,15 +40,10 @@ const Comidas = () => {
     lunch: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
     dinner: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } }
   });
-  const [ringProgress, setRingProgress] = useState(0);
-  const [proteinProgress, setProteinProgress] = useState(0);
-  const [fatProgress, setFatProgress] = useState(0);
-  const [carbProgress, setCarbProgress] = useState(0);
   const [showCarbDetails, setShowCarbDetails] = useState(false);
   const [showFatDetails, setShowFatDetails] = useState(false);
   const [tabValue, setTabValue] = useState<"macros" | "micronutrients">("macros");
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const rafRef = useRef<number | null>(null);
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
   const dateISO = formatDate(selectedDate);
@@ -72,7 +65,6 @@ const Comidas = () => {
       // Load nutrition totals
       const totals = await getTotals(dateISO);
       setDayTotals(totals);
-      startSequence();
     };
 
     loadData();
@@ -94,12 +86,11 @@ const Comidas = () => {
       
       const totals = await getTotals(dateISO);
       setDayTotals(totals);
-      startSequence();
     };
     
     window.addEventListener('mealsUpdated', handleMealsUpdate);
     return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
-  }, [dateISO, getTotals, refreshTotals, user]);
+  }, [dateISO, getTotals, user]);
   
   const handleRemoveItem = async (mealType: string, itemId: string) => {
     if (!user) return;
@@ -140,10 +131,6 @@ const Comidas = () => {
     }
   };
 
-  const calculateMacroPercentage = (consumed: number, goal: number) => {
-    return Math.min(100, (consumed / goal) * 100);
-  };
-
   // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
     const days = [];
@@ -174,59 +161,13 @@ const Comidas = () => {
     setSelectedDate(newDate);
   };
 
-  const cancelAnimation = () => {
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  };
-
-  const animatePhase = (setter: (v: number) => void, duration = 650) => {
-    cancelAnimation();
-    setter(0);
-    return new Promise<void>((resolve) => {
-      const start = performance.now();
-      const step = (ts: number) => {
-        const next = Math.min(1, (ts - start) / duration);
-        setter(next);
-        if (next < 1) {
-          rafRef.current = requestAnimationFrame(step);
-        } else {
-          rafRef.current = null;
-          resolve();
-        }
-      };
-      rafRef.current = requestAnimationFrame(step);
-    });
-  };
-
-  const startSequence = async () => {
-    setRingProgress(0);
-    setProteinProgress(0);
-    setFatProgress(0);
-    setCarbProgress(0);
-    await animatePhase(setRingProgress, 700);
-    await animatePhase(setProteinProgress, 500);
-    await animatePhase(setFatProgress, 500);
-    await animatePhase(setCarbProgress, 500);
-  };
-
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
       setCalendarOpen(false);
     }
   };
-
-  useEffect(() => {
-    return () => cancelAnimation();
-  }, []);
-
   const weekDays = getWeekDays();
-  const animatedKcal = dayTotals.kcalConsumed * ringProgress;
-  const animatedProtein = dayTotals.macrosG.protein * proteinProgress;
-  const animatedFat = dayTotals.macrosG.fat * fatProgress;
-  const animatedCarbs = dayTotals.macrosG.carbs * carbProgress;
 
   const meals = [
     { 
@@ -340,14 +281,14 @@ const Comidas = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">{t('dashboard.goal')}: {dayTotals.kcalTarget} Kcal</p>
-                   <CircularProgress 
-                    value={animatedKcal} 
+                  <CircularProgress 
+                    value={dayTotals.kcalConsumed} 
                     max={dayTotals.kcalTarget} 
                     size={110} 
                     strokeWidth={9}
-                  protein={animatedProtein}
-                    fat={animatedFat}
-                    carbs={animatedCarbs}
+                    protein={dayTotals.macrosG.protein}
+                    fat={dayTotals.macrosG.fat}
+                    carbs={dayTotals.macrosG.carbs}
                     displayValue={dayTotals.kcalConsumed}
                     proteinGoal={nutritionGoals?.protein_goal || 150}
                     fatGoal={nutritionGoals?.fat_goal || 65}
@@ -376,7 +317,7 @@ const Comidas = () => {
                        <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {nutritionGoals?.protein_goal || 150}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (animatedProtein / (nutritionGoals?.protein_goal || 150)) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / (nutritionGoals?.protein_goal || 150)) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
                     </div>
                     
                     <button
@@ -398,7 +339,7 @@ const Comidas = () => {
                       </span>
                     </button>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (animatedFat / (nutritionGoals?.fat_goal || 65)) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / (nutritionGoals?.fat_goal || 65)) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
                     </div>
                     {showFatDetails && (
                       <div className="space-y-2 pl-6">
@@ -445,7 +386,7 @@ const Comidas = () => {
                       </span>
                     </button>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (animatedCarbs / (nutritionGoals?.carbs_goal || 250)) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / (nutritionGoals?.carbs_goal || 250)) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
                     </div>
                     {showCarbDetails && (
                       <div className="space-y-2 pl-6">
