@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, ArrowRight, Scale, Footprints, Flame, Dumbbell, User, Droplet, Bot } from "lucide-react";
+import { Bell, ArrowRight, Scale, Footprints, Flame, User, Droplet, Bot } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -108,6 +108,19 @@ const Index = () => {
   const exerciseKcal = Math.round(todaySteps * kcalPerStep);
   const waterProgress = Math.min(todayWater / (waterGoal || 1), 1);
   const burnProgress = Math.min(exerciseKcal / (burnGoal || 1), 1);
+
+  const proteinCals = todayNutrition.macrosG.protein * 4;
+  const fatCals = todayNutrition.macrosG.fat * 9;
+  const carbCals = todayNutrition.macrosG.carbs * 4;
+  const totalMacroCals = proteinCals + fatCals + carbCals;
+  const calorieGoal = todayNutrition.kcalTarget || 1;
+
+  const getMacroWidth = (macroCals: number) => {
+    if (calorieGoal <= 0 || macroCals <= 0) return 0;
+    if (totalMacroCals <= 0) return 0;
+    const scale = totalMacroCals > calorieGoal ? calorieGoal / totalMacroCals : 1;
+    return Math.min(100, (macroCals * scale / calorieGoal) * 100);
+  };
 
   const handleSaveWater = async () => {
     if (!user?.id) return;
@@ -289,69 +302,78 @@ const Index = () => {
           )}
         </StatsCard>
 
-        {/* Grid of Stats Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Macros Card */}
-          <StatsCard 
-            className="cursor-pointer hover:bg-secondary/50 transition-colors"
-            onClick={() => navigate('/comidas')}
-          >
-            {isLoading ? (
-              <>
-                <Skeleton className="h-6 w-16 mb-4" />
-                <div className="space-y-3">
-                  <Skeleton className="h-5 w-full" />
-                  <Skeleton className="h-5 w-full" />
-                  <Skeleton className="h-5 w-full" />
+        {/* Macros horizontal card */}
+        <StatsCard
+          className="cursor-pointer hover:bg-secondary/50 transition-colors py-2.5"
+          onClick={() => navigate('/comidas')}
+        >
+          {isLoading ? (
+            <>
+              <div className="flex items-center gap-3 mb-2">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-base font-semibold text-foreground leading-tight whitespace-nowrap">
+                  {t('dashboard.macros')}
+                </h3>
+                <div
+                  role="progressbar"
+                  aria-valuenow={totalMacroCals}
+                  aria-valuemin={0}
+                  aria-valuemax={calorieGoal}
+                  className="h-2 w-full rounded-full bg-muted/60 overflow-hidden flex"
+                >
+                  <div
+                    className="h-full"
+                    style={{ width: `${getMacroWidth(proteinCals)}%`, backgroundColor: 'hsl(var(--protein))' }}
+                  />
+                  <div
+                    className="h-full"
+                    style={{ width: `${getMacroWidth(fatCals)}%`, backgroundColor: 'hsl(var(--fat))' }}
+                  />
+                  <div
+                    className="h-full"
+                    style={{ width: `${getMacroWidth(carbCals)}%`, backgroundColor: 'hsl(var(--carbs))' }}
+                  />
                 </div>
-              </>
-            ) : (
-              <>
-                <h3 className="text-lg font-semibold text-foreground mb-4">{t('dashboard.macros')}</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">{t('dashboard.proteins')}</span>
-                    <span className="text-foreground font-semibold">{todayNutrition.macrosG.protein} g</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">{t('dashboard.fats')}</span>
-                    <span className="text-foreground font-semibold">{todayNutrition.macrosG.fat} g</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground text-sm">{t('dashboard.carbs')}</span>
-                    <span className="text-foreground font-semibold">{todayNutrition.macrosG.carbs} g</span>
-                  </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex items-center justify-center gap-1.5 text-center flex-nowrap">
+                  <span className="text-muted-foreground text-xs leading-none whitespace-nowrap">{t('dashboard.proteins')}</span>
+                  <span className="text-foreground text-sm font-semibold leading-none whitespace-nowrap">
+                    {todayNutrition.macrosG.protein} g
+                  </span>
                 </div>
-              </>
-            )}
-          </StatsCard>
+                <div className="flex items-center justify-center gap-1.5 text-center flex-nowrap">
+                  <span className="text-muted-foreground text-xs leading-none whitespace-nowrap">{t('dashboard.fats')}</span>
+                  <span className="text-foreground text-sm font-semibold leading-none whitespace-nowrap">
+                    {todayNutrition.macrosG.fat} g
+                  </span>
+                </div>
+                <div className="flex items-center justify-center gap-1.5 text-center flex-nowrap">
+                  <span className="text-muted-foreground text-xs leading-none whitespace-nowrap">{t('dashboard.carbs')}</span>
+                  <span className="text-foreground text-sm font-semibold leading-none whitespace-nowrap">
+                    {todayNutrition.macrosG.carbs} g
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+        </StatsCard>
 
-          {/* Steps Card */}
+        {/* Weight + Steps row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <StatsCard 
-            className="cursor-pointer hover:bg-secondary/50 transition-colors"
-            onClick={() => navigate('/analytics?focus=steps')}
-          >
-            {isLoading ? (
-              <>
-                <Skeleton className="h-6 w-20 mb-4" />
-                <Skeleton className="h-10 w-32 mb-2" />
-                <Skeleton className="h-4 w-28" />
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 mb-4">
-                  <Footprints className="w-5 h-5 text-foreground" />
-                  <h3 className="text-lg font-semibold text-foreground">{t('dashboard.steps')}</h3>
-                </div>
-                <p className="text-4xl font-bold text-foreground mb-2">{todaySteps.toLocaleString('es-ES')}</p>
-                <p className="text-sm text-muted-foreground">{t('dashboard.stepsGoal')}</p>
-              </>
-            )}
-          </StatsCard>
-
-          {/* Weight Card */}
-          <StatsCard 
-            className="py-4 cursor-pointer hover:bg-secondary/50 transition-colors"
+            className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors"
             onClick={() => navigate('/analytics?focus=weight')}
           >
             {isLoading ? (
@@ -364,11 +386,11 @@ const Index = () => {
               <>
                 <div className="flex items-center gap-2 mb-3">
                   <Scale className="w-4 h-4 text-foreground" />
-                  <h3 className="text-base font-semibold text-foreground">{t('dashboard.weight')}</h3>
+                  <h3 className="text-base font-semibold text-foreground leading-none">{t('dashboard.weight')}</h3>
                 </div>
                 {todayWeight !== null ? (
                   <>
-                    <p className="text-3xl font-bold text-foreground mb-1.5">{todayWeight.toFixed(1)} Kg</p>
+                    <p className="text-3xl font-bold text-foreground mb-1.5 leading-none">{todayWeight.toFixed(1)} Kg</p>
                     <p className="text-xs text-muted-foreground">{t('common.today')}</p>
                   </>
                 ) : (
@@ -388,18 +410,26 @@ const Index = () => {
             )}
           </StatsCard>
 
-          {/* Entrenadores Card */}
-          <StatsCard
-            className="cursor-pointer hover:bg-secondary/50 transition-colors"
-            onClick={() => navigate('/coaches')}
+          <StatsCard 
+            className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors"
+            onClick={() => navigate('/analytics?focus=steps')}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <Dumbbell className="w-5 h-5 text-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">{t('dashboard.trainers')}</h3>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {t('dashboard.findTrainer')}
-            </p>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-6 w-20 mb-4" />
+                <Skeleton className="h-10 w-32 mb-2" />
+                <Skeleton className="h-4 w-28" />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <Footprints className="w-4 h-4 text-foreground" />
+                  <h3 className="text-base font-semibold text-foreground leading-none">{t('dashboard.steps')}</h3>
+                </div>
+                <p className="text-3xl font-bold text-foreground mb-1.5 leading-none">{todaySteps.toLocaleString('es-ES')}</p>
+                <p className="text-xs text-muted-foreground">{t('dashboard.stepsGoal')}</p>
+              </>
+            )}
           </StatsCard>
         </div>
 

@@ -51,8 +51,8 @@ const Analytics = () => {
 
   // Color scheme
   const COLORS = {
-    weight: "hsl(var(--chart-1))",
-    steps: "hsl(var(--chart-2))",
+    weight: "#8B7CF6",
+    steps: "#ff6b35",
     water: "#60a5fa",
   };
 
