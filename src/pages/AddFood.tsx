@@ -129,35 +129,35 @@ const AddFood = () => {
     const vitamins: Micronutrient[] = [];
     const minerals: Micronutrient[] = [];
 
-    const addMicro = (collection: Micronutrient[], name: string, value: any, unit: string) => {
-      const num = Number(value);
-      if (!Number.isFinite(num) || num === 0) return;
-      collection.push({ name, amount: num, unit });
-    };
+    const microConfig = [
+      { collection: minerals, name: "Sodium", key: "sodium_mg", unit: "mg" },
+      { collection: minerals, name: "Potassium", key: "potassium_mg", unit: "mg" },
+      { collection: minerals, name: "Calcium", key: "calcium_mg", unit: "mg" },
+      { collection: minerals, name: "Magnesium", key: "magnesium_mg", unit: "mg" },
+      { collection: minerals, name: "Phosphorus", key: "phosphorus_mg", unit: "mg" },
+      { collection: minerals, name: "Iron", key: "iron_mg", unit: "mg" },
+      { collection: minerals, name: "Zinc", key: "zinc_mg", unit: "mg" },
+      { collection: minerals, name: "Selenium", key: "selenium_ug", unit: "μg" },
+      { collection: vitamins, name: "Vitamin A (RE)", key: "vit_a_re_ug", unit: "μg" },
+      { collection: vitamins, name: "Vitamin A (RAE)", key: "vit_a_rae_ug", unit: "μg" },
+      { collection: vitamins, name: "Vitamin B1", key: "vit_b1_mg", unit: "mg" },
+      { collection: vitamins, name: "Vitamin B2", key: "vit_b2_mg", unit: "mg" },
+      { collection: vitamins, name: "Vitamin B6", key: "vit_b6_mg", unit: "mg" },
+      { collection: vitamins, name: "Vitamin B12", key: "vit_b12_ug", unit: "μg" },
+      { collection: vitamins, name: "Vitamin B3 (Niacin)", key: "vit_b3_niacin_mg", unit: "mg" },
+      { collection: vitamins, name: "Vitamin B9 (Folate)", key: "vit_b9_folate_ug", unit: "μg" },
+      { collection: vitamins, name: "Vitamin B5 (Pantothenic)", key: "vit_b5_pantothenic_mg", unit: "mg" },
+      { collection: vitamins, name: "Vitamin C", key: "vit_c_mg", unit: "mg" },
+      { collection: vitamins, name: "Vitamin D", key: "vit_d_ug", unit: "μg" },
+      { collection: vitamins, name: "Vitamin E", key: "vit_e_mg", unit: "mg" },
+    ];
 
-    // Minerals
-    addMicro(minerals, "Sodium", source.sodium_mg, "mg");
-    addMicro(minerals, "Potassium", source.potassium_mg, "mg");
-    addMicro(minerals, "Calcium", source.calcium_mg, "mg");
-    addMicro(minerals, "Magnesium", source.magnesium_mg, "mg");
-    addMicro(minerals, "Phosphorus", source.phosphorus_mg, "mg");
-    addMicro(minerals, "Iron", source.iron_mg, "mg");
-    addMicro(minerals, "Zinc", source.zinc_mg, "mg");
-    addMicro(minerals, "Selenium", source.selenium_ug, "μg");
-
-    // Vitamins
-    addMicro(vitamins, "Vitamin A (RE)", source.vit_a_re_ug, "μg");
-    addMicro(vitamins, "Vitamin A (RAE)", source.vit_a_rae_ug, "μg");
-    addMicro(vitamins, "Vitamin B1", source.vit_b1_mg, "mg");
-    addMicro(vitamins, "Vitamin B2", source.vit_b2_mg, "mg");
-    addMicro(vitamins, "Vitamin B6", source.vit_b6_mg, "mg");
-    addMicro(vitamins, "Vitamin B12", source.vit_b12_ug, "μg");
-    addMicro(vitamins, "Vitamin B3 (Niacin)", source.vit_b3_niacin_mg, "mg");
-    addMicro(vitamins, "Vitamin B9 (Folate)", source.vit_b9_folate_ug, "μg");
-    addMicro(vitamins, "Vitamin B5 (Pantothenic)", source.vit_b5_pantothenic_mg, "mg");
-    addMicro(vitamins, "Vitamin C", source.vit_c_mg, "mg");
-    addMicro(vitamins, "Vitamin D", source.vit_d_ug, "μg");
-    addMicro(vitamins, "Vitamin E", source.vit_e_mg, "mg");
+    microConfig.forEach(({ collection, name, key, unit }) => {
+      const raw = source?.[key];
+      const num = Number(raw);
+      const amount = Number.isFinite(num) ? num : 0;
+      collection.push({ name, amount, unit });
+    });
 
     return { vitamins, minerals };
   };
