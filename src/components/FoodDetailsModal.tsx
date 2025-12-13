@@ -117,7 +117,10 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <div className="flex items-start justify-between">
             <div className="flex-1">
