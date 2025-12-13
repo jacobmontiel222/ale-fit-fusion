@@ -10,7 +10,7 @@ export interface MicronutrientData {
   max?: number;
 }
 
-const MICRONUTRIENT_CONFIG: MicronutrientData[] = [
+export const MICRONUTRIENT_CONFIG: MicronutrientData[] = [
   { key: 'fiber_g', label: 'Dietary fibres', unit: 'g' },
   { key: 'sodium_mg', label: 'Sodium', unit: 'mg', max: 2300 },
   { key: 'potassium_mg', label: 'Potassium', unit: 'mg', max: 3500 },

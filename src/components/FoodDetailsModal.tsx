@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FoodItem, FoodCategory, FoodTag } from '@/types/food';
 import { useTranslation } from 'react-i18next';
+import { Progress } from '@/components/ui/progress';
+import { MICRONUTRIENT_CONFIG } from '@/hooks/useMicronutrients';
 
 interface FoodDetailsModalProps {
   food: FoodItem | null;

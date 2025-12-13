@@ -480,7 +480,7 @@ const AddFood = () => {
         const queryText = searchQuery.trim();
         const { data, error } = await supabase
           .from('community_foods')
-          .select('id, barcode, name, brand, base_serving, base_unit, calories, protein, carbs, fat, updated_at')
+          .select('*')
           .or(`name.ilike.%${queryText}%,brand.ilike.%${queryText}%`)
           .order('name')
           .limit(30);
@@ -499,7 +499,12 @@ const AddFood = () => {
           protein: Number(row.protein) || 0,
           fat: Number(row.fat) || 0,
           carbs: Number(row.carbs) || 0,
-          micronutrients: { vitamins: [], minerals: [] },
+          sugar: Number(row.sugars_g ?? 0) || 0,
+          fiber: Number(row.fiber_g ?? 0) || 0,
+          satFat: Number(row.sat_fat_g ?? 0) || 0,
+          monoFat: Number(row.mono_fat_g ?? 0) || 0,
+          polyFat: Number(row.poly_fat_g ?? 0) || 0,
+          micronutrients: row.micronutrients || mapMicrosFromSource(row),
           servingSize: Number(row.base_serving) || 100,
           servingUnit: row.base_unit || 'g',
           barcode: row.barcode || undefined,
