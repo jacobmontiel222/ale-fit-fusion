@@ -638,6 +638,9 @@ const AddFood = () => {
       return;
     }
 
+    const baseMicros = food.micronutrients || mapMicrosFromSource(food);
+    const microCols = microsToColumns(baseMicros);
+
     try {
       const { error } = await supabase
         .from('community_foods')
@@ -651,6 +654,13 @@ const AddFood = () => {
           protein: food.protein,
           carbs: food.carbs,
           fat: food.fat,
+          sugars_g: food.sugar ?? 0,
+          fiber_g: food.fiber ?? 0,
+          sat_fat_g: (food as any).satFat ?? 0,
+          mono_fat_g: (food as any).monoFat ?? 0,
+          poly_fat_g: (food as any).polyFat ?? 0,
+          micronutrients: baseMicros,
+          ...microCols,
           created_by: user?.id || null,
           source,
         }, {
