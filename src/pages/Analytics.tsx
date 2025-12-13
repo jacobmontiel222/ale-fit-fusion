@@ -51,7 +51,6 @@ const Analytics = () => {
   const [weightAnimSeed, setWeightAnimSeed] = useState(0);
   const [stepsAnimSeed, setStepsAnimSeed] = useState(0);
   const [waterAnimSeed, setWaterAnimSeed] = useState(0);
-  const cacheKey = user?.id ? `analytics-cache-${user.id}` : null;
 
   const bumpSeeds = () => {
     const now = Date.now();
@@ -78,27 +77,6 @@ const Analytics = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
-
-      if (cacheKey && typeof window !== 'undefined') {
-        try {
-          const cached = localStorage.getItem(cacheKey);
-          if (cached) {
-            const parsed = JSON.parse(cached) as {
-              weightData?: WeightEntry[];
-              stepsData?: StepsEntry[];
-              waterData?: WaterEntry[];
-              targetWeightGoal?: number | null;
-            };
-            if (parsed.weightData) setWeightData(parsed.weightData);
-            if (parsed.stepsData) setStepsData(parsed.stepsData);
-            if (parsed.waterData) setWaterData(parsed.waterData);
-            if (parsed.targetWeightGoal !== undefined) setTargetWeightGoal(parsed.targetWeightGoal);
-            bumpSeeds();
-          }
-        } catch (e) {
-          console.warn('Error reading analytics cache', e);
-        }
-      }
 
       // Load weight data
       const { data: weights } = await supabase
@@ -140,19 +118,6 @@ const Analytics = () => {
         .maybeSingle();
       const target = profileRow?.target_weight ?? null;
       setTargetWeightGoal(target);
-
-      if (cacheKey && typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify({
-            weightData: weights ? weights.map(w => ({ date: w.date, kg: Number(w.weight) })) : weightData,
-            stepsData: steps ? steps.map(s => ({ date: s.date, steps: s.steps })) : stepsData,
-            waterData: water ? water.map(w => ({ date: w.date, ml: w.ml_consumed })) : waterData,
-            targetWeightGoal: target,
-          }));
-        } catch (e) {
-          console.warn('Error writing analytics cache', e);
-        }
-      }
 
       bumpSeeds();
     };
