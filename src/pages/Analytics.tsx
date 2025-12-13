@@ -490,7 +490,16 @@ const Analytics = () => {
     for (let v = 0; v <= maxY; v += step) {
       ticks.push(v);
     }
-    return { domain: [0, maxY] as [number, number], ticks };
+    if (!ticks.includes(20000)) ticks.push(20000);
+    if (maxVal > maxY) {
+      maxY = Math.ceil(maxVal / step) * step;
+      if (maxY - maxVal < step * 0.15) maxY += step;
+      ticks.push(maxY);
+    }
+    ticks.sort((a, b) => a - b);
+    const headroom = step * 0.1;
+    const upper = Math.max(maxY, ticks[ticks.length - 1] ?? maxY) + headroom;
+    return { domain: [0, upper] as [number, number], ticks };
   }
 
   function getWaterYAxisConfig() {
@@ -716,7 +725,10 @@ const Analytics = () => {
           {/* Chart */}
           <div className="h-48 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={animatedStepsData}>
+              <BarChart 
+                data={animatedStepsData}
+                margin={{ top: 16, right: 8, left: 8, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="day" 
@@ -728,6 +740,7 @@ const Analytics = () => {
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   ticks={stepsConfig.ticks}
                   domain={stepsConfig.domain}
+                  interval={0}
                   tickFormatter={(val) => Number(val).toLocaleString(i18n.language)}
                   width={60}
                 />
