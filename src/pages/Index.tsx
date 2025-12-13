@@ -371,9 +371,9 @@ const Index = () => {
         </StatsCard>
 
         {/* Weight + Steps row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 items-stretch">
           <StatsCard 
-            className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors"
+            className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors h-full min-w-0"
             onClick={() => navigate('/analytics?focus=weight')}
           >
             {isLoading ? (
@@ -411,7 +411,7 @@ const Index = () => {
           </StatsCard>
 
           <StatsCard 
-            className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors"
+            className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors h-full min-w-0"
             onClick={() => navigate('/analytics?focus=steps')}
           >
             {isLoading ? (
