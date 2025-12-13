@@ -691,7 +691,7 @@ const AddFood = () => {
           setSelectedFood(null);
           setManualEntry(false);
           const mapped = scannedFoodToFoodItemType(item);
-          handleSelectFromDatabase(mapped);
+          handleSelectFromDatabase(mapped, { editable: true });
           toast.success(t('addFood.scanDetected', { item: item.name }));
           setIsProcessingScan(false);
           setScannerOpen(false);
@@ -829,8 +829,8 @@ const AddFood = () => {
   };
   
   // Manejar selección de alimento desde la base de datos
-  const handleSelectFromDatabase = (food: FoodItemType) => {
-    setDetailsEditable(false);
+  const handleSelectFromDatabase = (food: FoodItemType, opts?: { editable?: boolean }) => {
+    setDetailsEditable(!!opts?.editable);
     setManualEntry(false);
     setSelectedDatabaseFood(food);
     setShowDetailsModal(true);
