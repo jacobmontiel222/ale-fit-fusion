@@ -1019,6 +1019,10 @@ const AddFood = () => {
       console.error(error);
       return;
     }
+
+    // Compartir con comunidad si aplica
+    const source: 'scan' | 'manual' = food.barcode ? 'scan' : 'manual';
+    upsertCommunityFood(food as any, source);
     
     // Trigger meals update event
     window.dispatchEvent(new CustomEvent('mealsUpdated'));
