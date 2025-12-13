@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { initializeFoodDatabase } from "@/lib/initFoodDatabase";
 import { useProfile } from "@/hooks/useProfile";
 import { useRef as useReactRef } from "react";
+import { Micronutrient } from "@/types/food";
 
 const CAMERA_PERMISSION_KEY = "cameraPermissionGranted";
 const PROCESSING_SPINNER_SIZE = "w-12 h-12";
@@ -31,9 +32,13 @@ interface FoodItem {
   protein: number;
   fat: number;
   carbs: number;
+  fiber?: number;
+  sugar?: number;
   servingSize: number;
   servingUnit: string;
   barcode?: string;
+  vitamins?: Micronutrient[];
+  minerals?: Micronutrient[];
 }
 
 const mockFoods: FoodItem[] = [
@@ -117,6 +122,43 @@ const AddFood = () => {
     lastUpdated: undefined,
   });
 
+  const mapMicrosFromSource = (source: any): { vitamins: Micronutrient[]; minerals: Micronutrient[] } => {
+    const vitamins: Micronutrient[] = [];
+    const minerals: Micronutrient[] = [];
+
+    const addMicro = (collection: Micronutrient[], name: string, value: any, unit: string) => {
+      const num = Number(value);
+      if (!Number.isFinite(num) || num === 0) return;
+      collection.push({ name, amount: num, unit });
+    };
+
+    // Minerals
+    addMicro(minerals, "Sodium", source.sodium_mg, "mg");
+    addMicro(minerals, "Potassium", source.potassium_mg, "mg");
+    addMicro(minerals, "Calcium", source.calcium_mg, "mg");
+    addMicro(minerals, "Magnesium", source.magnesium_mg, "mg");
+    addMicro(minerals, "Phosphorus", source.phosphorus_mg, "mg");
+    addMicro(minerals, "Iron", source.iron_mg, "mg");
+    addMicro(minerals, "Zinc", source.zinc_mg, "mg");
+    addMicro(minerals, "Selenium", source.selenium_ug, "μg");
+
+    // Vitamins
+    addMicro(vitamins, "Vitamin A (RE)", source.vit_a_re_ug, "μg");
+    addMicro(vitamins, "Vitamin A (RAE)", source.vit_a_rae_ug, "μg");
+    addMicro(vitamins, "Vitamin B1", source.vit_b1_mg, "mg");
+    addMicro(vitamins, "Vitamin B2", source.vit_b2_mg, "mg");
+    addMicro(vitamins, "Vitamin B6", source.vit_b6_mg, "mg");
+    addMicro(vitamins, "Vitamin B12", source.vit_b12_ug, "μg");
+    addMicro(vitamins, "Vitamin B3 (Niacin)", source.vit_b3_niacin_mg, "mg");
+    addMicro(vitamins, "Vitamin B9 (Folate)", source.vit_b9_folate_ug, "μg");
+    addMicro(vitamins, "Vitamin B5 (Pantothenic)", source.vit_b5_pantothenic_mg, "mg");
+    addMicro(vitamins, "Vitamin C", source.vit_c_mg, "mg");
+    addMicro(vitamins, "Vitamin D", source.vit_d_ug, "μg");
+    addMicro(vitamins, "Vitamin E", source.vit_e_mg, "mg");
+
+    return { vitamins, minerals };
+  };
+
   const scannedFoodToFoodItemType = (food: FoodItem): FoodItemType => ({
     id: `scan-${food.name}-${food.brand || ''}-${Date.now()}`,
     name: food.name,
@@ -127,7 +169,32 @@ const AddFood = () => {
     protein: food.protein,
     fat: food.fat,
     carbs: food.carbs,
-    micronutrients: { vitamins: [], minerals: [] },
+    fiber: food.fiber,
+    sugar: food.sugar,
+    micronutrients: mapMicrosFromSource({
+      vitamins: food.vitamins,
+      minerals: food.minerals,
+      sodium_mg: (food as any).sodium_mg,
+      potassium_mg: (food as any).potassium_mg,
+      calcium_mg: (food as any).calcium_mg,
+      magnesium_mg: (food as any).magnesium_mg,
+      phosphorus_mg: (food as any).phosphorus_mg,
+      iron_mg: (food as any).iron_mg,
+      zinc_mg: (food as any).zinc_mg,
+      selenium_ug: (food as any).selenium_ug,
+      vit_a_re_ug: (food as any).vit_a_re_ug,
+      vit_a_rae_ug: (food as any).vit_a_rae_ug,
+      vit_b1_mg: (food as any).vit_b1_mg,
+      vit_b2_mg: (food as any).vit_b2_mg,
+      vit_b6_mg: (food as any).vit_b6_mg,
+      vit_b12_ug: (food as any).vit_b12_ug,
+      vit_b3_niacin_mg: (food as any).vit_b3_niacin_mg,
+      vit_b9_folate_ug: (food as any).vit_b9_folate_ug,
+      vit_b5_pantothenic_mg: (food as any).vit_b5_pantothenic_mg,
+      vit_c_mg: (food as any).vit_c_mg,
+      vit_d_ug: (food as any).vit_d_ug,
+      vit_e_mg: (food as any).vit_e_mg,
+    }),
     servingSize: food.servingSize,
     servingUnit: food.servingUnit,
     barcode: food.barcode,
@@ -596,15 +663,21 @@ const AddFood = () => {
             return;
           }
           
+          const per100 = productData?.per_100g ?? productData ?? {};
           const item: FoodItem = {
             name: productData.name ?? t('addFood.defaultProductName'),
             brand: productData.brand ?? "",
-            calories: productData.per_100g?.kcal ?? 0,
-            protein: productData.per_100g?.protein ?? 0,  // Sin el sufijo _g
-            fat: productData.per_100g?.fat ?? 0,          // Sin el sufijo _g
-            carbs: productData.per_100g?.carbs ?? 0,      // Sin el sufijo _g
+            calories: per100.kcal ?? per100.calories ?? 0,
+            protein: per100.protein ?? per100.protein_g ?? 0,
+            fat: per100.fat ?? per100.fat_g ?? 0,
+            carbs: per100.carbs ?? per100.carbs_g ?? 0,
+            sugar: per100.sugars_g ?? per100.sugar ?? 0,
+            fiber: per100.fiber_g ?? per100.fiber ?? 0,
             servingSize: 100,
             servingUnit: "g",
+            barcode,
+            vitamins: [],
+            minerals: [],
           };
           
           setSelectedFood(null);
