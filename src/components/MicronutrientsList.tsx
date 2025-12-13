@@ -25,34 +25,21 @@ export const MicronutrientsList = ({ date }: MicronutrientsListProps) => {
     );
   }
 
-  if (micronutrients.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p className="mb-2">No hay datos de micronutrientes</p>
-        <p className="text-sm">
-          Los alimentos de tu base de datos local contienen información completa de vitaminas y minerales
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-3">
       {micronutrients.map((micro, index) => {
-        const percentage = Math.min(100, (micro.current / micro.goal) * 100);
+        const maxForBar = micro.max ?? Math.max(1, micro.value * 1.5);
+        const percentage = Math.min(100, (micro.value / maxForBar) * 100);
         
         return (
           <div key={index} className="space-y-1.5">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-foreground font-medium">{micro.name}</span>
+              <span className="text-foreground font-medium">{micro.label}</span>
               <span className="text-muted-foreground">
-                {micro.current} / {micro.goal} {micro.unit}
+                {micro.value} {micro.unit}{micro.max ? ` / ${micro.max} ${micro.unit}` : ''}
               </span>
             </div>
-            <Progress value={percentage} className="h-2" />
-            <div className="text-xs text-muted-foreground text-right">
-              {percentage.toFixed(0)}%
-            </div>
+            <Progress value={percentage} className="h-2 bg-secondary" indicatorClassName="bg-white" />
           </div>
         );
       })}

@@ -18,6 +18,10 @@ interface DayTotals {
   kcalConsumed: number;
   macrosG: MacroData;
   macrosPct: MacroData;
+  sugars: number;
+  satFat: number;
+  monoFat: number;
+  polyFat: number;
   breakfast: MealData;
   lunch: MealData;
   dinner: MealData;
@@ -53,6 +57,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         kcalConsumed: 0,
         macrosG: { protein: 0, fat: 0, carbs: 0 },
         macrosPct: { protein: 0, fat: 0, carbs: 0 },
+        sugars: 0,
+        satFat: 0,
+        monoFat: 0,
+        polyFat: 0,
         breakfast: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
         lunch: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
         dinner: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
@@ -86,6 +94,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     const lunch: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
     const dinner: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
     const snacks: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    let sugars = 0;
+    let satFat = 0;
+    let monoFat = 0;
+    let polyFat = 0;
 
     // Calculate meal totals
     if (meals) {
@@ -94,6 +106,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         const protein = Number(meal.protein) || 0;
         const fat = Number(meal.fat) || 0;
         const carbs = Number(meal.carbs) || 0;
+        sugars += Number(meal.sugars_g) || 0;
+        satFat += Number(meal.sat_fat_g) || 0;
+        monoFat += Number(meal.mono_fat_g) || 0;
+        polyFat += Number(meal.poly_fat_g) || 0;
 
         switch (meal.meal_type) {
           case 'Desayuno':
@@ -141,6 +157,10 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         fat: Math.round(macrosG.fat * 10) / 10,
         carbs: Math.round(macrosG.carbs * 10) / 10,
       },
+      sugars: Math.round(sugars * 10) / 10,
+      satFat: Math.round(satFat * 10) / 10,
+      monoFat: Math.round(monoFat * 10) / 10,
+      polyFat: Math.round(polyFat * 10) / 10,
       macrosPct: {
         protein: Math.round(macrosPct.protein * 10) / 10,
         fat: Math.round(macrosPct.fat * 10) / 10,
