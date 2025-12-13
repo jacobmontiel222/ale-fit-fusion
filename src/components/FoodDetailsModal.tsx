@@ -310,25 +310,29 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                   <span className="text-muted-foreground">{t('foodDetails.carbs')}</span>
                   <span className="font-semibold">{adjustedMacros.carbs} g</span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-border text-sm">
-                  <span className="text-muted-foreground">{t('foodDetails.fiber')}</span>
-                  <span className="font-semibold">{adjustedMacros.fiber || adjustedMacros.fiber === 0 ? `${adjustedMacros.fiber} g` : '-'}</span>
-                </div>
                 <div className="flex items-center justify-between py-2 border-b border-border text-sm pl-4">
                   <span className="text-muted-foreground">{t('foodDetails.sugar')}</span>
                   <span className="font-semibold">{adjustedMacros.sugar || adjustedMacros.sugar === 0 ? `${adjustedMacros.sugar} g` : '-'}</span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-border text-sm">
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground">{t('foodDetails.fat')}</span>
+                  <span className="font-semibold">{adjustedMacros.fat} g</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border text-sm pl-4">
                   <span className="text-muted-foreground">{t('foodDetails.satFat', 'Saturated fat')}</span>
                   <span className="font-semibold">{adjustedMacros.satFat || adjustedMacros.satFat === 0 ? `${adjustedMacros.satFat} g` : '-'}</span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-border text-sm">
-                  <span className="text-muted-foreground pl-4">{t('foodDetails.monoFat', 'Monounsaturated fat')}</span>
+                <div className="flex items-center justify-between py-2 border-b border-border text-sm pl-4">
+                  <span className="text-muted-foreground">{t('foodDetails.monoFat', 'Monounsaturated fat')}</span>
                   <span className="font-semibold">{adjustedMacros.monoFat || adjustedMacros.monoFat === 0 ? `${adjustedMacros.monoFat} g` : '-'}</span>
                 </div>
-                <div className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-muted-foreground pl-4">{t('foodDetails.polyFat', 'Polyunsaturated fat')}</span>
+                <div className="flex items-center justify-between py-2 border-b border-border text-sm pl-4">
+                  <span className="text-muted-foreground">{t('foodDetails.polyFat', 'Polyunsaturated fat')}</span>
                   <span className="font-semibold">{adjustedMacros.polyFat || adjustedMacros.polyFat === 0 ? `${adjustedMacros.polyFat} g` : '-'}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 text-sm">
+                  <span className="text-muted-foreground">{t('foodDetails.fiber')}</span>
+                  <span className="font-semibold">{adjustedMacros.fiber || adjustedMacros.fiber === 0 ? `${adjustedMacros.fiber} g` : '-'}</span>
                 </div>
               </div>
             </TabsContent>
