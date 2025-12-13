@@ -42,6 +42,7 @@ interface FoodItem {
   barcode?: string;
   vitamins?: Micronutrient[];
   minerals?: Micronutrient[];
+  micronutrients?: { vitamins: Micronutrient[]; minerals: Micronutrient[] };
 }
 
 const mockFoods: FoodItem[] = [
@@ -162,6 +163,74 @@ const AddFood = () => {
     return { vitamins, minerals };
   };
 
+  const computeAdjustedMicros = (food: FoodItemType, multiplier: number) => ({
+    vitamins: food.micronutrients.vitamins.map(v => ({
+      ...v,
+      amount: Math.round(v.amount * multiplier * 100) / 100,
+    })),
+    minerals: food.micronutrients.minerals.map(m => ({
+      ...m,
+      amount: Math.round(m.amount * multiplier * 100) / 100,
+    })),
+  });
+
+  const microsToColumns = (micros: { vitamins: Micronutrient[]; minerals: Micronutrient[] }) => {
+    const cols = {
+      sodium_mg: 0,
+      potassium_mg: 0,
+      calcium_mg: 0,
+      magnesium_mg: 0,
+      phosphorus_mg: 0,
+      iron_mg: 0,
+      zinc_mg: 0,
+      selenium_ug: 0,
+      vit_a_re_ug: 0,
+      vit_a_rae_ug: 0,
+      vit_b1_mg: 0,
+      vit_b2_mg: 0,
+      vit_b6_mg: 0,
+      vit_b12_ug: 0,
+      vit_b3_niacin_mg: 0,
+      vit_b9_folate_ug: 0,
+      vit_b5_pantothenic_mg: 0,
+      vit_c_mg: 0,
+      vit_d_ug: 0,
+      vit_e_mg: 0,
+    };
+
+    const mapName: Record<string, keyof typeof cols> = {
+      "Sodium": "sodium_mg",
+      "Potassium": "potassium_mg",
+      "Calcium": "calcium_mg",
+      "Magnesium": "magnesium_mg",
+      "Phosphorus": "phosphorus_mg",
+      "Iron": "iron_mg",
+      "Zinc": "zinc_mg",
+      "Selenium": "selenium_ug",
+      "Vitamin A (RE)": "vit_a_re_ug",
+      "Vitamin A (RAE)": "vit_a_rae_ug",
+      "Vitamin B1": "vit_b1_mg",
+      "Vitamin B2": "vit_b2_mg",
+      "Vitamin B6": "vit_b6_mg",
+      "Vitamin B12": "vit_b12_ug",
+      "Vitamin B3 (Niacin)": "vit_b3_niacin_mg",
+      "Vitamin B9 (Folate)": "vit_b9_folate_ug",
+      "Vitamin B5 (Pantothenic)": "vit_b5_pantothenic_mg",
+      "Vitamin C": "vit_c_mg",
+      "Vitamin D": "vit_d_ug",
+      "Vitamin E": "vit_e_mg",
+    };
+
+    [...micros.vitamins, ...micros.minerals].forEach(m => {
+      const key = mapName[m.name];
+      if (key) {
+        cols[key] = (cols[key] || 0) + (Number.isFinite(m.amount) ? m.amount : 0);
+      }
+    });
+
+    return cols;
+  };
+
   const scannedFoodToFoodItemType = (food: FoodItem): FoodItemType => ({
     id: `scan-${food.name}-${food.brand || ''}-${Date.now()}`,
     name: food.name,
@@ -177,29 +246,7 @@ const AddFood = () => {
     satFat: food.satFat,
     monoFat: food.monoFat,
     polyFat: food.polyFat,
-    micronutrients: mapMicrosFromSource({
-      ...food,
-      sodium_mg: (food as any).sodium_mg,
-      potassium_mg: (food as any).potassium_mg,
-      calcium_mg: (food as any).calcium_mg,
-      magnesium_mg: (food as any).magnesium_mg,
-      phosphorus_mg: (food as any).phosphorus_mg,
-      iron_mg: (food as any).iron_mg,
-      zinc_mg: (food as any).zinc_mg,
-      selenium_ug: (food as any).selenium_ug,
-      vit_a_re_ug: (food as any).vit_a_re_ug,
-      vit_a_rae_ug: (food as any).vit_a_rae_ug,
-      vit_b1_mg: (food as any).vit_b1_mg,
-      vit_b2_mg: (food as any).vit_b2_mg,
-      vit_b6_mg: (food as any).vit_b6_mg,
-      vit_b12_ug: (food as any).vit_b12_ug,
-      vit_b3_niacin_mg: (food as any).vit_b3_niacin_mg,
-      vit_b9_folate_ug: (food as any).vit_b9_folate_ug,
-      vit_b5_pantothenic_mg: (food as any).vit_b5_pantothenic_mg,
-      vit_c_mg: (food as any).vit_c_mg,
-      vit_d_ug: (food as any).vit_d_ug,
-      vit_e_mg: (food as any).vit_e_mg,
-    }),
+    micronutrients: food.micronutrients || mapMicrosFromSource(food),
     servingSize: food.servingSize,
     servingUnit: food.servingUnit,
     barcode: food.barcode,
@@ -219,6 +266,9 @@ const AddFood = () => {
     carbs: seed?.carbs ?? 0,
     fiber: seed?.fiber,
     sugar: seed?.sugar,
+    satFat: (seed as any)?.satFat,
+    monoFat: (seed as any)?.monoFat,
+    polyFat: (seed as any)?.polyFat,
     micronutrients: seed?.micronutrients || { vitamins: [], minerals: [] },
     servingSize: seed?.servingSize ?? 100,
     servingUnit: seed?.servingUnit || 'g',
@@ -669,6 +719,8 @@ const AddFood = () => {
           }
           
           const per100 = productData?.per_100g ?? productData ?? {};
+          const microSource = { ...per100, ...productData };
+          const micros = mapMicrosFromSource(microSource);
           const item: FoodItem = {
             name: productData.name ?? t('addFood.defaultProductName'),
             brand: productData.brand ?? "",
@@ -686,6 +738,7 @@ const AddFood = () => {
             barcode,
             vitamins: [],
             minerals: [],
+            micronutrients: micros,
           };
           
           setSelectedFood(null);
@@ -743,6 +796,8 @@ const AddFood = () => {
       return;
     }
     const adjustedMacros = calculateAdjustedMacros(foodToAdd, servingAmount);
+    const adjustedMicronutrients = computeAdjustedMicros(foodToAdd as any, servingAmount / (foodToAdd.servingSize || 100));
+    const microCols = microsToColumns(adjustedMicronutrients);
     
     // Check if adding to recipe
     if (meal === "recipe") {
@@ -799,6 +854,8 @@ const AddFood = () => {
         mono_fat_g: adjustedMacros.monoFat,
         poly_fat_g: adjustedMacros.polyFat,
         barcode: foodToAdd.barcode || null,
+        micronutrients: adjustedMicronutrients,
+        ...microCols,
         entry_method: 'manual'
       });
 
@@ -883,20 +940,8 @@ const AddFood = () => {
     console.log('🍎 Alimento desde DB:', food.name);
     console.log('🔬 Micronutrientes originales:', food.micronutrients);
     
-    const adjustedMicronutrients = {
-      vitamins: food.micronutrients.vitamins.map(v => ({
-        name: v.name,
-        amount: Math.round(v.amount * multiplier * 100) / 100,
-        unit: v.unit,
-        dailyValue: v.dailyValue
-      })),
-      minerals: food.micronutrients.minerals.map(m => ({
-        name: m.name,
-        amount: Math.round(m.amount * multiplier * 100) / 100,
-        unit: m.unit,
-        dailyValue: m.dailyValue
-      }))
-    };
+    const adjustedMicronutrients = computeAdjustedMicros(food, multiplier);
+    const microCols = microsToColumns(adjustedMicronutrients);
     
     console.log('📊 Micronutrientes ajustados a guardar:', adjustedMicronutrients);
     
@@ -955,7 +1000,8 @@ const AddFood = () => {
         poly_fat_g: adjustedMacros.polyFat,
         barcode: food.barcode || null,
         entry_method: 'database',
-        micronutrients: adjustedMicronutrients
+        micronutrients: adjustedMicronutrients,
+        ...microCols
       });
 
     if (error) {
