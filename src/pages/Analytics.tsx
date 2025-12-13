@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps, Scatter } from "recharts";
 import { useTranslation } from "react-i18next";
 
 interface WeightEntry {
@@ -48,6 +48,17 @@ const Analytics = () => {
   const [newWaterDate, setNewWaterDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [targetWeightGoal, setTargetWeightGoal] = useState<number | null>(null);
   const [savingSteps, setSavingSteps] = useState(false);
+  const [weightAnimSeed, setWeightAnimSeed] = useState(0);
+  const [stepsAnimSeed, setStepsAnimSeed] = useState(0);
+  const [waterAnimSeed, setWaterAnimSeed] = useState(0);
+  const cacheKey = user?.id ? `analytics-cache-${user.id}` : null;
+
+  const bumpSeeds = () => {
+    const now = Date.now();
+    setWeightAnimSeed(now);
+    setStepsAnimSeed(now + 1);
+    setWaterAnimSeed(now + 2);
+  };
 
   // Color scheme
   const COLORS = {
@@ -67,6 +78,27 @@ const Analytics = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
+
+      if (cacheKey && typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached) as {
+              weightData?: WeightEntry[];
+              stepsData?: StepsEntry[];
+              waterData?: WaterEntry[];
+              targetWeightGoal?: number | null;
+            };
+            if (parsed.weightData) setWeightData(parsed.weightData);
+            if (parsed.stepsData) setStepsData(parsed.stepsData);
+            if (parsed.waterData) setWaterData(parsed.waterData);
+            if (parsed.targetWeightGoal !== undefined) setTargetWeightGoal(parsed.targetWeightGoal);
+            bumpSeeds();
+          }
+        } catch (e) {
+          console.warn('Error reading analytics cache', e);
+        }
+      }
 
       // Load weight data
       const { data: weights } = await supabase
@@ -106,7 +138,23 @@ const Analytics = () => {
         .select('target_weight')
         .eq('id', user.id)
         .maybeSingle();
-      setTargetWeightGoal(profileRow?.target_weight ?? null);
+      const target = profileRow?.target_weight ?? null;
+      setTargetWeightGoal(target);
+
+      if (cacheKey && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({
+            weightData: weights ? weights.map(w => ({ date: w.date, kg: Number(w.weight) })) : weightData,
+            stepsData: steps ? steps.map(s => ({ date: s.date, steps: s.steps })) : stepsData,
+            waterData: water ? water.map(w => ({ date: w.date, ml: w.ml_consumed })) : waterData,
+            targetWeightGoal: target,
+          }));
+        } catch (e) {
+          console.warn('Error writing analytics cache', e);
+        }
+      }
+
+      bumpSeeds();
     };
 
     loadData();
@@ -291,6 +339,29 @@ const Analytics = () => {
     return null;
   };
 
+  const filteredWeightData = getFilteredDataWithAllDays(weightData, weightRange, { kg: null as any });
+  const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
+  const filteredWaterData = getFilteredDataWithAllDays(waterData, waterRange, { ml: 0 });
+
+  const weightChartData = formatChartData(filteredWeightData);
+  const stepsChartData = formatChartData(filteredStepsData);
+  const waterChartData = formatChartData(filteredWaterData);
+  const weightChartKey = `${weightAnimSeed}-${weightRange}-${weightChartData.length}-${weightChartData.at(-1)?.kg ?? 0}`;
+  const stepsChartKey = `${stepsAnimSeed}-${stepsRange}-${stepsChartData.length}-${stepsChartData.at(-1)?.steps ?? 0}`;
+  const waterChartKey = `${waterAnimSeed}-${waterRange}-${waterChartData.length}-${waterChartData.at(-1)?.ml ?? 0}`;
+
+  useEffect(() => {
+    setWeightAnimSeed(Date.now());
+  }, [weightRange, weightChartData.length, weightChartData.at(-1)?.kg]);
+
+  useEffect(() => {
+    setStepsAnimSeed(Date.now());
+  }, [stepsRange, stepsChartData.length, stepsChartData.at(-1)?.steps]);
+
+  useEffect(() => {
+    setWaterAnimSeed(Date.now());
+  }, [waterRange, waterChartData.length, waterChartData.at(-1)?.ml]);
+
   const addWeight = async () => {
     if (!newWeight || isNaN(Number(newWeight)) || !user) return;
     
@@ -370,16 +441,12 @@ const Analytics = () => {
     }
   };
 
-  const filteredWeightData = getFilteredDataWithAllDays(weightData, weightRange, { kg: null as any });
-  const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
-  const filteredWaterData = getFilteredDataWithAllDays(waterData, waterRange, { ml: 0 });
-
-  const formatChartData = (data: WeightEntry[] | StepsEntry[] | WaterEntry[]) => {
+  function formatChartData(data: WeightEntry[] | StepsEntry[] | WaterEntry[]) {
     return data.map(entry => ({
       ...entry,
       day: format(new Date(entry.date), 'd', { locale: es })
     }));
-  };
+  }
 
   const calculateNiceYAxisTicks = (data: WeightEntry[]): number[] => {
     const validData = data.filter(d => d.kg !== null);
@@ -401,9 +468,6 @@ const Analytics = () => {
     return ticks;
   };
 
-  const weightChartData = formatChartData(filteredWeightData);
-  const stepsChartData = formatChartData(filteredStepsData);
-  const waterChartData = formatChartData(filteredWaterData);
   const weightYAxisTicks = calculateNiceYAxisTicks(filteredWeightData);
 
   const validWeightData = filteredWeightData.filter(d => d.kg !== null);
@@ -523,7 +587,7 @@ const Analytics = () => {
 
           {/* Chart */}
           <div className="h-48 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer key={weightChartKey} width="100%" height="100%">
               <LineChart data={weightChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
@@ -540,14 +604,27 @@ const Analytics = () => {
                   width={60}
                 />
                 <Tooltip content={<WeightTooltip />} />
+                <Scatter
+                  dataKey="kg"
+                  fill={COLORS.weight}
+                  shape="circle"
+                  isAnimationActive
+                  animationBegin={200}
+                  animationDuration={1400}
+                  animationEasing="ease-out"
+                />
                 <Line 
                   type="monotone" 
                   dataKey="kg" 
                   stroke={COLORS.weight}
                   strokeWidth={3}
-                  dot={weightRange === 'thisMonth' || weightRange === 'last3Months' || weightRange === 'last6Months' ? false : { fill: COLORS.weight, r: 4 }}
+                  dot={false}
                   activeDot={{ r: 6 }}
                   connectNulls={false}
+                  isAnimationActive
+                  animationBegin={1600}
+                  animationDuration={1400}
+                  animationEasing="ease-out"
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -628,7 +705,7 @@ const Analytics = () => {
 
           {/* Chart */}
           <div className="h-48 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer key={stepsChartKey} width="100%" height="100%">
               <BarChart data={stepsChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
@@ -645,6 +722,9 @@ const Analytics = () => {
                   dataKey="steps" 
                   fill={COLORS.steps}
                   radius={[4, 4, 0, 0]}
+                  isAnimationActive
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -760,7 +840,7 @@ const Analytics = () => {
 
           {/* Chart */}
           <div className="h-48 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer key={waterChartKey} width="100%" height="100%">
               <BarChart data={waterChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
@@ -780,6 +860,9 @@ const Analytics = () => {
                   dataKey="ml" 
                   fill={COLORS.water}
                   radius={[4, 4, 0, 0]}
+                  isAnimationActive
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               </BarChart>
             </ResponsiveContainer>

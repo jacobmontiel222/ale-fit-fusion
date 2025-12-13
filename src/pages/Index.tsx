@@ -36,6 +36,9 @@ const Index = () => {
   const [showAddWater, setShowAddWater] = useState(false);
   const [waterInput, setWaterInput] = useState("");
   const [savingWater, setSavingWater] = useState(false);
+  const [animateMacros, setAnimateMacros] = useState(false);
+  const [animatedWater, setAnimatedWater] = useState(0);
+  const [animatedBurn, setAnimatedBurn] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -122,6 +125,17 @@ const Index = () => {
     return Math.min(100, (macroCals * scale / calorieGoal) * 100);
   };
 
+  useEffect(() => {
+    setAnimateMacros(false);
+    const timer = setTimeout(() => setAnimateMacros(true), 50);
+    return () => clearTimeout(timer);
+  }, [
+    todayNutrition.macrosG.protein,
+    todayNutrition.macrosG.fat,
+    todayNutrition.macrosG.carbs,
+    todayNutrition.kcalTarget,
+  ]);
+
   const handleSaveWater = async () => {
     if (!user?.id) return;
     const amount = Number(waterInput);
@@ -157,6 +171,16 @@ const Index = () => {
       setSavingWater(false);
     }
   };
+
+  useEffect(() => {
+    setAnimatedWater(0);
+    setAnimatedBurn(0);
+    const timer = setTimeout(() => {
+      setAnimatedWater(todayWater);
+      setAnimatedBurn(exerciseKcal);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [todayWater, exerciseKcal]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -252,7 +276,7 @@ const Index = () => {
                 onClick={() => setShowAddWater(true)}
               >
                 <ProgressRing
-                  value={todayWater}
+                  value={animatedWater}
                   max={waterGoal}
                   size={60}
                   strokeWidth={6}
@@ -278,7 +302,7 @@ const Index = () => {
                 onClick={() => navigate('/analytics?focus=steps')}
               >
                 <ProgressRing
-                  value={exerciseKcal}
+                  value={animatedBurn}
                   max={burnGoal}
                   size={60}
                   strokeWidth={6}
@@ -333,16 +357,16 @@ const Index = () => {
                   className="h-2 w-full rounded-full bg-muted/60 overflow-hidden flex"
                 >
                   <div
-                    className="h-full"
-                    style={{ width: `${getMacroWidth(proteinCals)}%`, backgroundColor: 'hsl(var(--protein))' }}
+                    className="h-full transition-all duration-700 ease-out"
+                    style={{ width: `${animateMacros ? getMacroWidth(proteinCals) : 0}%`, backgroundColor: 'hsl(var(--protein))' }}
                   />
                   <div
-                    className="h-full"
-                    style={{ width: `${getMacroWidth(fatCals)}%`, backgroundColor: 'hsl(var(--fat))' }}
+                    className="h-full transition-all duration-700 ease-out"
+                    style={{ width: `${animateMacros ? getMacroWidth(fatCals) : 0}%`, backgroundColor: 'hsl(var(--fat))' }}
                   />
                   <div
-                    className="h-full"
-                    style={{ width: `${getMacroWidth(carbCals)}%`, backgroundColor: 'hsl(var(--carbs))' }}
+                    className="h-full transition-all duration-700 ease-out"
+                    style={{ width: `${animateMacros ? getMacroWidth(carbCals) : 0}%`, backgroundColor: 'hsl(var(--carbs))' }}
                   />
                 </div>
               </div>
