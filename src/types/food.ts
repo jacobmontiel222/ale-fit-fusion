@@ -30,6 +30,9 @@ export interface FoodItem {
   carbs: number;
   fiber?: number;
   sugar?: number;
+  satFat?: number;
+  monoFat?: number;
+  polyFat?: number;
   
   // Micronutrientes por 100g
   micronutrients: {

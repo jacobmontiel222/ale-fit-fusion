@@ -73,6 +73,9 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
         carbs: Math.round(currentFood.carbs * multiplier * 10) / 10,
         fiber: currentFood.fiber ? Math.round(currentFood.fiber * multiplier * 10) / 10 : undefined,
         sugar: currentFood.sugar ? Math.round(currentFood.sugar * multiplier * 10) / 10 : undefined,
+        satFat: currentFood.satFat ? Math.round(currentFood.satFat * multiplier * 10) / 10 : undefined,
+        monoFat: currentFood.monoFat ? Math.round(currentFood.monoFat * multiplier * 10) / 10 : undefined,
+        polyFat: currentFood.polyFat ? Math.round(currentFood.polyFat * multiplier * 10) / 10 : undefined,
       }
     : {
         calories: 0,
@@ -81,6 +84,9 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
         carbs: 0,
         fiber: 0,
         sugar: 0,
+        satFat: 0,
+        monoFat: 0,
+        polyFat: 0,
       };
 
   const handleAdd = () => {
@@ -314,6 +320,24 @@ export function FoodDetailsModal({ food, open, onOpenChange, onAddFood, editable
                   <div className="flex items-center justify-between py-2 border-b border-border">
                     <span className="text-muted-foreground">{t('foodDetails.sugar')}</span>
                     <span className="font-semibold">{adjustedMacros.sugar} g</span>
+                  </div>
+                )}
+                {adjustedMacros.satFat !== undefined && adjustedMacros.satFat > 0 && (
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">{t('foodDetails.satFat', 'Saturated fat')}</span>
+                    <span className="font-semibold">{adjustedMacros.satFat} g</span>
+                  </div>
+                )}
+                {adjustedMacros.monoFat !== undefined && adjustedMacros.monoFat > 0 && (
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">{t('foodDetails.monoFat', 'Monounsaturated fat')}</span>
+                    <span className="font-semibold">{adjustedMacros.monoFat} g</span>
+                  </div>
+                )}
+                {adjustedMacros.polyFat !== undefined && adjustedMacros.polyFat > 0 && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-muted-foreground">{t('foodDetails.polyFat', 'Polyunsaturated fat')}</span>
+                    <span className="font-semibold">{adjustedMacros.polyFat} g</span>
                   </div>
                 )}
               </div>

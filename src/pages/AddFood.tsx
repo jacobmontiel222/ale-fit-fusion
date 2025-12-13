@@ -34,6 +34,9 @@ interface FoodItem {
   carbs: number;
   fiber?: number;
   sugar?: number;
+  satFat?: number;
+  monoFat?: number;
+  polyFat?: number;
   servingSize: number;
   servingUnit: string;
   barcode?: string;
@@ -171,9 +174,11 @@ const AddFood = () => {
     carbs: food.carbs,
     fiber: food.fiber,
     sugar: food.sugar,
+    satFat: food.satFat,
+    monoFat: food.monoFat,
+    polyFat: food.polyFat,
     micronutrients: mapMicrosFromSource({
-      vitamins: food.vitamins,
-      minerals: food.minerals,
+      ...food,
       sodium_mg: (food as any).sodium_mg,
       potassium_mg: (food as any).potassium_mg,
       calcium_mg: (food as any).calcium_mg,
@@ -673,6 +678,9 @@ const AddFood = () => {
             carbs: per100.carbs ?? per100.carbs_g ?? 0,
             sugar: per100.sugars_g ?? per100.sugar ?? 0,
             fiber: per100.fiber_g ?? per100.fiber ?? 0,
+            satFat: per100.sat_fat_g ?? per100.saturated_fat ?? 0,
+            monoFat: per100.mono_fat_g ?? per100.monounsaturated_fat ?? 0,
+            polyFat: per100.poly_fat_g ?? per100.polyunsaturated_fat ?? 0,
             servingSize: 100,
             servingUnit: "g",
             barcode,
@@ -704,11 +712,18 @@ const AddFood = () => {
 
     const calculateAdjustedMacros = (food: FoodItem, amount: number) => {
     const multiplier = amount / food.servingSize;
+    const round1 = (val: number | undefined) =>
+      Number.isFinite(val) ? Math.round((val as number) * multiplier * 10) / 10 : 0;
     return {
       calories: Math.round(food.calories * multiplier),
-      protein: Math.round(food.protein * multiplier * 10) / 10,
-      fat: Math.round(food.fat * multiplier * 10) / 10,
-      carbs: Math.round(food.carbs * multiplier * 10) / 10,
+      protein: round1(food.protein),
+      fat: round1(food.fat),
+      carbs: round1(food.carbs),
+      sugar: round1(food.sugar),
+      fiber: round1(food.fiber),
+      satFat: round1((food as any).satFat),
+      monoFat: round1((food as any).monoFat),
+      polyFat: round1((food as any).polyFat),
     };
   };
 
@@ -778,6 +793,11 @@ const AddFood = () => {
         protein: adjustedMacros.protein,
         fat: adjustedMacros.fat,
         carbs: adjustedMacros.carbs,
+        sugars_g: adjustedMacros.sugar,
+        fiber_g: adjustedMacros.fiber,
+        sat_fat_g: adjustedMacros.satFat,
+        mono_fat_g: adjustedMacros.monoFat,
+        poly_fat_g: adjustedMacros.polyFat,
         barcode: foodToAdd.barcode || null,
         entry_method: 'manual'
       });
@@ -852,6 +872,11 @@ const AddFood = () => {
       protein: Math.round(food.protein * multiplier * 10) / 10,
       fat: Math.round(food.fat * multiplier * 10) / 10,
       carbs: Math.round(food.carbs * multiplier * 10) / 10,
+      sugar: Math.round((food.sugar || 0) * multiplier * 10) / 10,
+      fiber: Math.round((food.fiber || 0) * multiplier * 10) / 10,
+      satFat: Math.round(((food as any).satFat || 0) * multiplier * 10) / 10,
+      monoFat: Math.round(((food as any).monoFat || 0) * multiplier * 10) / 10,
+      polyFat: Math.round(((food as any).polyFat || 0) * multiplier * 10) / 10,
     };
     
     // Calcular micronutrientes ajustados
@@ -923,6 +948,11 @@ const AddFood = () => {
         protein: adjustedMacros.protein,
         fat: adjustedMacros.fat,
         carbs: adjustedMacros.carbs,
+        sugars_g: adjustedMacros.sugar,
+        fiber_g: adjustedMacros.fiber,
+        sat_fat_g: adjustedMacros.satFat,
+        mono_fat_g: adjustedMacros.monoFat,
+        poly_fat_g: adjustedMacros.polyFat,
         barcode: food.barcode || null,
         entry_method: 'database',
         micronutrients: adjustedMicronutrients
