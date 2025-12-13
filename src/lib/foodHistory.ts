@@ -7,6 +7,15 @@ export interface HistoryItem {
   protein: number;
   fat: number;
   carbs: number;
+  sugar?: number;
+  fiber?: number;
+  satFat?: number;
+  monoFat?: number;
+  polyFat?: number;
+  micronutrients?: {
+    vitamins: Array<{ name: string; amount: number; unit: string; dailyValue?: number }>;
+    minerals: Array<{ name: string; amount: number; unit: string; dailyValue?: number }>;
+  };
   servingSize: number;
   servingUnit: string;
   meal: string;
