@@ -48,15 +48,26 @@ const Analytics = () => {
   const [newWaterDate, setNewWaterDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [targetWeightGoal, setTargetWeightGoal] = useState<number | null>(null);
   const [savingSteps, setSavingSteps] = useState(false);
-  const [weightAnimSeed, setWeightAnimSeed] = useState(0);
-  const [stepsAnimSeed, setStepsAnimSeed] = useState(0);
-  const [waterAnimSeed, setWaterAnimSeed] = useState(0);
+  const [weightProgress, setWeightProgress] = useState(0);
+  const [stepsProgress, setStepsProgress] = useState(0);
+  const [waterProgress, setWaterProgress] = useState(0);
 
   const bumpSeeds = () => {
-    const now = Date.now();
-    setWeightAnimSeed(now);
-    setStepsAnimSeed(now + 1);
-    setWaterAnimSeed(now + 2);
+    const duration = 900;
+    const start = performance.now();
+    setWeightProgress(0);
+    setStepsProgress(0);
+    setWaterProgress(0);
+    const step = (ts: number) => {
+      const progress = Math.min(1, (ts - start) / duration);
+      setWeightProgress(progress);
+      setStepsProgress(progress);
+      setWaterProgress(progress);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    requestAnimationFrame(step);
   };
 
   // Color scheme
@@ -118,8 +129,6 @@ const Analytics = () => {
         .maybeSingle();
       const target = profileRow?.target_weight ?? null;
       setTargetWeightGoal(target);
-
-      bumpSeeds();
     };
 
     loadData();
@@ -308,24 +317,44 @@ const Analytics = () => {
   const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
   const filteredWaterData = getFilteredDataWithAllDays(waterData, waterRange, { ml: 0 });
 
+  const weightConfig = getWeightYAxisConfig(filteredWeightData);
+  const stepsConfig = getStepsYAxisConfig(filteredStepsData);
+  const waterConfig = getWaterYAxisConfig();
+
   const weightChartData = formatChartData(filteredWeightData);
   const stepsChartData = formatChartData(filteredStepsData);
   const waterChartData = formatChartData(filteredWaterData);
-  const weightChartKey = `${weightAnimSeed}-${weightRange}-${weightChartData.length}-${weightChartData.at(-1)?.kg ?? 0}`;
-  const stepsChartKey = `${stepsAnimSeed}-${stepsRange}-${stepsChartData.length}-${stepsChartData.at(-1)?.steps ?? 0}`;
-  const waterChartKey = `${waterAnimSeed}-${waterRange}-${waterChartData.length}-${waterChartData.at(-1)?.ml ?? 0}`;
+
+  const sanitizedWeightData = weightChartData.map((entry) => {
+    if (!Number.isFinite(entry.kg)) return { ...entry, kg: null as any };
+    return entry;
+  });
+
+  const hasWeightData = sanitizedWeightData.some((entry) => entry.kg !== null);
+
+  const animatedWeightData = sanitizedWeightData.map((entry) => {
+    if (!hasWeightData || entry.kg === null) return { ...entry, kg: null as any };
+    return {
+      ...entry,
+      kg: weightConfig.baseline + (entry.kg - weightConfig.baseline) * weightProgress,
+    };
+  });
+
+  const animatedStepsData = stepsChartData.map((entry) => ({
+    ...entry,
+    steps: entry.steps * stepsProgress,
+  }));
+
+  const animatedWaterData = waterChartData.map((entry) => ({
+    ...entry,
+    ml: entry.ml * waterProgress,
+  }));
 
   useEffect(() => {
-    setWeightAnimSeed(Date.now());
-  }, [weightRange, weightChartData.length, weightChartData.at(-1)?.kg]);
-
-  useEffect(() => {
-    setStepsAnimSeed(Date.now());
-  }, [stepsRange, stepsChartData.length, stepsChartData.at(-1)?.steps]);
-
-  useEffect(() => {
-    setWaterAnimSeed(Date.now());
-  }, [waterRange, waterChartData.length, waterChartData.at(-1)?.ml]);
+    const hasData = weightData.length > 0 || stepsData.length > 0 || waterData.length > 0;
+    if (!hasData) return;
+    bumpSeeds();
+  }, [weightData, stepsData, waterData, weightRange, stepsRange, waterRange]);
 
   const addWeight = async () => {
     if (!newWeight || isNaN(Number(newWeight)) || !user) return;
@@ -413,32 +442,67 @@ const Analytics = () => {
     }));
   }
 
-  const calculateNiceYAxisTicks = (data: WeightEntry[]): number[] => {
+  function calculateNiceYAxisTicks(data: WeightEntry[]): number[] {
     const validData = data.filter(d => d.kg !== null);
-    if (validData.length === 0) return [65, 70, 75, 80, 85];
-    
-    const minWeight = Math.min(...validData.map(d => d.kg));
-    const maxWeight = Math.max(...validData.map(d => d.kg));
-    
-    // Add 2kg margin above and below
-    const rangeMin = Math.floor(minWeight - 2);
-    const rangeMax = Math.ceil(maxWeight + 2);
-    
-    // Use 2kg increments for cleaner display
-    const ticks: number[] = [];
-    for (let i = rangeMin; i <= rangeMax; i += 2) {
-      ticks.push(i);
-    }
-    
-    return ticks;
-  };
+    if (validData.length === 0) return [-3, 0, 3];
 
-  const weightYAxisTicks = calculateNiceYAxisTicks(filteredWeightData);
+    const minW = Math.min(...validData.map(d => d.kg));
+    const maxW = Math.max(...validData.map(d => d.kg));
+    const range = maxW - minW;
+    const mid = (minW + maxW) / 2;
+    const base = Math.round(mid);
+
+    let halfRange = 3;
+    if (range <= 1.5) halfRange = 2;
+    else if (range <= 3) halfRange = 3;
+    else halfRange = Math.min(5, Math.ceil(range / 2) + 1);
+
+    const min = base - halfRange;
+    const max = base + halfRange;
+    const step = range <= 2 ? 0.5 : 1;
+
+    const ticks: number[] = [];
+    for (let v = min; v <= max + 1e-6; v += step) {
+      ticks.push(Number(v.toFixed(1)));
+    }
+    return ticks;
+  }
+
+  function getWeightYAxisConfig(data: WeightEntry[]) {
+    const ticks = calculateNiceYAxisTicks(data);
+    const domain: [number, number] = [ticks[0] ?? -3, ticks[ticks.length - 1] ?? 3];
+    const baseline = data.find(d => d.kg != null)?.kg ?? 0;
+    return { ticks, domain, baseline };
+  }
+
+  function getStepsYAxisConfig(data: StepsEntry[]) {
+    const values = data.map(d => d.steps);
+    const maxVal = values.length ? Math.max(...values) : 0;
+    const step = 5000;
+    let maxY = Math.ceil(maxVal / step) * step || step;
+    if (maxY < 20000) {
+      maxY = 20000;
+    }
+    if (maxY - maxVal < step * 0.15) {
+      maxY += step;
+    }
+    const ticks: number[] = [];
+    for (let v = 0; v <= maxY; v += step) {
+      ticks.push(v);
+    }
+    return { domain: [0, maxY] as [number, number], ticks };
+  }
+
+  function getWaterYAxisConfig() {
+    const max = 6000;
+    const ticks = [0, 2000, 4000, 6000];
+    return { domain: [0, max] as [number, number], ticks };
+  }
 
   const validWeightData = filteredWeightData.filter(d => d.kg !== null);
   const weightDelta = validWeightData.length >= 2 
-    ? (validWeightData[validWeightData.length - 1].kg - validWeightData[0].kg).toFixed(1)
-    : "0.0";
+    ? validWeightData[validWeightData.length - 1].kg - validWeightData[0].kg
+    : null;
 
   const startWeight = validWeightData.length >= 1 ? validWeightData[0].kg : null;
   const endWeight = validWeightData.length >= 1 ? validWeightData[validWeightData.length - 1].kg : null;
@@ -469,23 +533,6 @@ const Analytics = () => {
   const waterAverage = filteredWaterData.length > 0
     ? Math.round(waterTotal / filteredWaterData.length)
     : 0;
-
-  // Calculate nice Y-axis ticks for water (1000ml intervals)
-  const calculateWaterYAxisTicks = (data: WaterEntry[]): number[] => {
-    if (data.length === 0) return [0, 1000, 2000, 3000];
-    
-    const maxWater = Math.max(...data.map(d => d.ml));
-    const maxTick = Math.ceil(maxWater / 1000) * 1000 + 1000; // Round up to next 1000 and add one more
-    
-    const ticks: number[] = [];
-    for (let i = 0; i <= maxTick; i += 1000) {
-      ticks.push(i);
-    }
-    
-    return ticks;
-  };
-
-  const waterYAxisTicks = calculateWaterYAxisTicks(filteredWaterData);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -552,8 +599,8 @@ const Analytics = () => {
 
           {/* Chart */}
           <div className="h-48 mb-4">
-            <ResponsiveContainer key={weightChartKey} width="100%" height="100%">
-              <LineChart data={weightChartData}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={animatedWeightData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="day" 
@@ -563,20 +610,21 @@ const Analytics = () => {
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  ticks={weightYAxisTicks}
-                  domain={[weightYAxisTicks[0], weightYAxisTicks[weightYAxisTicks.length - 1]]}
-                  tickFormatter={(value) => `${value.toFixed(1)} kg`}
-                  width={60}
+                  ticks={weightConfig.ticks}
+                  domain={weightConfig.domain}
+                  tickFormatter={(value) => {
+                    const v = Number(value);
+                    return Number.isInteger(v) ? v.toString() : v.toFixed(1);
+                  }}
+                  width={56}
                 />
                 <Tooltip content={<WeightTooltip />} />
                 <Scatter
                   dataKey="kg"
                   fill={COLORS.weight}
                   shape="circle"
-                  isAnimationActive
-                  animationBegin={200}
-                  animationDuration={1400}
-                  animationEasing="ease-out"
+                  isAnimationActive={false}
+                  connectNulls
                 />
                 <Line 
                   type="monotone" 
@@ -586,10 +634,7 @@ const Analytics = () => {
                   dot={false}
                   activeDot={{ r: 6 }}
                   connectNulls={false}
-                  isAnimationActive
-                  animationBegin={1600}
-                  animationDuration={1400}
-                  animationEasing="ease-out"
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -611,7 +656,7 @@ const Analytics = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">{t('analytics.variation')}</p>
               <p className={`text-lg font-semibold ${weightTrendClass}`}>
-                {Number(weightDelta) > 0 ? '+' : ''}{weightDelta} kg
+                {weightDelta === null ? '-' : `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)} kg`}
               </p>
               <p className="text-xs text-muted-foreground">
                 {weightRange === 'thisWeek' ? t('analytics.thisWeek') : 
@@ -670,8 +715,8 @@ const Analytics = () => {
 
           {/* Chart */}
           <div className="h-48 mb-4">
-            <ResponsiveContainer key={stepsChartKey} width="100%" height="100%">
-              <BarChart data={stepsChartData}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={animatedStepsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="day" 
@@ -681,15 +726,17 @@ const Analytics = () => {
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  ticks={stepsConfig.ticks}
+                  domain={stepsConfig.domain}
+                  tickFormatter={(val) => Number(val).toLocaleString(i18n.language)}
+                  width={60}
                 />
                 <Tooltip content={<StepsTooltip />} />
                 <Bar 
                   dataKey="steps" 
                   fill={COLORS.steps}
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive
-                  animationDuration={800}
-                  animationEasing="ease-out"
+                  isAnimationActive={false}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -805,8 +852,8 @@ const Analytics = () => {
 
           {/* Chart */}
           <div className="h-48 mb-4">
-            <ResponsiveContainer key={waterChartKey} width="100%" height="100%">
-              <BarChart data={waterChartData}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={animatedWaterData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="day" 
@@ -816,18 +863,17 @@ const Analytics = () => {
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickFormatter={(value) => `${value} ml`}
-                  ticks={waterYAxisTicks}
-                  domain={[0, waterYAxisTicks[waterYAxisTicks.length - 1]]}
+                  tickFormatter={(value) => Number(value).toLocaleString(i18n.language)}
+                  ticks={waterConfig.ticks}
+                  domain={waterConfig.domain}
+                  width={70}
                 />
                 <Tooltip content={<WaterTooltip />} />
                 <Bar 
                   dataKey="ml" 
                   fill={COLORS.water}
                   radius={[4, 4, 0, 0]}
-                  isAnimationActive
-                  animationDuration={800}
-                  animationEasing="ease-out"
+                  isAnimationActive={false}
                 />
               </BarChart>
             </ResponsiveContainer>
