@@ -47,6 +47,10 @@ const Comidas = () => {
 
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
   const dateISO = formatDate(selectedDate);
+  const todayLabel = new Date().toLocaleDateString(
+    i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language,
+    { day: 'numeric', month: 'long', year: 'numeric' }
+  );
   
   useEffect(() => {
     const loadData = async () => {
@@ -190,39 +194,36 @@ const Comidas = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">{t('meals.title')}</h1>
+        {/* Header compacto con fecha actual */}
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground leading-tight">{t('meals.title')}</h1>
+            <p className="text-sm text-muted-foreground">{todayLabel}</p>
+          </div>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label={t('analytics.date')}>
+                <CalendarIcon className="w-5 h-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
-        {/* Mini Calendar */}
-        <StatsCard className="mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon" onClick={goToPreviousWeek}>
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" className="font-semibold text-lg">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {selectedDate.toLocaleDateString(i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language, { month: 'long', year: 'numeric' })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="center">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={handleDateSelect}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-            <Button variant="ghost" size="icon" onClick={goToNextWeek}>
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-7 gap-2">
+        {/* Tira semanal compacta */}
+        <div className="flex items-center gap-2 mb-4">
+          <Button variant="ghost" size="icon" onClick={goToPreviousWeek} aria-label={t('common.previous')}>
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <div className="grid grid-cols-7 gap-2 flex-1">
             {weekDays.map((day, idx) => {
               const isSelected = formatDate(day) === formatDate(selectedDate);
               const isToday = formatDate(day) === formatDate(new Date());
@@ -236,7 +237,7 @@ const Comidas = () => {
                   }`}
                 >
                   <span className="text-xs text-muted-foreground mb-1">
-                    {day.toLocaleDateString('es-ES', { weekday: 'short' }).charAt(0).toUpperCase()}
+                    {day.toLocaleDateString(i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language, { weekday: 'short' }).charAt(0).toUpperCase()}
                   </span>
                   <span className={`text-sm font-semibold ${isToday ? 'text-accent' : ''}`}>
                     {day.getDate()}
@@ -245,7 +246,10 @@ const Comidas = () => {
               );
             })}
           </div>
-        </StatsCard>
+          <Button variant="ghost" size="icon" onClick={goToNextWeek} aria-label={t('common.next')}>
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
 
         {/* Main Calories Summary with Tabs */}
         <StatsCard className="overflow-hidden py-3">
