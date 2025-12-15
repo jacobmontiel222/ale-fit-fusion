@@ -37,6 +37,7 @@ interface ProfileData {
   water_goal_ml?: number | null;
   burn_goal_kcal?: number | null;
   calories_goal?: number | null;
+  steps_goal?: number | null;
 }
 
 const Profile = () => {
@@ -56,6 +57,7 @@ const Profile = () => {
     water_goal_ml: null,
     burn_goal_kcal: null,
     calories_goal: null,
+    steps_goal: null,
   });
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
@@ -75,14 +77,14 @@ const Profile = () => {
     return code.split('-')[0];
   };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+ useEffect(() => {
+   setMounted(true);
+ }, []);
 
   useEffect(() => {
-    if (profile) {
-      setEditData(profile);
-    }
+  if (profile) {
+    setEditData(profile);
+  }
   }, [profile]);
 
   useEffect(() => {
@@ -400,6 +402,25 @@ const Profile = () => {
               ) : (
                 <span className="text-muted-foreground">
                   {profile?.burn_goal_kcal != null ? `${profile.burn_goal_kcal} kcal` : '--'}
+                </span>
+              )}
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-foreground">{t('profile.stepsGoal', 'Objetivo de pasos')}</span>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={editData.steps_goal ?? ""}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, steps_goal: e.target.value === '' ? null : Number(e.target.value) }))}
+                    className="w-28 h-8 text-right"
+                    placeholder="10000"
+                  />
+                  <span className="text-muted-foreground">{t('dashboard.steps')}</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">
+                  {profile?.steps_goal != null ? `${profile.steps_goal.toLocaleString('es-ES')} ${t('dashboard.steps')}` : '--'}
                 </span>
               )}
             </div>

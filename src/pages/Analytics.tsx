@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps, Scatter } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, TooltipProps, Scatter, ReferenceLine } from "recharts";
 import { useTranslation } from "react-i18next";
+import { useProfile } from "@/hooks/useProfile";
 
 interface WeightEntry {
   date: string;
@@ -51,6 +52,7 @@ const Analytics = () => {
   const [weightProgress, setWeightProgress] = useState(0);
   const [stepsProgress, setStepsProgress] = useState(0);
   const [waterProgress, setWaterProgress] = useState(0);
+  const { profile } = useProfile();
 
   const bumpSeeds = () => {
     const duration = 900;
@@ -317,11 +319,27 @@ const Analytics = () => {
   const filteredStepsData = getFilteredDataWithAllDays(stepsData, stepsRange, { steps: 0 });
   const filteredWaterData = getFilteredDataWithAllDays(waterData, waterRange, { ml: 0 });
 
-  const weightConfig = getWeightYAxisConfig(filteredWeightData);
-  const stepsConfig = getStepsYAxisConfig(filteredStepsData);
-  const waterConfig = getWaterYAxisConfig();
+  const { startDate: weightStartDate } = getDateRange(weightRange);
+  const prevWeightEntry = [...weightData]
+    .filter(d => new Date(d.date) < weightStartDate)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .pop();
 
-  const weightChartData = formatChartData(filteredWeightData);
+  const stepsGoal = profile?.steps_goal ?? 20000;
+  const waterGoal = profile?.water_goal_ml ?? 2000;
+
+  const weightDataForChart = prevWeightEntry ? [prevWeightEntry, ...filteredWeightData] : filteredWeightData;
+
+  const weightConfig = getWeightYAxisConfig(weightDataForChart);
+  const stepsConfig = getStepsYAxisConfig(filteredStepsData, stepsGoal);
+  const waterConfig = getWaterYAxisConfig(filteredWaterData, waterGoal);
+
+  const weightChartData = formatChartData(weightDataForChart).map((entry, idx) => {
+    if (prevWeightEntry && idx === 0) {
+      return { ...entry, day: "", isPadding: true };
+    }
+    return entry;
+  });
   const stepsChartData = formatChartData(filteredStepsData);
   const waterChartData = formatChartData(filteredWaterData);
 
@@ -475,11 +493,11 @@ const Analytics = () => {
     return { ticks, domain, baseline };
   }
 
-  function getStepsYAxisConfig(data: StepsEntry[]) {
+  function getStepsYAxisConfig(data: StepsEntry[], goal: number) {
     const values = data.map(d => d.steps);
     const maxVal = values.length ? Math.max(...values) : 0;
     const step = 5000;
-    let maxY = Math.ceil(maxVal / step) * step || step;
+    let maxY = Math.ceil(Math.max(maxVal, goal || 0) / step) * step || step;
     if (maxY < 20000) {
       maxY = 20000;
     }
@@ -502,10 +520,16 @@ const Analytics = () => {
     return { domain: [0, upper] as [number, number], ticks };
   }
 
-  function getWaterYAxisConfig() {
-    const max = 6000;
-    const ticks = [0, 2000, 4000, 6000];
-    return { domain: [0, max] as [number, number], ticks };
+  function getWaterYAxisConfig(data: WaterEntry[], goal: number) {
+    const values = data.map(d => d.ml);
+    const maxVal = values.length ? Math.max(...values) : 0;
+    const step = 1000;
+    let maxY = Math.ceil(Math.max(maxVal, goal || 0, 6000) / step) * step;
+    const ticks: number[] = [];
+    for (let v = 0; v <= maxY; v += step) {
+      ticks.push(v);
+    }
+    return { domain: [0, maxY] as [number, number], ticks };
   }
 
   const validWeightData = filteredWeightData.filter(d => d.kg !== null);
@@ -615,6 +639,7 @@ const Analytics = () => {
                   dataKey="day" 
                   stroke="hsl(var(--muted-foreground))"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tickFormatter={(v, idx) => (weightChartData[idx]?.isPadding ? '' : v)}
                 />
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
@@ -745,6 +770,11 @@ const Analytics = () => {
                   width={60}
                 />
                 <Tooltip content={<StepsTooltip />} />
+                <ReferenceLine
+                  y={stepsGoal}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeDasharray="4 4"
+                />
                 <Bar 
                   dataKey="steps" 
                   fill={COLORS.steps}
@@ -786,17 +816,8 @@ const Analytics = () => {
             <DialogHeader>
               <DialogTitle>{t('analytics.addSteps', 'Añadir pasos')}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="steps-date">{t('analytics.date')}</Label>
-                <Input
-                  id="steps-date"
-                  type="date"
-                  value={newStepsDate}
-                  onChange={(e) => setNewStepsDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
+            <div className="space-y-4">
+              <div>
                 <Label htmlFor="steps-amount">{t('analytics.steps')}</Label>
                 <Input
                   id="steps-amount"
@@ -807,9 +828,18 @@ const Analytics = () => {
                   placeholder="8000"
                 />
               </div>
+              <div>
+                <Label htmlFor="steps-date">{t('analytics.date')}</Label>
+                <Input
+                  id="steps-date"
+                  type="date"
+                  value={newStepsDate}
+                  onChange={(e) => setNewStepsDate(e.target.value)}
+                />
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setShowAddSteps(false)} disabled={savingSteps}>
+              <Button variant="outline" onClick={() => setShowAddSteps(false)} disabled={savingSteps}>
                 {t('common.cancel')}
               </Button>
               <Button onClick={handleAddSteps} disabled={savingSteps || !newStepsAmount}>
@@ -882,6 +912,11 @@ const Analytics = () => {
                   width={70}
                 />
                 <Tooltip content={<WaterTooltip />} />
+                <ReferenceLine
+                  y={waterGoal}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeDasharray="4 4"
+                />
                 <Bar 
                   dataKey="ml" 
                   fill={COLORS.water}

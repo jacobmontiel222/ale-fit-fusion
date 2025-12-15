@@ -14,6 +14,7 @@ interface ProfileData {
   water_goal_ml?: number | null;
   burn_goal_kcal?: number | null;
   calories_goal?: number | null;
+  steps_goal?: number | null;
 }
 
 export const useProfile = () => {
@@ -34,6 +35,7 @@ export const useProfile = () => {
           water_goal_ml: null,
           burn_goal_kcal: null,
           calories_goal: null,
+          steps_goal: null,
         };
       }
 
@@ -46,7 +48,7 @@ export const useProfile = () => {
         supabase.auth.getUser(),
         supabase
           .from('profiles')
-          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color, share_foods_with_community, water_goal_ml, burn_goal_kcal')
+          .select('name, height, current_weight, target_weight, avatar_icon, avatar_color, share_foods_with_community, water_goal_ml, burn_goal_kcal, steps_goal')
           .eq('id', user.id)
           .maybeSingle(),
         supabase
@@ -81,6 +83,7 @@ export const useProfile = () => {
         water_goal_ml: profileData?.water_goal_ml ?? null,
         burn_goal_kcal: profileData?.burn_goal_kcal ?? null,
         calories_goal: nutritionGoals?.calories_goal ?? null,
+        steps_goal: profileData?.steps_goal ?? null,
       };
     },
     enabled: !!user?.id,
@@ -102,6 +105,7 @@ export const useProfile = () => {
       }
       if (data.water_goal_ml !== undefined) updateData.water_goal_ml = data.water_goal_ml;
       if (data.burn_goal_kcal !== undefined) updateData.burn_goal_kcal = data.burn_goal_kcal;
+      if (data.steps_goal !== undefined) updateData.steps_goal = data.steps_goal;
 
       if (Object.keys(updateData).length > 0) {
         const { error } = await supabase

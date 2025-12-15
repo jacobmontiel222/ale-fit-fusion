@@ -36,6 +36,10 @@ const Index = () => {
   const [showAddWater, setShowAddWater] = useState(false);
   const [waterInput, setWaterInput] = useState("");
   const [savingWater, setSavingWater] = useState(false);
+  const [showAddSteps, setShowAddSteps] = useState(false);
+  const [newStepsAmount, setNewStepsAmount] = useState("");
+  const [savingSteps, setSavingSteps] = useState(false);
+  const todayISO = new Date().toISOString().split('T')[0];
   const [animateMacros, setAnimateMacros] = useState(false);
   const [animatedWater, setAnimatedWater] = useState(0);
   const [animatedBurn, setAnimatedBurn] = useState(0);
@@ -142,7 +146,6 @@ const Index = () => {
     if (!Number.isFinite(amount) || amount <= 0) return;
     setSavingWater(true);
     try {
-      const todayISO = new Date().toISOString().split('T')[0];
       const { data: existing } = await supabase
         .from('daily_water_intake')
         .select('ml_consumed')
@@ -169,6 +172,43 @@ const Index = () => {
       console.error('Error saving water', err);
     } finally {
       setSavingWater(false);
+    }
+  };
+
+  const handleAddSteps = async () => {
+    if (!user?.id) return;
+    const stepsValue = Number(newStepsAmount);
+    if (!Number.isFinite(stepsValue) || stepsValue <= 0) return;
+    setSavingSteps(true);
+    try {
+      const { data: existing } = await supabase
+        .from('daily_steps')
+        .select('steps')
+        .eq('user_id', user.id)
+        .eq('date', todayISO)
+        .maybeSingle();
+
+      const newTotal = (existing?.steps || 0) + stepsValue;
+
+      const { error } = await supabase
+        .from('daily_steps')
+        .upsert(
+          {
+            user_id: user.id,
+            date: todayISO,
+            steps: newTotal,
+          },
+          { onConflict: 'user_id,date' },
+        );
+      if (error) throw error;
+      await refetch();
+      window.dispatchEvent(new Event('stepsUpdated'));
+      setShowAddSteps(false);
+      setNewStepsAmount("");
+    } catch (err) {
+      console.error('Error saving steps', err);
+    } finally {
+      setSavingSteps(false);
     }
   };
 
@@ -299,7 +339,7 @@ const Index = () => {
               
               <div 
                 className="cursor-pointer hover:bg-secondary/50 transition-colors rounded-2xl p-3 flex items-center gap-3"
-                onClick={() => navigate('/analytics?focus=steps')}
+                onClick={() => setShowAddSteps(true)}
               >
                 <ProgressRing
                   value={animatedBurn}
@@ -436,7 +476,7 @@ const Index = () => {
 
           <StatsCard 
             className="py-2.5 cursor-pointer hover:bg-secondary/50 transition-colors h-full min-w-0"
-            onClick={() => navigate('/analytics?focus=steps')}
+            onClick={() => setShowAddSteps(true)}
           >
             {isLoading ? (
               <>
@@ -498,6 +538,33 @@ const Index = () => {
             </Button>
             <Button onClick={handleSaveWater} disabled={!waterInput || savingWater}>
               {savingWater ? t('profile.saving') : t('common.add')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Steps Dialog (matching water style) */}
+      <Dialog open={showAddSteps} onOpenChange={setShowAddSteps}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('dashboard.steps')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              id="steps-amount"
+              type="number"
+              inputMode="numeric"
+              value={newStepsAmount}
+              onChange={(e) => setNewStepsAmount(e.target.value)}
+              placeholder="8000"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowAddSteps(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleAddSteps} disabled={!newStepsAmount || savingSteps}>
+              {savingSteps ? t('profile.saving') : t('common.add')}
             </Button>
           </DialogFooter>
         </DialogContent>
