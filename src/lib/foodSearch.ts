@@ -59,11 +59,16 @@ function similarityScore(str1: string, str2: string): number {
     return 0.8 - (normalized2.length - normalized1.length) * 0.01;
   }
   
+  // Skip Levenshtein when query is much shorter than food name or lengths are very different
+  if (normalized2.length - normalized1.length > 10 || normalized1.length / Math.max(1, normalized2.length) < 0.3) {
+    return 0;
+  }
+
   // Distancia de Levenshtein
   const distance = levenshteinDistance(normalized1, normalized2);
   const maxLength = Math.max(normalized1.length, normalized2.length);
   const similarity = 1 - distance / maxLength;
-  
+
   return Math.max(0, similarity);
 }
 

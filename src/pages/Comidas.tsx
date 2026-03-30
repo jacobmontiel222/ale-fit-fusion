@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, ChefHat, Settings, ChevronLeft, ChevronRight, Trash2, CalendarIcon } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
@@ -10,36 +11,36 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useNutrition } from "@/contexts/NutritionContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { useTranslation } from "react-i18next";
 
+interface GoalFormValues {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  useGrams: boolean;
+}
+
+const MEAL_TYPE_DB: Record<string, string> = {
+  breakfast: 'Desayuno',
+  lunch: 'Comida',
+  dinner: 'Cena',
+};
+
 const Comidas = () => {
   const navigate = useNavigate();
-  const { getTotals } = useNutrition();
   const { user } = useAuth();
   const { goals: nutritionGoals, updateGoals } = useNutritionGoals();
+  const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
-  
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showEditModal, setShowEditModal] = useState(false);
-  const [dailyMeals, setDailyMeals] = useState<any[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [dayTotals, setDayTotals] = useState({
-    kcalTarget: 2000,
-    kcalConsumed: 0,
-    macrosG: { protein: 0, fat: 0, carbs: 0 },
-    sugars: 0,
-    satFat: 0,
-    monoFat: 0,
-    polyFat: 0,
-    breakfast: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
-    lunch: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } },
-    dinner: { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } }
-  });
   const [showCarbDetails, setShowCarbDetails] = useState(false);
   const [showFatDetails, setShowFatDetails] = useState(false);
   const [tabValue, setTabValue] = useState<"macros" | "micronutrients">("macros");
@@ -51,54 +52,83 @@ const Comidas = () => {
     i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language,
     { day: 'numeric', month: 'long', year: 'numeric' }
   );
-  
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user) return;
 
-      // Load meals
-      const { data: meals } = await supabase
+  // Single fetch — shared cache key with useMicronutrients
+  const { data: dailyMeals = [] } = useQuery({
+    queryKey: ['mealEntries', user?.id, dateISO],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
         .from('meal_entries')
         .select('*')
         .eq('user_id', user.id)
         .eq('date', dateISO)
         .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
 
-      setDailyMeals(meals || []);
+  // Compute dayTotals from cached meal data — no extra Supabase call
+  const dayTotals = useMemo(() => {
+    const kcalTarget = nutritionGoals?.calories_goal ?? 2000;
+    const breakfast = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    const lunch = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    const dinner = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    const snacks = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
+    let sugars = 0, satFat = 0, monoFat = 0, polyFat = 0;
 
-      // Load nutrition totals
-      const totals = await getTotals(dateISO);
-      setDayTotals(totals);
+    for (const meal of dailyMeals) {
+      const cal = Number(meal.calories) || 0;
+      const prot = Number(meal.protein) || 0;
+      const fat = Number(meal.fat) || 0;
+      const carb = Number(meal.carbs) || 0;
+      sugars += Number(meal.sugars_g) || 0;
+      satFat += Number(meal.sat_fat_g) || 0;
+      monoFat += Number(meal.mono_fat_g) || 0;
+      polyFat += Number(meal.poly_fat_g) || 0;
+
+      const target =
+        meal.meal_type === 'Desayuno' ? breakfast :
+        meal.meal_type === 'Comida' ? lunch :
+        meal.meal_type === 'Cena' ? dinner : snacks;
+      target.calories += cal;
+      target.macros.protein += prot;
+      target.macros.fat += fat;
+      target.macros.carbs += carb;
+    }
+
+    const kcalConsumed = breakfast.calories + lunch.calories + dinner.calories + snacks.calories;
+    const macrosG = {
+      protein: Math.round((breakfast.macros.protein + lunch.macros.protein + dinner.macros.protein + snacks.macros.protein) * 10) / 10,
+      fat: Math.round((breakfast.macros.fat + lunch.macros.fat + dinner.macros.fat + snacks.macros.fat) * 10) / 10,
+      carbs: Math.round((breakfast.macros.carbs + lunch.macros.carbs + dinner.macros.carbs + snacks.macros.carbs) * 10) / 10,
     };
 
-    loadData();
-  }, [dateISO, user, getTotals]);
-  
-  // Listen to meals updates to refresh in real-time
-  useEffect(() => {
-    const handleMealsUpdate = async () => {
-      if (!user) return;
-      
-      const { data: meals } = await supabase
-        .from('meal_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', dateISO)
-        .order('created_at', { ascending: true });
-
-      setDailyMeals(meals || []);
-      
-      const totals = await getTotals(dateISO);
-      setDayTotals(totals);
+    return {
+      kcalTarget,
+      kcalConsumed: Math.round(kcalConsumed),
+      macrosG,
+      sugars: Math.round(sugars * 10) / 10,
+      satFat: Math.round(satFat * 10) / 10,
+      monoFat: Math.round(monoFat * 10) / 10,
+      polyFat: Math.round(polyFat * 10) / 10,
+      breakfast,
+      lunch,
+      dinner,
     };
-    
-    window.addEventListener('mealsUpdated', handleMealsUpdate);
-    return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
-  }, [dateISO, getTotals, user]);
-  
-  const handleRemoveItem = async (mealType: string, itemId: string) => {
+  }, [dailyMeals, nutritionGoals?.calories_goal]);
+
+  // Memoized meal list — only rebuilds when translations or dayTotals change
+  const meals = useMemo(() => [
+    { key: 'breakfast', name: t('meals.breakfast'), data: dayTotals.breakfast },
+    { key: 'lunch', name: t('meals.lunch'), data: dayTotals.lunch },
+    { key: 'dinner', name: t('meals.dinner'), data: dayTotals.dinner },
+  ], [t, dayTotals.breakfast, dayTotals.lunch, dayTotals.dinner]);
+
+  const handleRemoveItem = async (itemId: string) => {
     if (!user) return;
-
     const { error } = await supabase
       .from('meal_entries')
       .delete()
@@ -106,21 +136,11 @@ const Comidas = () => {
       .eq('user_id', user.id);
 
     if (!error) {
-      const { data: meals } = await supabase
-        .from('meal_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', dateISO)
-        .order('created_at', { ascending: true });
-
-      setDailyMeals(meals || []);
-      
-      const totals = await getTotals(dateISO);
-      setDayTotals(totals);
+      queryClient.invalidateQueries({ queryKey: ['mealEntries', user.id, dateISO] });
     }
   };
 
-  const handleSaveGoals = async (newGoals: any) => {
+  const handleSaveGoals = async (newGoals: GoalFormValues) => {
     try {
       await updateGoals({
         calories_goal: newGoals.calories,
@@ -128,23 +148,18 @@ const Comidas = () => {
         fat_goal: newGoals.fat,
         carbs_goal: newGoals.carbs,
       });
-      const totals = await getTotals(dateISO);
-      setDayTotals(totals);
     } catch (error) {
-      console.error('Error updating goals:', error);
+      if (process.env.NODE_ENV !== 'production') console.error('Error updating goals:', error);
     }
   };
 
-  // Generate calendar days (current week - Monday to Sunday)
   const getWeekDays = () => {
     const days = [];
     const current = new Date(selectedDate);
     const dayOfWeek = current.getDay();
-    // Adjust so Monday = 0, Tuesday = 1, ..., Sunday = 6
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const startOfWeek = new Date(current);
     startOfWeek.setDate(current.getDate() - mondayOffset);
-
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
       day.setDate(startOfWeek.getDate() + i);
@@ -171,30 +186,13 @@ const Comidas = () => {
       setCalendarOpen(false);
     }
   };
-  const weekDays = getWeekDays();
 
-  const meals = [
-    { 
-      name: t('meals.breakfast'), 
-      calories: dayTotals.breakfast.calories,
-      macros: dayTotals.breakfast.macros,
-    },
-    { 
-      name: t('meals.lunch'), 
-      calories: dayTotals.lunch.calories,
-      macros: dayTotals.lunch.macros,
-    },
-    { 
-      name: t('meals.dinner'), 
-      calories: dayTotals.dinner.calories,
-      macros: dayTotals.dinner.macros,
-    },
-  ];
+  const weekDays = getWeekDays();
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6 space-y-4">
-        {/* Header compacto con fecha actual */}
+        {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div>
             <h1 className="text-2xl font-bold text-foreground leading-tight">{t('meals.title')}</h1>
@@ -218,7 +216,7 @@ const Comidas = () => {
           </Popover>
         </div>
 
-        {/* Tira semanal compacta */}
+        {/* Weekly strip */}
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="icon" onClick={goToPreviousWeek} aria-label={t('common.previous')}>
             <ChevronLeft className="w-5 h-5" />
@@ -227,7 +225,6 @@ const Comidas = () => {
             {weekDays.map((day, idx) => {
               const isSelected = formatDate(day) === formatDate(selectedDate);
               const isToday = formatDate(day) === formatDate(new Date());
-              
               return (
                 <button
                   key={idx}
@@ -253,8 +250,9 @@ const Comidas = () => {
 
         {/* Main Calories Summary with Tabs */}
         <StatsCard className="overflow-hidden py-3">
-          <Tabs value={tabValue} onValueChange={(val) => setTabValue(val as any)} className="w-full">
-            {/* Header with Edit Button */}
+          <Tabs value={tabValue} onValueChange={(val) => {
+            if (val === "macros" || val === "micronutrients") setTabValue(val);
+          }} className="w-full">
             <div className="flex items-center justify-between mb-3 pr-1">
               <TabsList className="grid w-full grid-cols-2 flex-1">
                 <TabsTrigger value="macros" className="text-sm truncate">{t('meals.macrosTab')}</TabsTrigger>
@@ -270,7 +268,7 @@ const Comidas = () => {
                 <Settings className="w-5 h-5" />
               </Button>
             </div>
-            
+
             <TabsContent
               value="macros"
               className="mt-0"
@@ -285,10 +283,10 @@ const Comidas = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">{t('dashboard.goal')}: {dayTotals.kcalTarget} Kcal</p>
-                  <CircularProgress 
-                    value={dayTotals.kcalConsumed} 
-                    max={dayTotals.kcalTarget} 
-                    size={110} 
+                  <CircularProgress
+                    value={dayTotals.kcalConsumed}
+                    max={dayTotals.kcalTarget}
+                    size={110}
                     strokeWidth={9}
                     protein={dayTotals.macrosG.protein}
                     fat={dayTotals.macrosG.fat}
@@ -300,7 +298,7 @@ const Comidas = () => {
                     showMacroColors={true}
                   />
                 </div>
-                
+
                 <div className="w-full space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground text-sm">{t('common.consumed')}</span>
@@ -310,37 +308,28 @@ const Comidas = () => {
                     <span className="text-muted-foreground text-sm">{t('common.remaining')}</span>
                     <span className="text-foreground font-semibold">{Math.max(0, dayTotals.kcalTarget - dayTotals.kcalConsumed)} Kcal</span>
                   </div>
-                  
-                  {/* Macros Distribution */}
+
                   <div className="pt-2 border-t border-border space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--protein))' }}></span>
                         {t('dashboard.proteins')}
                       </span>
-                       <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {nutritionGoals?.protein_goal || 150}g</span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.protein}g / {nutritionGoals?.protein_goal || 150}g</span>
                     </div>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.protein / (nutritionGoals?.protein_goal || 150)) * 100)}%`, backgroundColor: 'hsl(var(--protein))' }} />
                     </div>
-                    
-                    <button
-                      type="button"
-                      onClick={() => setShowFatDetails((v) => !v)}
-                      className="flex w-full justify-between items-center focus:outline-none"
-                    >
+
+                    <button type="button" onClick={() => setShowFatDetails((v) => !v)} className="flex w-full justify-between items-center focus:outline-none">
                       <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--fat))' }}></span>
                         <span className="flex items-center gap-1">
                           {t('dashboard.fats')}
-                          <span className="text-muted-foreground text-xs">
-                            {showFatDetails ? '▲' : '▼'}
-                          </span>
+                          <span className="text-muted-foreground text-xs">{showFatDetails ? '▲' : '▼'}</span>
                         </span>
                       </span>
-                      <span className="text-foreground font-semibold">
-                        {dayTotals.macrosG.fat}g / {nutritionGoals?.fat_goal || 65}g
-                      </span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.fat}g / {nutritionGoals?.fat_goal || 65}g</span>
                     </button>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.fat / (nutritionGoals?.fat_goal || 65)) * 100)}%`, backgroundColor: 'hsl(var(--fat))' }} />
@@ -370,24 +359,16 @@ const Comidas = () => {
                         </div>
                       </div>
                     )}
-                    
-                    <button
-                      type="button"
-                      onClick={() => setShowCarbDetails((v) => !v)}
-                      className="flex w-full justify-between items-center focus:outline-none"
-                    >
+
+                    <button type="button" onClick={() => setShowCarbDetails((v) => !v)} className="flex w-full justify-between items-center focus:outline-none">
                       <span className="text-muted-foreground text-sm flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--carbs))' }}></span>
                         <span className="flex items-center gap-1">
                           {t('dashboard.carbs')}
-                          <span className="text-muted-foreground text-xs">
-                            {showCarbDetails ? '▲' : '▼'}
-                          </span>
+                          <span className="text-muted-foreground text-xs">{showCarbDetails ? '▲' : '▼'}</span>
                         </span>
                       </span>
-                      <span className="text-foreground font-semibold">
-                        {dayTotals.macrosG.carbs}g / {nutritionGoals?.carbs_goal || 250}g
-                      </span>
+                      <span className="text-foreground font-semibold">{dayTotals.macrosG.carbs}g / {nutritionGoals?.carbs_goal || 250}g</span>
                     </button>
                     <div className="w-full bg-progress-bg h-2 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, (dayTotals.macrosG.carbs / (nutritionGoals?.carbs_goal || 250)) * 100)}%`, backgroundColor: 'hsl(var(--carbs))' }} />
@@ -407,7 +388,7 @@ const Comidas = () => {
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent
               value="micronutrients"
               className="mt-0"
@@ -426,22 +407,12 @@ const Comidas = () => {
 
         {/* Meal Cards */}
         <div className="space-y-2.5">
-          {[
-            { name: t('meals.breakfast'), data: dayTotals.breakfast },
-            { name: t('meals.lunch'), data: dayTotals.lunch },
-            { name: t('meals.dinner'), data: dayTotals.dinner }
-          ].map((meal, index) => {
-            const mealItems = dailyMeals.filter((m: any) => {
-              const mealTypeMap: Record<string, string> = {
-                [t('meals.breakfast')]: 'Desayuno',
-                [t('meals.lunch')]: 'Comida',
-                [t('meals.dinner')]: 'Cena'
-              };
-              return m.meal_type === mealTypeMap[meal.name];
-            });
-            
+          {meals.map((meal) => {
+            const dbMealType = MEAL_TYPE_DB[meal.key];
+            const mealItems = dailyMeals.filter(m => m.meal_type === dbMealType);
+
             return (
-              <StatsCard key={index} className="py-4">
+              <StatsCard key={meal.key} className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground mb-0.5">{meal.name}</h3>
@@ -456,18 +427,17 @@ const Comidas = () => {
                       <p className="text-muted-foreground text-sm">{t('meals.noFoodsAdded')}</p>
                     )}
                   </div>
-                  <button 
+                  <button
                     onClick={() => navigate(`/add-food?meal=${meal.name}&date=${dateISO}`)}
                     className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform"
                   >
                     <Plus className="w-4 h-4 text-primary-foreground" />
                   </button>
                 </div>
-                
-                {/* List of foods in this meal */}
+
                 {mealItems.length > 0 && (
                   <div className="space-y-2 pt-2 border-t border-border">
-                    {mealItems.map((item: any) => (
+                    {mealItems.map((item) => (
                       <div key={item.id} className="flex items-start justify-between text-sm">
                         <div className="flex-1">
                           <p className="font-medium text-foreground">{item.food_name}</p>
@@ -479,7 +449,7 @@ const Comidas = () => {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => handleRemoveItem(meal.name, item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                         >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
@@ -500,9 +470,7 @@ const Comidas = () => {
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-foreground mb-2">{t('meals.recipes')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('meals.recipesDescription')}
-              </p>
+              <p className="text-sm text-muted-foreground">{t('meals.recipesDescription')}</p>
             </div>
             <Button size="icon" variant="ghost" className="rounded-full">
               <Plus className="w-5 h-5" />

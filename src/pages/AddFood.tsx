@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { getFoodHistory, addToHistory, type HistoryItem, removeFromHistory } from "@/lib/foodHistory";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNutrition } from "@/contexts/NutritionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { FoodDetailsModal } from "@/components/FoodDetailsModal";
 import { FoodItem as FoodItemType } from "@/types/food";
@@ -58,6 +59,7 @@ const AddFood = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { invalidateMeals } = useNutrition();
   const { profile } = useProfile();
   const { t, i18n } = useTranslation();
   const meal = searchParams.get("meal") || t('meals.breakfast');
@@ -895,9 +897,7 @@ const AddFood = () => {
     const source: 'scan' | 'manual' = foodToAdd.barcode ? 'scan' : 'manual';
     upsertCommunityFood(foodToAdd, source);
 
-    // Trigger meals update event
-    window.dispatchEvent(new CustomEvent('mealsUpdated'));
-    
+    invalidateMeals(selectedDate);
     toast.success(t('addFood.addSuccess', { food: foodToAdd.name, meal }));
     navigate("/comidas");
   };
@@ -1040,9 +1040,7 @@ const AddFood = () => {
     const source: 'scan' | 'manual' = food.barcode ? 'scan' : 'manual';
     upsertCommunityFood(food as any, source);
     
-    // Trigger meals update event
-    window.dispatchEvent(new CustomEvent('mealsUpdated'));
-    
+    invalidateMeals(selectedDate);
     toast.success(t('addFood.addSuccess', { food: food.name, meal }));
     navigate("/comidas");
   };

@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { useMicronutrients } from "@/hooks/useMicronutrients";
 import { Loader2 } from "lucide-react";
@@ -6,8 +7,18 @@ interface MicronutrientsListProps {
   date: string;
 }
 
-export const MicronutrientsList = ({ date }: MicronutrientsListProps) => {
+export const MicronutrientsList = memo(({ date }: MicronutrientsListProps) => {
   const { micronutrients, loading, hasMeals } = useMicronutrients(date);
+
+  const enrichedMicros = useMemo(
+    () =>
+      micronutrients.map(micro => {
+        const maxForBar = micro.max ?? Math.max(1, micro.value * 1.5);
+        const percentage = Math.min(100, (micro.value / maxForBar) * 100);
+        return { ...micro, percentage };
+      }),
+    [micronutrients]
+  );
 
   if (loading) {
     return (
@@ -27,22 +38,17 @@ export const MicronutrientsList = ({ date }: MicronutrientsListProps) => {
 
   return (
     <div className="space-y-3">
-      {micronutrients.map((micro, index) => {
-        const maxForBar = micro.max ?? Math.max(1, micro.value * 1.5);
-        const percentage = Math.min(100, (micro.value / maxForBar) * 100);
-        
-        return (
-          <div key={index} className="space-y-1.5">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-foreground font-medium">{micro.label}</span>
-              <span className="text-muted-foreground">
-                {micro.value} {micro.unit}{micro.max ? ` / ${micro.max} ${micro.unit}` : ''}
-              </span>
-            </div>
-            <Progress value={percentage} className="h-2 bg-secondary" indicatorClassName="bg-white" />
+      {enrichedMicros.map((micro, index) => (
+        <div key={index} className="space-y-1.5">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-foreground font-medium">{micro.label}</span>
+            <span className="text-muted-foreground">
+              {micro.value} {micro.unit}{micro.max ? ` / ${micro.max} ${micro.unit}` : ''}
+            </span>
           </div>
-        );
-      })}
+          <Progress value={micro.percentage} className="h-2 bg-secondary" indicatorClassName="bg-white" />
+        </div>
+      ))}
     </div>
   );
-};
+});

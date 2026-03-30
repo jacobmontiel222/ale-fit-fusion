@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
@@ -30,27 +31,21 @@ interface DayTotals {
 
 interface NutritionContextType {
   getTotals: (dateISO: string) => Promise<DayTotals>;
-  refreshTotals: () => void;
+  invalidateMeals: (dateISO?: string) => void;
 }
 
 const NutritionContext = createContext<NutritionContextType | undefined>(undefined);
 
 export function NutritionProvider({ children }: { children: ReactNode }) {
-  const [refresh, setRefresh] = useState(0);
   const { user } = useAuth();
-  
-  // Listen for meals updates and auto-refresh
-  useEffect(() => {
-    const handleMealsUpdate = () => {
-      setRefresh((prev) => prev + 1);
-    };
-    
-    window.addEventListener('mealsUpdated', handleMealsUpdate);
-    return () => window.removeEventListener('mealsUpdated', handleMealsUpdate);
-  }, []);
+  const queryClient = useQueryClient();
+
+  const invalidateMeals = (dateISO?: string) => {
+    queryClient.invalidateQueries({ queryKey: ['mealEntries', user?.id, dateISO] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard', user?.id] });
+  };
 
   const getTotals = async (dateISO: string): Promise<DayTotals> => {
-    // Default values if no user is logged in
     if (!user) {
       return {
         kcalTarget: 2000,
@@ -68,7 +63,6 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
       };
     }
 
-    // Get nutrition goals from Supabase
     const { data: goalsData } = await supabase
       .from('nutrition_goals')
       .select('*')
@@ -82,14 +76,12 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
       carbs_goal: 250,
     };
 
-    // Get meal entries for the day from Supabase
     const { data: meals } = await supabase
       .from('meal_entries')
       .select('*')
       .eq('user_id', user.id)
       .eq('date', dateISO);
 
-    // Initialize meal totals
     const breakfast: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
     const lunch: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
     const dinner: MealData = { calories: 0, macros: { protein: 0, fat: 0, carbs: 0 } };
@@ -99,7 +91,6 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     let monoFat = 0;
     let polyFat = 0;
 
-    // Calculate meal totals
     if (meals) {
       meals.forEach((meal) => {
         const calories = Number(meal.calories) || 0;
@@ -134,7 +125,6 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    // Calculate day totals
     const kcalConsumed = breakfast.calories + lunch.calories + dinner.calories + snacks.calories;
     const macrosG = {
       protein: breakfast.macros.protein + lunch.macros.protein + dinner.macros.protein + snacks.macros.protein,
@@ -142,7 +132,6 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
       carbs: breakfast.macros.carbs + lunch.macros.carbs + dinner.macros.carbs + snacks.macros.carbs,
     };
 
-    // Calculate percentages
     const macrosPct = {
       protein: goals.calories_goal > 0 ? ((macrosG.protein * 4) / goals.calories_goal) * 100 : 0,
       fat: goals.calories_goal > 0 ? ((macrosG.fat * 9) / goals.calories_goal) * 100 : 0,
@@ -201,12 +190,8 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  const refreshTotals = () => {
-    setRefresh((prev) => prev + 1);
-  };
-
   return (
-    <NutritionContext.Provider value={{ getTotals, refreshTotals }}>
+    <NutritionContext.Provider value={{ getTotals, invalidateMeals }}>
       {children}
     </NutritionContext.Provider>
   );

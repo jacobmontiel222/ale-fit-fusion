@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -133,6 +133,10 @@ export const useProfile = () => {
     },
   });
 
+  // Store queryClient in a ref so it's not a reactive dependency
+  const queryClientRef = useRef(queryClient);
+  queryClientRef.current = queryClient;
+
   useEffect(() => {
     if (!user?.id) return;
 
@@ -147,7 +151,7 @@ export const useProfile = () => {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+          queryClientRef.current.invalidateQueries({ queryKey: ['profile', user.id] });
         }
       )
       .subscribe();
@@ -155,7 +159,7 @@ export const useProfile = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id]);
 
   return {
     profile: query.data,

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -36,73 +37,46 @@ export const MICRONUTRIENT_CONFIG: MicronutrientData[] = [
 
 export function useMicronutrients(date: string) {
   const { user } = useAuth();
-  const [micronutrients, setMicronutrients] = useState<MicronutrientData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasMeals, setHasMeals] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
+  const { data: meals, isLoading } = useQuery({
+    queryKey: ['mealEntries', user?.id, date],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('meal_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', date);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const micronutrients = useMemo((): MicronutrientData[] => {
+    if (!meals || meals.length === 0) {
+      return MICRONUTRIENT_CONFIG.map(cfg => ({ ...cfg, value: 0 }));
     }
 
-    const fetchMicronutrients = async () => {
-      try {
-        setLoading(true);
+    const totals: Record<string, number> = {};
+    MICRONUTRIENT_CONFIG.forEach(cfg => { totals[cfg.key] = 0; });
 
-        const { data: meals, error } = await supabase
-          .from('meal_entries')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('date', date);
+    meals.forEach((meal) => {
+      MICRONUTRIENT_CONFIG.forEach(cfg => {
+        const val = Number((meal as Record<string, unknown>)[cfg.key]) || 0;
+        totals[cfg.key] = (totals[cfg.key] || 0) + val;
+      });
+    });
 
-        if (error) {
-          console.error('Error fetching meals:', error);
-          return;
-        }
+    return MICRONUTRIENT_CONFIG.map(cfg => ({
+      ...cfg,
+      value: Math.round((totals[cfg.key] || 0) * 10) / 10,
+    }));
+  }, [meals]);
 
-        setHasMeals(!!(meals && meals.length));
-
-        if (!meals || meals.length === 0) {
-          setMicronutrients(MICRONUTRIENT_CONFIG.map(cfg => ({ ...cfg, value: 0 })));
-          return;
-        }
-
-        const totals: Record<string, number> = {};
-        MICRONUTRIENT_CONFIG.forEach(cfg => { totals[cfg.key] = 0; });
-
-        meals.forEach((meal) => {
-          MICRONUTRIENT_CONFIG.forEach(cfg => {
-            const val = Number((meal as any)[cfg.key]) || 0;
-            totals[cfg.key] = (totals[cfg.key] || 0) + val;
-          });
-        });
-
-        const micronutrientsData: MicronutrientData[] = MICRONUTRIENT_CONFIG.map(cfg => ({
-          ...cfg,
-          value: Math.round((totals[cfg.key] || 0) * 10) / 10,
-        }));
-
-        setMicronutrients(micronutrientsData);
-      } catch (error) {
-        console.error('Error calculating micronutrients:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMicronutrients();
-
-    const handleMealsUpdate = () => {
-      fetchMicronutrients();
-    };
-
-    window.addEventListener('mealsUpdated', handleMealsUpdate);
-
-    return () => {
-      window.removeEventListener('mealsUpdated', handleMealsUpdate);
-    };
-  }, [user, date]);
-
-  return { micronutrients, loading, hasMeals };
+  return {
+    micronutrients,
+    loading: isLoading,
+    hasMeals: !!(meals && meals.length > 0),
+  };
 }

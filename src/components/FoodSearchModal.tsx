@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -68,27 +68,36 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
     return food.name;
   };
 
-  // Cargar alimentos desde IndexedDB (CSV)
+  // Track whether foods have been loaded for the current modal open session
+  const loadedRef = useRef(false);
+
+  // Reset when modal closes so it reloads fresh next time
   useEffect(() => {
+    if (!open) {
+      loadedRef.current = false;
+    }
+  }, [open]);
+
+  // Load foods from IndexedDB (CSV) — only once per open session, not on every language change
+  useEffect(() => {
+    if (!open || loadedRef.current) return;
+
     const loadFoods = async () => {
       try {
         setLoading(true);
-        
-        // Limpiar y recargar con el idioma actual
-        await foodDatabase.clearAll();
-        
-        const response = await fetch('/data/foods_database.csv');
-        const csvText = await response.text();
+        loadedRef.current = true;
+
         const { initializeFoodDatabase } = await import('@/lib/initFoodDatabase');
-        await initializeFoodDatabase(i18n.language);
-        
-        const foods = await foodDatabase.getAllFoods();
         const count = await foodDatabase.getCount();
+        if (count === 0) {
+          await initializeFoodDatabase(i18n.language);
+        }
+
+        const foods = await foodDatabase.getAllFoods();
         setAllFoods(foods);
-        setFoodCount(count);
+        setFoodCount(foods.length);
         setFilteredResults([]);
 
-        // Derivar categorías y tags disponibles
         const categories = new Set<FoodCategory>();
         const tags = new Set<FoodTag>();
         foods.forEach(food => {
@@ -98,23 +107,29 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
         setAvailableCategories(Array.from(categories));
         setAvailableTags(Array.from(tags));
       } catch (error) {
-        console.error('Error cargando alimentos:', error);
+        if (process.env.NODE_ENV !== 'production') console.error('Error cargando alimentos:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (open) loadFoods();
-  }, [open, i18n.language]);
+    loadFoods();
+  }, [open]);
 
-  // Buscar con filtros locales (fuzzy)
+  // Debounce search query to avoid running Levenshtein on every keystroke
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Search with debounced query + filters
   useEffect(() => {
     if (!allFoods.length) return;
-
-    const updatedFilters = { ...filters, query: searchQuery };
+    const updatedFilters = { ...filters, query: debouncedQuery };
     const results = searchFoods(allFoods, updatedFilters);
     setFilteredResults(results.map(r => r.item).slice(0, 100));
-  }, [searchQuery, filters, allFoods]);
+  }, [debouncedQuery, filters, allFoods]);
 
   const toggleCategory = (category: FoodCategory) => {
     setFilters(prev => ({

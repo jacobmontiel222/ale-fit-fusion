@@ -1,12 +1,12 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { NutritionProvider } from "@/contexts/NutritionContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Comidas from "./pages/Comidas";
 import AddFood from "./pages/AddFood";
@@ -23,9 +23,6 @@ import SignUp from "./pages/SignUp";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -79,12 +76,12 @@ const App = () => {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <BrowserRouter basename={basename}>
-          <AuthProvider>
-            <NutritionProvider>
-              <TooltipProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <BrowserRouter basename={basename}>
+        <AuthProvider>
+          <NutritionProvider>
+            <TooltipProvider>
+              <ErrorBoundary>
                 <ScrollToTop />
                 <Toaster />
                 <Sonner />
@@ -101,22 +98,22 @@ const App = () => {
                   <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  
+
                   {/* Public Routes (redirect to home if logged in) */}
                   <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
                   <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
                   <Route path="/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />
                   <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
-                  
+
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </TooltipProvider>
+              </ErrorBoundary>
+            </TooltipProvider>
           </NutritionProvider>
         </AuthProvider>
       </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

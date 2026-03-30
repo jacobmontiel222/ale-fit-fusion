@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { trackAnalyticsEvent, FITAI_OPEN_FROM_HOME_HEADER_EVENT, FITAI_OPEN_FROM_TAB_EVENT } from "@/lib/analytics";
 import { FITAI_UNREAD_KEY, getFitAIUnread, setFitAIUnread } from "@/lib/fitai";
@@ -29,10 +30,11 @@ interface StepsEntry {
 
 const Index = () => {
   const navigate = useNavigate();
-  const { data, isLoading, refetch } = useDashboardData();
+  const { data, isLoading } = useDashboardData();
   const { t } = useTranslation();
   const [hasFitAIUnread, setHasFitAIUnread] = useState(false);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [showAddWater, setShowAddWater] = useState(false);
   const [waterInput, setWaterInput] = useState("");
   const [savingWater, setSavingWater] = useState(false);
@@ -69,18 +71,12 @@ const Index = () => {
 
     window.addEventListener("storage", handleStorage);
     window.addEventListener("fityai:unread-changed", customHandler);
-    const handleWaterUpdated = () => refetch();
-    const handleStepsUpdated = () => refetch();
-    window.addEventListener("waterUpdated", handleWaterUpdated);
-    window.addEventListener("stepsUpdated", handleStepsUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("fityai:unread-changed", customHandler);
-      window.removeEventListener("waterUpdated", handleWaterUpdated);
-      window.removeEventListener("stepsUpdated", handleStepsUpdated);
     };
-  }, [refetch]);
+  }, []);
 
   const handleOpenFitAI = () => {
     setFitAIUnread(false);
@@ -164,12 +160,11 @@ const Index = () => {
           { onConflict: 'user_id,date' },
         );
       if (error) throw error;
-      await refetch();
-      window.dispatchEvent(new Event('waterUpdated'));
+      queryClient.invalidateQueries({ queryKey: ['dashboard', user.id] });
       setShowAddWater(false);
       setWaterInput("");
     } catch (err) {
-      console.error('Error saving water', err);
+      if (process.env.NODE_ENV !== 'production') console.error('Error saving water', err);
     } finally {
       setSavingWater(false);
     }
@@ -201,12 +196,11 @@ const Index = () => {
           { onConflict: 'user_id,date' },
         );
       if (error) throw error;
-      await refetch();
-      window.dispatchEvent(new Event('stepsUpdated'));
+      queryClient.invalidateQueries({ queryKey: ['dashboard', user.id] });
       setShowAddSteps(false);
       setNewStepsAmount("");
     } catch (err) {
-      console.error('Error saving steps', err);
+      if (process.env.NODE_ENV !== 'production') console.error('Error saving steps', err);
     } finally {
       setSavingSteps(false);
     }
