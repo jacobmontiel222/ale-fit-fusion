@@ -43,6 +43,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
   const invalidateMeals = (dateISO?: string) => {
     queryClient.invalidateQueries({ queryKey: ['mealEntries', user?.id, dateISO] });
     queryClient.invalidateQueries({ queryKey: ['dashboard', user?.id] });
+    queryClient.invalidateQueries({ queryKey: ['gamification', user?.id] });
   };
 
   const getTotals = async (dateISO: string): Promise<DayTotals> => {

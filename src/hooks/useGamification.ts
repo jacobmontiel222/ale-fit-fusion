@@ -25,6 +25,7 @@ const EMPTY_STATE: GamificationState = {
   totalXp: 0,
   levelProgress: getLevelProgress(0),
   currentStreak: 0,
+  freezeAvailable: false,
   weeklyFitnessScore: null,
   unlockedBadges: [],
   activeProfileTitle: null,
@@ -42,7 +43,7 @@ export function useGamification(): GamificationState {
       const [gamResult, badgesResult, scoreResult] = await Promise.all([
         db
           .from('user_gamification')
-          .select('total_xp, current_streak, longest_streak, active_profile_title')
+          .select('total_xp, current_streak, longest_streak, active_profile_title, freeze_available')
           .eq('user_id', userId)
           .single(),
 
@@ -65,6 +66,7 @@ export function useGamification(): GamificationState {
         gam: gamResult.data as {
           total_xp: number;
           current_streak: number;
+          freeze_available: boolean;
           active_profile_title: string | null;
         } | null,
         badges: (badgesResult.data ?? []) as { badge_id: string; unlocked_at: string }[],
@@ -113,6 +115,7 @@ export function useGamification(): GamificationState {
     totalXp,
     levelProgress: getLevelProgress(totalXp),
     currentStreak: gam?.current_streak ?? 0,
+    freezeAvailable: gam?.freeze_available ?? false,
     weeklyFitnessScore,
     unlockedBadges,
     activeProfileTitle: resolveActiveTitle(unlockedBadges, gam?.active_profile_title ?? null),

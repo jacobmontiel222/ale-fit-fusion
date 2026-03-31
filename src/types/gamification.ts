@@ -51,6 +51,7 @@ export interface GamificationState {
   totalXp: number;
   levelProgress: LevelProgress;
   currentStreak: number;
+  freezeAvailable: boolean;
   weeklyFitnessScore: WeeklyFitnessScore | null;
   unlockedBadges: UserBadge[];
   activeProfileTitle: string | null;

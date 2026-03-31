@@ -161,6 +161,7 @@ const Index = () => {
         );
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['dashboard', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
       setShowAddWater(false);
       setWaterInput("");
     } catch (err) {

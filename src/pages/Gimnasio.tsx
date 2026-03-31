@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical, Check, CalendarDays, ListChecks } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -49,6 +50,7 @@ interface TemplateExercise {
 
 const Gimnasio = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -216,6 +218,8 @@ const Gimnasio = () => {
       console.error('Error creating session:', error);
       return;
     }
+
+    queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
 
     // Reload sessions
     const { data: sessionsData } = await supabase
