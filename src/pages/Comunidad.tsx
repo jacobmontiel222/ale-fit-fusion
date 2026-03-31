@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, Plus, Users } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Input } from "@/components/ui/input";
@@ -185,6 +186,7 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
 const Comunidad = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab]         = useState<FilterTab>("trending");
   const [searchQuery, setSearchQuery]     = useState("");
@@ -235,35 +237,11 @@ const Comunidad = () => {
     onError: () => toast.error("Couldn't join. Try again."),
   });
 
-  // ── Leave ──────────────────────────────────────────────────────────────────
-  const leaveMutation = useMutation({
-    mutationFn: async (communityId: string) => {
-      const { error } = await db
-        .from("community_members")
-        .delete()
-        .eq("community_id", communityId)
-        .eq("user_id", user!.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["communities", user?.id] });
-      toast.success("Left community.");
-    },
-    onError: () => toast.error("Couldn't leave. Try again."),
-  });
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleJoin = (id: string) => joinMutation.mutate(id);
 
-  const handleView = (id: string) => {
-    const community = rows.find(r => r.id === id);
-    if (!community) return;
-    // TODO: navigate to community detail screen
-    // For now offer leave if the user is a non-owner member
-    if (community.owner_id !== user?.id) {
-      leaveMutation.mutate(id);
-    }
-  };
+  const handleView = (id: string) => navigate(`/comunidad/${id}`);
 
   // ── Filter ─────────────────────────────────────────────────────────────────
   const communities: Community[] = rows

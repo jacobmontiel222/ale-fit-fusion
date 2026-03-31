@@ -24,6 +24,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Comunidad from "./pages/Comunidad";
+import CommunityDetail from "./pages/CommunityDetail";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -96,6 +97,7 @@ const App = () => {
                   <Route path="/gimnasio" element={<ProtectedRoute><Gimnasio /></ProtectedRoute>} />
                   <Route path="/coaches" element={<ProtectedRoute><Coaches /></ProtectedRoute>} />
                   <Route path="/comunidad" element={<ProtectedRoute><Comunidad /></ProtectedRoute>} />
+                  <Route path="/comunidad/:id" element={<ProtectedRoute><CommunityDetail /></ProtectedRoute>} />
                   <Route path="/gimnasio/session/:sessionId" element={<ProtectedRoute><WorkoutSession /></ProtectedRoute>} />
                   <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
