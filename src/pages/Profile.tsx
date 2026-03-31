@@ -1,4 +1,4 @@
-import { X, ChevronRight, Pencil } from "lucide-react";
+import { X, ChevronRight, Pencil, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
@@ -28,8 +28,10 @@ import {
 
 // Gamification
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useGamification } from "@/hooks/useGamification";
 import { useNewBadges } from "@/hooks/useNewBadges";
+import { BADGE_CATALOG } from "@/config/badgeCatalog";
 import { LevelCard } from "@/components/profile/LevelCard";
 import { StreakCard } from "@/components/profile/StreakCard";
 import { FitnessScoreCard } from "@/components/profile/FitnessScoreCard";
@@ -87,6 +89,36 @@ const Profile = () => {
   const gamification = useGamification();
   const { currentBadge, dismissCurrent } = useNewBadges(gamification.unlockedBadges, gamification.isLoading);
 
+  // ── Profile title selector ────────────────────────────────────────────────
+  // All titles available to this user (from their unlocked badges)
+  const unlockedTitles = BADGE_CATALOG
+    .filter(b => b.unlocksTitle && gamification.unlockedBadges.some(ub => ub.badgeId === b.id))
+    .map(b => b.unlocksTitle as string);
+
+  const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
+  const [savingTitle, setSavingTitle] = useState(false);
+
+  // Sync selectedTitle when editing starts
+  useEffect(() => {
+    if (isEditing) setSelectedTitle(gamification.activeProfileTitle ?? null);
+  }, [isEditing]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function saveProfileTitle(title: string | null) {
+    if (!user?.id) return;
+    setSavingTitle(true);
+    try {
+      await (supabase as any)
+        .from('user_gamification')
+        .update({ active_profile_title: title, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+      queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
+    } catch {
+      toast.error('Could not save title');
+    } finally {
+      setSavingTitle(false);
+    }
+  }
+
   // Recompute the current week's fitness score on every profile visit so the
   // weekly_fitness_scores table stays fresh and badge/XP state is up to date.
   useEffect(() => {
@@ -136,6 +168,7 @@ const Profile = () => {
     }
     try {
       await updateProfile({ ...editData, name: trimmedName });
+      await saveProfileTitle(selectedTitle);
       setEditData(prev => ({ ...prev, name: trimmedName }));
       setIsEditing(false);
       toast.success(t('profile.profileUpdated'));
@@ -277,11 +310,32 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Profile title – shown only when user has one unlocked */}
+          {/* Profile title – read mode */}
           {gamification.activeProfileTitle && !isEditing && (
             <span className="text-sm font-medium text-accent mb-3">
               {gamification.activeProfileTitle}
             </span>
+          )}
+
+          {/* Profile title – edit mode selector */}
+          {isEditing && unlockedTitles.length > 0 && (
+            <div className="w-full max-w-xs mt-1 mb-1">
+              <p className="text-[11px] text-muted-foreground text-center mb-1.5">Profile title</p>
+              <div className="relative">
+                <select
+                  value={selectedTitle ?? ''}
+                  onChange={e => setSelectedTitle(e.target.value || null)}
+                  disabled={savingTitle}
+                  className="w-full appearance-none rounded-xl border border-border bg-muted/40 px-3 py-2 pr-8 text-sm text-center font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">— No title —</option>
+                  {unlockedTitles.map(title => (
+                    <option key={title} value={title}>{title}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              </div>
+            </div>
           )}
 
           {!isEditing ? (
