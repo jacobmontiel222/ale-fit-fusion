@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Scale, Footprints, Droplet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, eachDayOfInterval, format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -33,6 +34,7 @@ interface WaterEntry {
 const Analytics = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
@@ -406,6 +408,7 @@ const Analytics = () => {
       );
       
       setWeightData(updatedData);
+      queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
       setShowAddWeight(false);
       setNewWeight("");
       setNewWeightDate(format(new Date(), 'yyyy-MM-dd'));
