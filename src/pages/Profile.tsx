@@ -27,11 +27,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // Gamification
+import { useQueryClient } from "@tanstack/react-query";
 import { useGamification } from "@/hooks/useGamification";
 import { LevelCard } from "@/components/profile/LevelCard";
 import { StreakCard } from "@/components/profile/StreakCard";
 import { FitnessScoreCard } from "@/components/profile/FitnessScoreCard";
 import { BadgesSection } from "@/components/profile/BadgesSection";
+import { recalculateWeeklyScore, getISOWeekMonday } from "@/lib/weeklyScore";
 
 interface ProfileData {
   name: string;
@@ -78,8 +80,19 @@ const Profile = () => {
   const [mounted, setMounted] = useState(false);
   const { profile, updateProfile, isUpdating } = useProfile();
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
 
   const gamification = useGamification();
+
+  // Recompute the current week's fitness score on every profile visit so the
+  // weekly_fitness_scores table stays fresh and badge/XP state is up to date.
+  useEffect(() => {
+    if (!user?.id) return;
+    const weekStart = getISOWeekMonday();
+    recalculateWeeklyScore(user.id, weekStart)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['gamification', user.id] }))
+      .catch(() => {}); // non-critical; silently skip on network errors
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const normalizeLang = (code: string) => {
     const lower = code.toLowerCase();
