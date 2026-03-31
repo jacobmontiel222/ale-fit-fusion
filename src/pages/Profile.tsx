@@ -29,10 +29,12 @@ import {
 // Gamification
 import { useQueryClient } from "@tanstack/react-query";
 import { useGamification } from "@/hooks/useGamification";
+import { useNewBadges } from "@/hooks/useNewBadges";
 import { LevelCard } from "@/components/profile/LevelCard";
 import { StreakCard } from "@/components/profile/StreakCard";
 import { FitnessScoreCard } from "@/components/profile/FitnessScoreCard";
 import { BadgesSection } from "@/components/profile/BadgesSection";
+import { BadgeUnlockModal } from "@/components/profile/BadgeUnlockModal";
 import { recalculateWeeklyScore, getISOWeekMonday } from "@/lib/weeklyScore";
 
 interface ProfileData {
@@ -83,6 +85,7 @@ const Profile = () => {
   const queryClient = useQueryClient();
 
   const gamification = useGamification();
+  const { currentBadge, dismissCurrent } = useNewBadges(gamification.unlockedBadges, gamification.isLoading);
 
   // Recompute the current week's fitness score on every profile visit so the
   // weekly_fitness_scores table stays fresh and badge/XP state is up to date.
@@ -656,6 +659,13 @@ const Profile = () => {
       <LanguageSelector
         open={showLanguageSelector}
         onOpenChange={setShowLanguageSelector}
+      />
+
+      {/* Badge unlock celebration modal — shown automatically on first unlock */}
+      <BadgeUnlockModal
+        badge={currentBadge}
+        open={currentBadge !== null}
+        onClose={dismissCurrent}
       />
     </div>
   );
