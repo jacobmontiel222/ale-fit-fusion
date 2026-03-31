@@ -1,31 +1,64 @@
 import { useState } from "react";
 import { Search, Plus, Users } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CommunityCard, type Community } from "@/components/CommunityCard";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// NOTE: communities, community_members, communities_with_count are new tables/views.
+// Cast supabase as `any` until you regenerate types after applying the SQL migrations.
+const db = supabase as any;
 
-type FilterTab = "trending" | "influencers" | "friends";
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type FilterTab = "trending" | "influencers" | "joined";
 
 const TABS: { key: FilterTab; label: string }[] = [
-  { key: "trending", label: "Trending" },
-  { key: "influencers", label: "Influencers" },
-  { key: "friends", label: "Friends" },
+  { key: "trending",    label: "Trending"     },
+  { key: "influencers", label: "Influencers"  },
+  { key: "joined",      label: "Joined"       },
 ];
 
-// ---------------------------------------------------------------------------
-// Empty State
-// ---------------------------------------------------------------------------
+interface CommunityRow {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string;
+  tag: string | null;
+  image_url: string | null;
+  is_influencer: boolean;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  member_count: number;
+  is_joined: boolean;
+}
+
+function rowToCommunity(row: CommunityRow, userId: string): Community {
+  return {
+    id:                  row.id,
+    name:                row.name,
+    description:         row.description,
+    memberCount:         row.member_count,
+    tag:                 row.tag ?? undefined,
+    isJoined:            row.is_joined,
+    isOwner:             row.owner_id === userId,
+    createdByInfluencer: row.is_influencer,
+    imageUrl:            row.image_url ?? undefined,
+  };
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
 
 const EMPTY_MESSAGES: Record<FilterTab, string> = {
-  trending: "No communities yet. Be the first to create one.",
+  trending:    "No communities yet. Be the first to create one.",
   influencers: "No influencer communities available yet.",
-  friends: "Communities from people you follow will appear here.",
+  joined:      "You haven't joined any communities yet.",
 };
 
 interface EmptyStateProps {
@@ -54,81 +87,204 @@ const EmptyState = ({ tab, canCreate, onCreateClick }: EmptyStateProps) => (
   </StatsCard>
 );
 
-// ---------------------------------------------------------------------------
-// Create Community placeholder (no backend yet)
-// ---------------------------------------------------------------------------
+// ─── Create community form ────────────────────────────────────────────────────
 
-const CreateCommunityPrompt = ({ onClose }: { onClose: () => void }) => (
-  <StatsCard className="space-y-4">
-    <div className="flex items-center justify-between">
-      <h2 className="font-semibold text-foreground">Create a Community</h2>
-      <button
-        onClick={onClose}
-        className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-      >
-        ✕
-      </button>
-    </div>
-    <p className="text-sm text-muted-foreground leading-relaxed">
-      Community creation will be available soon. Your community will be visible to all users and
-      you can invite people to join.
-    </p>
-    <div className="text-xs text-muted-foreground bg-muted/30 rounded-xl p-3">
-      Note: Each user can create only one community.
-    </div>
-    <Button className="w-full rounded-xl" disabled>
-      Coming soon
-    </Button>
-  </StatsCard>
-);
+interface CreateCommunityFormProps {
+  onClose: () => void;
+  onCreated: () => void;
+  userId: string;
+}
 
-// ---------------------------------------------------------------------------
-// Main Screen
-// ---------------------------------------------------------------------------
+const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityFormProps) => {
+  const [name, setName]               = useState("");
+  const [description, setDescription] = useState("");
+  const [tag, setTag]                 = useState("");
 
-const Comunidad = () => {
-  const [activeTab, setActiveTab] = useState<FilterTab>("trending");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showCreatePrompt, setShowCreatePrompt] = useState(false);
-
-  // TODO: replace with Supabase query – e.g. supabase.from('communities').select(...)
-  const communities: Community[] = [];
-
-  // TODO: replace with Supabase check – has user already created a community?
-  const hasCreatedCommunity = false;
-
-  const filtered = communities.filter((c) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      !q || c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q);
-
-    if (!matchesSearch) return false;
-
-    if (activeTab === "influencers") return c.createdByInfluencer;
-    // TODO: "friends" tab – filter by user's following list from Supabase
-    if (activeTab === "friends") return false;
-    return true; // trending shows all
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await db.from("communities").insert({
+        owner_id:    userId,
+        name:        name.trim(),
+        description: description.trim(),
+        tag:         tag.trim() || null,
+        is_public:   true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Community created!");
+      onCreated();
+      onClose();
+    },
+    onError: (err: any) => {
+      if (err?.code === "23505") {
+        toast.error("You already have a community.");
+      } else {
+        toast.error("Failed to create community. Try again.");
+        console.error(err);
+      }
+    },
   });
 
-  // TODO: wire to Supabase mutation – supabase.from('community_members').insert(...)
-  const handleJoin = (id: string) => {
-    console.log("join community:", id);
-  };
+  return (
+    <StatsCard className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-foreground">Create a Community</h2>
+        <button
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+        >
+          ✕
+        </button>
+      </div>
 
-  // TODO: navigate to community detail screen
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
+          <Input
+            placeholder="My Fitness Community"
+            value={name}
+            onChange={e => setName(e.target.value.slice(0, 50))}
+            className="rounded-xl"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+          <textarea
+            placeholder="What's this community about?"
+            value={description}
+            onChange={e => setDescription(e.target.value.slice(0, 200))}
+            rows={3}
+            className="w-full resize-none rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 outline-none border border-border focus:border-accent transition-colors"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Tag (optional)</label>
+          <Input
+            placeholder="e.g. fitness, nutrition, weightlifting"
+            value={tag}
+            onChange={e => setTag(e.target.value.slice(0, 30))}
+            className="rounded-xl"
+          />
+        </div>
+      </div>
+
+      <Button
+        className="w-full rounded-xl"
+        disabled={!name.trim() || mutation.isPending}
+        onClick={() => mutation.mutate()}
+      >
+        {mutation.isPending ? "Creating..." : "Create Community"}
+      </Button>
+    </StatsCard>
+  );
+};
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
+
+const Comunidad = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const [activeTab, setActiveTab]         = useState<FilterTab>("trending");
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // ── Fetch communities ──────────────────────────────────────────────────────
+  const { data: rows = [], isLoading } = useQuery<CommunityRow[]>({
+    queryKey: ["communities", user?.id],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("communities_with_count")
+        .select("*")
+        .order("member_count", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // ── Check if user already owns a community ─────────────────────────────────
+  const { data: ownedCommunity } = useQuery({
+    queryKey: ["ownedCommunity", user?.id],
+    queryFn: async () => {
+      const { data } = await db
+        .from("communities")
+        .select("id")
+        .eq("owner_id", user!.id)
+        .maybeSingle();
+      return data as { id: string } | null;
+    },
+    enabled: !!user?.id,
+  });
+
+  const hasCreatedCommunity = !!ownedCommunity;
+
+  // ── Join ───────────────────────────────────────────────────────────────────
+  const joinMutation = useMutation({
+    mutationFn: async (communityId: string) => {
+      const { error } = await db
+        .from("community_members")
+        .insert({ community_id: communityId, user_id: user!.id, role: "member" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["communities", user?.id] });
+      toast.success("Joined!");
+    },
+    onError: () => toast.error("Couldn't join. Try again."),
+  });
+
+  // ── Leave ──────────────────────────────────────────────────────────────────
+  const leaveMutation = useMutation({
+    mutationFn: async (communityId: string) => {
+      const { error } = await db
+        .from("community_members")
+        .delete()
+        .eq("community_id", communityId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["communities", user?.id] });
+      toast.success("Left community.");
+    },
+    onError: () => toast.error("Couldn't leave. Try again."),
+  });
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleJoin = (id: string) => joinMutation.mutate(id);
+
   const handleView = (id: string) => {
-    console.log("view community:", id);
+    const community = rows.find(r => r.id === id);
+    if (!community) return;
+    // TODO: navigate to community detail screen
+    // For now offer leave if the user is a non-owner member
+    if (community.owner_id !== user?.id) {
+      leaveMutation.mutate(id);
+    }
   };
 
-  const handleCreateClick = () => {
-    if (!hasCreatedCommunity) setShowCreatePrompt(true);
-  };
+  // ── Filter ─────────────────────────────────────────────────────────────────
+  const communities: Community[] = rows
+    .filter(row => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        !q || row.name.toLowerCase().includes(q) || row.description.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+      if (activeTab === "influencers") return row.is_influencer;
+      if (activeTab === "joined")      return row.is_joined;
+      return true; // trending = all
+    })
+    .map(row => rowToCommunity(row, user?.id ?? ""));
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 pt-6 pb-4 space-y-5">
 
-        {/* ── Header ───────────────────────────────────────────────────── */}
+        {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Community</h1>
@@ -140,7 +296,7 @@ const Comunidad = () => {
             size="sm"
             variant={hasCreatedCommunity ? "outline" : "default"}
             className="flex items-center gap-1.5 rounded-xl mt-1"
-            onClick={handleCreateClick}
+            onClick={() => !hasCreatedCommunity && setShowCreateForm(v => !v)}
             disabled={hasCreatedCommunity}
             title={hasCreatedCommunity ? "You already have a community" : "Create a community"}
           >
@@ -149,25 +305,32 @@ const Comunidad = () => {
           </Button>
         </div>
 
-        {/* ── Create prompt (inline, no modal yet) ─────────────────────── */}
-        {showCreatePrompt && (
-          <CreateCommunityPrompt onClose={() => setShowCreatePrompt(false)} />
+        {/* Create form */}
+        {showCreateForm && user?.id && (
+          <CreateCommunityForm
+            userId={user.id}
+            onClose={() => setShowCreateForm(false)}
+            onCreated={() => {
+              queryClient.invalidateQueries({ queryKey: ["communities", user.id] });
+              queryClient.invalidateQueries({ queryKey: ["ownedCommunity", user.id] });
+            }}
+          />
         )}
 
-        {/* ── Search ───────────────────────────────────────────────────── */}
+        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Search communities..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-9 h-11 rounded-2xl"
           />
         </div>
 
-        {/* ── Filter Tabs ──────────────────────────────────────────────── */}
+        {/* Filter tabs */}
         <div className="flex gap-2">
-          {TABS.map((tab) => (
+          {TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
@@ -182,16 +345,22 @@ const Comunidad = () => {
           ))}
         </div>
 
-        {/* ── Community List / Empty State ─────────────────────────────── */}
-        {filtered.length === 0 ? (
+        {/* List / empty / loading */}
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-28 rounded-3xl bg-card animate-pulse" />
+            ))}
+          </div>
+        ) : communities.length === 0 ? (
           <EmptyState
             tab={activeTab}
             canCreate={!hasCreatedCommunity}
-            onCreateClick={handleCreateClick}
+            onCreateClick={() => setShowCreateForm(true)}
           />
         ) : (
           <div className="space-y-3">
-            {filtered.map((community) => (
+            {communities.map(community => (
               <CommunityCard
                 key={community.id}
                 community={community}
