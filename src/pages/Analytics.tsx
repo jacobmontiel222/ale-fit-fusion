@@ -272,14 +272,17 @@ const Analytics = () => {
   // Custom tooltip components
   const WeightTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload as WeightEntry & { day: string };
+      const data = payload[0].payload as WeightEntry & { day: string; kgPredicted?: number };
+      const kg = data.kg ?? data.kgPredicted ?? null;
+      if (kg === null) return null;
+      const isPredicted = data.kg === null;
       return (
         <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-1">
             {new Date(data.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
           </p>
-          <p className="text-base font-bold" style={{ color: COLORS.weight }}>
-            {data.kg.toFixed(2)} kg
+          <p className="text-base font-bold" style={{ color: COLORS.weight, opacity: isPredicted ? 0.6 : 1 }}>
+            {kg.toFixed(2)} kg{isPredicted ? ' (est.)' : ''}
           </p>
         </div>
       );
@@ -340,14 +343,14 @@ const Analytics = () => {
   const stepsConfig = getStepsYAxisConfig(filteredStepsData, stepsGoal);
   const waterConfig = getWaterYAxisConfig(filteredWaterData, waterGoal);
 
-  const weightChartData = formatChartData(weightDataForChart).map((entry, idx) => {
+  const weightChartData = formatChartData(weightDataForChart, weightRange).map((entry, idx) => {
     if (prevWeightEntry && idx === 0) {
       return { ...entry, day: "", isPadding: true };
     }
     return entry;
   });
-  const stepsChartData = formatChartData(filteredStepsData);
-  const waterChartData = formatChartData(filteredWaterData);
+  const stepsChartData = formatChartData(filteredStepsData, stepsRange);
+  const waterChartData = formatChartData(filteredWaterData, waterRange);
 
   const sanitizedWeightData = weightChartData.map((entry) => {
     if (!Number.isFinite(entry.kg)) return { ...entry, kg: null as any };
@@ -363,6 +366,9 @@ const Analytics = () => {
       kg: weightConfig.baseline + (entry.kg - weightConfig.baseline) * weightProgress,
     };
   });
+
+  const combinedWeightData = computeWeightTrendLine(animatedWeightData);
+  const combinedWeightConfig = weightConfig;
 
   const animatedStepsData = stepsChartData.map((entry) => ({
     ...entry,
@@ -460,82 +466,96 @@ const Analytics = () => {
     }
   };
 
-  function formatChartData(data: WeightEntry[] | StepsEntry[] | WaterEntry[]) {
+  function getXLabel(dateStr: string, range: DateRange): string {
+    const d = new Date(dateStr);
+    if (range === 'thisWeek' || range === 'lastWeek') {
+      return format(d, 'EEE', { locale: es }); // Lun, Mar...
+    }
+    if (range === 'lastMonth' || range === 'thisMonth') {
+      return format(d, 'd MMM', { locale: es }); // 4 abr
+    }
+    return format(d, 'MMM yy', { locale: es }); // abr 25
+  }
+
+  function getXInterval(dataLength: number, range: DateRange): number | 'preserveStartEnd' {
+    if (range === 'thisWeek' || range === 'lastWeek') return 0; // muestra todos (7 días)
+    if (range === 'lastMonth' || range === 'thisMonth') return Math.floor(dataLength / 5);
+    if (range === 'last3Months') return Math.floor(dataLength / 6);
+    return Math.floor(dataLength / 5);
+  }
+
+  function formatChartData(data: WeightEntry[] | StepsEntry[] | WaterEntry[], range: DateRange) {
     return data.map(entry => ({
       ...entry,
-      day: format(new Date(entry.date), 'd', { locale: es })
+      day: getXLabel(entry.date, range),
     }));
   }
 
-  function calculateNiceYAxisTicks(data: WeightEntry[]): number[] {
-    const validData = data.filter(d => d.kg !== null);
-    if (validData.length === 0) return [-3, 0, 3];
-
-    const minW = Math.min(...validData.map(d => d.kg));
-    const maxW = Math.max(...validData.map(d => d.kg));
-    const range = maxW - minW;
-    const mid = (minW + maxW) / 2;
-    const base = Math.round(mid);
-
-    let halfRange = 3;
-    if (range <= 1.5) halfRange = 2;
-    else if (range <= 3) halfRange = 3;
-    else halfRange = Math.min(5, Math.ceil(range / 2) + 1);
-
-    const min = base - halfRange;
-    const max = base + halfRange;
-    const step = range <= 2 ? 0.5 : 1;
-
+  function getWeightYAxisConfig(data: WeightEntry[]) {
+    const valid = data.filter(d => d.kg !== null && Number.isFinite(d.kg));
+    if (valid.length === 0) {
+      return { ticks: [60, 70, 80], domain: [60, 80] as [number, number], baseline: 70 };
+    }
+    const minW = Math.min(...valid.map(d => d.kg));
+    const maxW = Math.max(...valid.map(d => d.kg));
+    const spread = maxW - minW;
+    const padding = Math.max(spread * 0.2, 0.5);
+    const rawMin = minW - padding;
+    const rawMax = maxW + padding;
+    const step = spread <= 2 ? 0.5 : spread <= 6 ? 1 : 2;
+    const domainMin = Math.floor(rawMin / step) * step;
+    const domainMax = Math.ceil(rawMax / step) * step;
     const ticks: number[] = [];
-    for (let v = min; v <= max + 1e-6; v += step) {
+    for (let v = domainMin; v <= domainMax + 1e-9; v += step) {
       ticks.push(Number(v.toFixed(1)));
     }
-    return ticks;
-  }
-
-  function getWeightYAxisConfig(data: WeightEntry[]) {
-    const ticks = calculateNiceYAxisTicks(data);
-    const domain: [number, number] = [ticks[0] ?? -3, ticks[ticks.length - 1] ?? 3];
-    const baseline = data.find(d => d.kg != null)?.kg ?? 0;
-    return { ticks, domain, baseline };
+    const baseline = valid[0].kg;
+    return { ticks, domain: [domainMin, domainMax] as [number, number], baseline };
   }
 
   function getStepsYAxisConfig(data: StepsEntry[], goal: number) {
     const values = data.map(d => d.steps);
     const maxVal = values.length ? Math.max(...values) : 0;
-    const step = 5000;
-    let maxY = Math.ceil(Math.max(maxVal, goal || 0) / step) * step || step;
-    if (maxY < 20000) {
-      maxY = 20000;
-    }
-    if (maxY - maxVal < step * 0.15) {
-      maxY += step;
-    }
+    const top = Math.max(maxVal, goal || 0);
+    const step = top <= 10000 ? 2000 : top <= 30000 ? 5000 : 10000;
+    const maxY = Math.ceil((top * 1.15) / step) * step;
     const ticks: number[] = [];
-    for (let v = 0; v <= maxY; v += step) {
-      ticks.push(v);
-    }
-    if (!ticks.includes(20000)) ticks.push(20000);
-    if (maxVal > maxY) {
-      maxY = Math.ceil(maxVal / step) * step;
-      if (maxY - maxVal < step * 0.15) maxY += step;
-      ticks.push(maxY);
-    }
-    ticks.sort((a, b) => a - b);
-    const headroom = step * 0.1;
-    const upper = Math.max(maxY, ticks[ticks.length - 1] ?? maxY) + headroom;
-    return { domain: [0, upper] as [number, number], ticks };
+    for (let v = 0; v <= maxY; v += step) ticks.push(v);
+    return { domain: [0, maxY] as [number, number], ticks };
+  }
+
+  function computeWeightTrendLine(data: (WeightEntry & { day?: string })[]) {
+    const valid = data.filter(d => d.kg !== null && Number.isFinite(d.kg));
+    if (valid.length < 2) return data.map(d => ({ ...d, kgTrend: undefined as number | undefined }));
+    const t0 = new Date(valid[0].date).getTime();
+    const xs = valid.map(d => (new Date(d.date).getTime() - t0) / 86400000);
+    const ys = valid.map(d => d.kg);
+    const n = xs.length;
+    const sumX = xs.reduce((a, b) => a + b, 0);
+    const sumY = ys.reduce((a, b) => a + b, 0);
+    const sumXY = xs.reduce((acc, x, i) => acc + x * ys[i], 0);
+    const sumX2 = xs.reduce((acc, x) => acc + x * x, 0);
+    const denom = n * sumX2 - sumX * sumX;
+    if (denom === 0) return data.map(d => ({ ...d, kgTrend: undefined as number | undefined }));
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+    return data.map(d => {
+      const x = (new Date(d.date).getTime() - t0) / 86400000;
+      return {
+        ...d,
+        kgTrend: Math.round((slope * x + intercept) * 100) / 100,
+      };
+    });
   }
 
   function getWaterYAxisConfig(data: WaterEntry[], goal: number) {
     const values = data.map(d => d.ml);
     const maxVal = values.length ? Math.max(...values) : 0;
-    const step = 1000;
-    let maxY = Math.ceil(Math.max(maxVal, goal || 0, 6000) / step) * step;
+    const top = Math.max(maxVal, goal || 0, 1000);
+    const step = top <= 3000 ? 500 : 1000;
+    const maxY = Math.ceil((top * 1.15) / step) * step;
     const ticks: number[] = [];
-    for (let v = 0; v <= maxY; v += step) {
-      ticks.push(v);
-    }
+    for (let v = 0; v <= maxY; v += step) ticks.push(v);
     return { domain: [0, maxY] as [number, number], ticks };
   }
 
@@ -619,44 +639,66 @@ const Analytics = () => {
             );
           })()}
 
+          {/* Legend */}
+          <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-1.5">
+              <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke={COLORS.weight} strokeWidth="2.5" strokeLinecap="round" /></svg>
+              <span className="text-xs text-muted-foreground">Registrado</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke={COLORS.weight} strokeWidth="2" strokeDasharray="4 3" strokeLinecap="round" opacity="0.5" /></svg>
+              <span className="text-xs text-muted-foreground">Tendencia</span>
+            </div>
+          </div>
+
           {/* Chart */}
           <div className="h-48 mb-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={animatedWeightData}>
+              <LineChart data={combinedWeightData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="day" 
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                <XAxis
+                  dataKey="day"
+                  stroke="hsl(var(--border))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                   tickFormatter={(v, idx) => (weightChartData[idx]?.isPadding ? '' : v)}
+                  interval={getXInterval(weightChartData.length, weightRange)}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  ticks={weightConfig.ticks}
-                  domain={weightConfig.domain}
-                  tickFormatter={(value) => {
-                    const v = Number(value);
-                    return Number.isInteger(v) ? v.toString() : v.toFixed(1);
+                <YAxis
+                  stroke="hsl(var(--border))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                  ticks={combinedWeightConfig.ticks}
+                  domain={combinedWeightConfig.domain}
+                  tickFormatter={(v) => {
+                    const n = Number(v);
+                    return Number.isInteger(n) ? String(n) : n.toFixed(1);
                   }}
-                  width={56}
+                  width={40}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip content={<WeightTooltip />} />
-                <Scatter
+                <Line
+                  type="monotone"
                   dataKey="kg"
-                  fill={COLORS.weight}
-                  shape="circle"
-                  isAnimationActive={false}
-                  connectNulls
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="kg" 
                   stroke={COLORS.weight}
                   strokeWidth={3}
                   dot={false}
                   activeDot={{ r: 6 }}
                   connectNulls={false}
+                  isAnimationActive={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="kgTrend"
+                  stroke={COLORS.weight}
+                  strokeWidth={1.5}
+                  strokeDasharray="5 4"
+                  strokeOpacity={0.45}
+                  dot={false}
+                  activeDot={false}
+                  connectNulls
                   isAnimationActive={false}
                 />
               </LineChart>
@@ -740,19 +782,26 @@ const Analytics = () => {
                 margin={{ top: 16, right: 8, left: 8, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="day" 
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                <XAxis
+                  dataKey="day"
+                  stroke="hsl(var(--border))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                  interval={getXInterval(stepsChartData.length, stepsRange)}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                <YAxis
+                  stroke="hsl(var(--border))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                   ticks={stepsConfig.ticks}
                   domain={stepsConfig.domain}
-                  interval={0}
-                  tickFormatter={(val) => Number(val).toLocaleString(i18n.language)}
-                  width={60}
+                  tickFormatter={(val) => {
+                    const n = Number(val);
+                    return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k` : String(n);
+                  }}
+                  width={36}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip content={<StepsTooltip />} />
                 <ReferenceLine
@@ -879,18 +928,26 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={animatedWaterData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="day" 
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                <XAxis
+                  dataKey="day"
+                  stroke="hsl(var(--border))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                  interval={getXInterval(waterChartData.length, waterRange)}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
-                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  tickFormatter={(value) => Number(value).toLocaleString(i18n.language)}
+                <YAxis
+                  stroke="hsl(var(--border))"
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
                   ticks={waterConfig.ticks}
                   domain={waterConfig.domain}
-                  width={70}
+                  tickFormatter={(val) => {
+                    const n = Number(val);
+                    return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}L` : `${n}`;
+                  }}
+                  width={36}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip content={<WaterTooltip />} />
                 <ReferenceLine
