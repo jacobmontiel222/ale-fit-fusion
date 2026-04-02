@@ -39,7 +39,7 @@ const Analytics = () => {
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
 
-  type DateRange = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last6Months';
+  type DateRange = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'last3Months' | 'last6Months' | 'all';
   const [weightRange, setWeightRange] = useState<DateRange>('thisWeek');
   const [stepsRange, setStepsRange] = useState<DateRange>('thisWeek');
   const [waterRange, setWaterRange] = useState<DateRange>('thisWeek');
@@ -239,6 +239,10 @@ const Analytics = () => {
         break;
       case 'last6Months':
         startDate = subMonths(today, 6);
+        endDate = today;
+        break;
+      case 'all':
+        startDate = subMonths(today, 24);
         endDate = today;
         break;
     }
@@ -588,21 +592,32 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {(['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth', 'last3Months', 'last6Months'] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setWeightRange(range)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                  weightRange === range
-                    ? 'bg-foreground/10 text-foreground ring-1 ring-foreground/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
-                }`}
-              >
-                {t(`analytics.${range}`)}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const opts = [
+              { key: 'thisWeek', label: '1W' },
+              { key: 'lastMonth', label: '1M' },
+              { key: 'last3Months', label: '3M' },
+              { key: 'last6Months', label: '6M' },
+              { key: 'all', label: 'All' },
+            ] as const;
+            return (
+              <div className="flex bg-muted/40 rounded-full p-1 mb-4 gap-0.5">
+                {opts.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setWeightRange(key)}
+                    className={`flex-1 px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                      weightRange === key
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Chart */}
           <div className="h-48 mb-4">
@@ -690,21 +705,32 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {(['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setStepsRange(range)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                  stepsRange === range
-                    ? 'bg-foreground/10 text-foreground ring-1 ring-foreground/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
-                }`}
-              >
-                {t(`analytics.${range}`)}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const opts = [
+              { key: 'thisWeek', label: '1W' },
+              { key: 'lastMonth', label: '1M' },
+              { key: 'last3Months', label: '3M' },
+              { key: 'last6Months', label: '6M' },
+              { key: 'all', label: 'All' },
+            ] as const;
+            return (
+              <div className="flex bg-muted/40 rounded-full p-1 mb-4 gap-0.5">
+                {opts.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setStepsRange(key)}
+                    className={`flex-1 px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                      stepsRange === key
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Chart */}
           <div className="h-48 mb-4">
@@ -821,21 +847,32 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {(['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setWaterRange(range)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                  waterRange === range
-                    ? 'bg-foreground/10 text-foreground ring-1 ring-foreground/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
-                }`}
-              >
-                {t(`analytics.${range}`)}
-              </button>
-            ))}
-          </div>
+          {(() => {
+            const opts = [
+              { key: 'thisWeek', label: '1W' },
+              { key: 'lastMonth', label: '1M' },
+              { key: 'last3Months', label: '3M' },
+              { key: 'last6Months', label: '6M' },
+              { key: 'all', label: 'All' },
+            ] as const;
+            return (
+              <div className="flex bg-muted/40 rounded-full p-1 mb-4 gap-0.5">
+                {opts.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setWaterRange(key)}
+                    className={`flex-1 px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                      waterRange === key
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Chart */}
           <div className="h-48 mb-4">
