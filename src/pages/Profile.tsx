@@ -1,4 +1,4 @@
-import { X, ChevronRight, Pencil, ChevronDown } from "lucide-react";
+import { ArrowLeft, Settings, ChevronRight, Pencil, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
@@ -32,7 +32,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGamification } from "@/hooks/useGamification";
 import { useNewBadges } from "@/hooks/useNewBadges";
 import { BADGE_CATALOG } from "@/config/badgeCatalog";
-import { LevelCard } from "@/components/profile/LevelCard";
 import { StreakCard } from "@/components/profile/StreakCard";
 import { FitnessScoreCard } from "@/components/profile/FitnessScoreCard";
 import { BadgesSection } from "@/components/profile/BadgesSection";
@@ -258,16 +257,19 @@ const Profile = () => {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex-1" />
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-card rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-foreground" />
+          </button>
           <h1 className="text-2xl font-bold text-foreground">{t('profile.title')}</h1>
-          <div className="flex-1 flex justify-end">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 hover:bg-card rounded-full transition-colors"
-            >
-              <X className="w-6 h-6 text-foreground" />
-            </button>
-          </div>
+          <button
+            onClick={handleEditProfile}
+            className="p-2 hover:bg-card rounded-full transition-colors"
+          >
+            <Settings className="w-6 h-6 text-foreground" />
+          </button>
         </div>
 
         {/* ── Identity ───────────────────────────────────────────────────── */}
@@ -312,9 +314,29 @@ const Profile = () => {
 
           {/* Profile title – read mode */}
           {gamification.activeProfileTitle && !isEditing && (
-            <span className="text-sm font-medium text-accent mb-3">
+            <span className="text-sm font-medium text-accent mb-1">
               {gamification.activeProfileTitle}
             </span>
+          )}
+
+          {/* Level pill */}
+          {!isEditing && (
+            <div className="flex items-center gap-2 mt-2 px-3 rounded-full bg-card/60 border border-border/50"
+              style={{ height: '28px' }}>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">LVL</span>
+              <span className="text-sm font-bold leading-none" style={{ color: 'hsl(var(--accent))' }}>
+                {gamification.levelProgress.currentLevel}
+              </span>
+              <div className="h-[2px] w-14 rounded-full overflow-hidden bg-muted mx-0.5">
+                <div
+                  className="h-full rounded-full bg-accent/70 transition-all duration-700"
+                  style={{ width: `${gamification.levelProgress.progressPercent}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+                {gamification.levelProgress.xpInCurrentLevel} / {gamification.levelProgress.xpInCurrentLevel + gamification.levelProgress.xpToNextLevel} XP
+              </span>
+            </div>
           )}
 
           {/* Profile title – edit mode selector */}
@@ -338,11 +360,7 @@ const Profile = () => {
             </div>
           )}
 
-          {!isEditing ? (
-            <Button variant="secondary" className="w-48 mt-3" onClick={handleEditProfile}>
-              {t('profile.editProfile')}
-            </Button>
-          ) : (
+          {isEditing && (
             <div className="flex gap-2 mt-3">
               <Button variant="secondary" className="w-24" onClick={handleCancelEdit}>
                 {t('profile.cancel')}
@@ -355,9 +373,6 @@ const Profile = () => {
         </div>
 
         {/* ── Gamification ───────────────────────────────────────────────── */}
-
-        {/* Level */}
-        <LevelCard levelProgress={gamification.levelProgress} />
 
         {/* Streak + Fitness Score quick view */}
         <div className="grid grid-cols-2 gap-3">
