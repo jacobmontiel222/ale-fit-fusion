@@ -588,49 +588,20 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              variant={weightRange === 'thisWeek' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeightRange('thisWeek')}
-            >
-              {t('analytics.thisWeek')}
-            </Button>
-            <Button
-              variant={weightRange === 'lastWeek' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeightRange('lastWeek')}
-            >
-              {t('analytics.lastWeek')}
-            </Button>
-            <Button
-              variant={weightRange === 'thisMonth' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeightRange('thisMonth')}
-            >
-              {t('analytics.thisMonth')}
-            </Button>
-            <Button
-              variant={weightRange === 'lastMonth' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeightRange('lastMonth')}
-            >
-              {t('analytics.lastMonth')}
-            </Button>
-            <Button
-              variant={weightRange === 'last3Months' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeightRange('last3Months')}
-            >
-              {t('analytics.last3Months')}
-            </Button>
-            <Button
-              variant={weightRange === 'last6Months' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWeightRange('last6Months')}
-            >
-              {t('analytics.last6Months')}
-            </Button>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {(['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth', 'last3Months', 'last6Months'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setWeightRange(range)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                  weightRange === range
+                    ? 'bg-foreground/10 text-foreground ring-1 ring-foreground/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                }`}
+              >
+                {t(`analytics.${range}`)}
+              </button>
+            ))}
           </div>
 
           {/* Chart */}
@@ -865,35 +836,20 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              variant={waterRange === 'thisWeek' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWaterRange('thisWeek')}
-            >
-              {t('analytics.thisWeek')}
-            </Button>
-            <Button
-              variant={waterRange === 'lastWeek' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWaterRange('lastWeek')}
-            >
-              {t('analytics.lastWeek')}
-            </Button>
-            <Button
-              variant={waterRange === 'thisMonth' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWaterRange('thisMonth')}
-            >
-              {t('analytics.thisMonth')}
-            </Button>
-            <Button
-              variant={waterRange === 'lastMonth' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setWaterRange('lastMonth')}
-            >
-              {t('analytics.lastMonth')}
-            </Button>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {(['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setWaterRange(range)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                  waterRange === range
+                    ? 'bg-foreground/10 text-foreground ring-1 ring-foreground/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                }`}
+              >
+                {t(`analytics.${range}`)}
+              </button>
+            ))}
           </div>
 
           {/* Chart */}

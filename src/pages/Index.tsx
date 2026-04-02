@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, ArrowRight, Scale, Footprints, Flame, User, Droplet, Bot } from "lucide-react";
+import { Bell, Scale, Footprints, Flame, User, Droplet, Bot } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { CircularProgress } from "@/components/CircularProgress";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -492,21 +492,6 @@ const Index = () => {
           </StatsCard>
         </div>
 
-        {/* Gym Session Card */}
-        <StatsCard 
-          className="cursor-pointer hover:bg-secondary transition-colors"
-          onClick={() => navigate('/gimnasio')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-1">{t('dashboard.gymSession')}</h3>
-              <p className="text-sm text-muted-foreground">{t('dashboard.trackWorkout')}</p>
-            </div>
-            <button className="w-12 h-12 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform">
-              <ArrowRight className="w-6 h-6 text-primary-foreground" />
-            </button>
-          </div>
-        </StatsCard>
       </div>
 
       <BottomNav />
