@@ -690,35 +690,20 @@ const Analytics = () => {
           </div>
 
           {/* Range Selector */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button
-              variant={stepsRange === 'thisWeek' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStepsRange('thisWeek')}
-            >
-              {t('analytics.thisWeek')}
-            </Button>
-            <Button
-              variant={stepsRange === 'lastWeek' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStepsRange('lastWeek')}
-            >
-              {t('analytics.lastWeek')}
-            </Button>
-            <Button
-              variant={stepsRange === 'thisMonth' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStepsRange('thisMonth')}
-            >
-              {t('analytics.thisMonth')}
-            </Button>
-            <Button
-              variant={stepsRange === 'lastMonth' ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStepsRange('lastMonth')}
-            >
-              {t('analytics.lastMonth')}
-            </Button>
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {(['thisWeek', 'lastWeek', 'thisMonth', 'lastMonth'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setStepsRange(range)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                  stepsRange === range
+                    ? 'bg-foreground/10 text-foreground ring-1 ring-foreground/20'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                }`}
+              >
+                {t(`analytics.${range}`)}
+              </button>
+            ))}
           </div>
 
           {/* Chart */}
