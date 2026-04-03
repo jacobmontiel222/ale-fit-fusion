@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { NutritionProvider } from "@/contexts/NutritionContext";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -74,6 +75,15 @@ const ScrollToTop = () => {
   return null;
 };
 
+const SwipeWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { onTouchStart, onTouchEnd } = useSwipeNavigation();
+  return (
+    <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="contents">
+      {children}
+    </div>
+  );
+};
+
 const App = () => {
   const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -89,18 +99,18 @@ const App = () => {
                 <Sonner />
                 <Routes>
                   {/* Protected Routes */}
-                  <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                  <Route path="/comidas" element={<ProtectedRoute><Comidas /></ProtectedRoute>} />
+                  <Route path="/" element={<ProtectedRoute><SwipeWrapper><Index /></SwipeWrapper></ProtectedRoute>} />
+                  <Route path="/comidas" element={<ProtectedRoute><SwipeWrapper><Comidas /></SwipeWrapper></ProtectedRoute>} />
                   <Route path="/add-food" element={<ProtectedRoute><AddFood /></ProtectedRoute>} />
                   <Route path="/recipes" element={<ProtectedRoute><Recipes /></ProtectedRoute>} />
                   <Route path="/create-recipe" element={<ProtectedRoute><CreateRecipe /></ProtectedRoute>} />
-                  <Route path="/gimnasio" element={<ProtectedRoute><Gimnasio /></ProtectedRoute>} />
+                  <Route path="/gimnasio" element={<ProtectedRoute><SwipeWrapper><Gimnasio /></SwipeWrapper></ProtectedRoute>} />
                   <Route path="/coaches" element={<ProtectedRoute><Coaches /></ProtectedRoute>} />
-                  <Route path="/comunidad" element={<ProtectedRoute><Comunidad /></ProtectedRoute>} />
+                  <Route path="/comunidad" element={<ProtectedRoute><SwipeWrapper><Comunidad /></SwipeWrapper></ProtectedRoute>} />
                   <Route path="/comunidad/:id" element={<ProtectedRoute><CommunityDetail /></ProtectedRoute>} />
                   <Route path="/gimnasio/session/:sessionId" element={<ProtectedRoute><WorkoutSession /></ProtectedRoute>} />
                   <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
-                  <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                  <Route path="/analytics" element={<ProtectedRoute><SwipeWrapper><Analytics /></SwipeWrapper></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
                   {/* Public Routes (redirect to home if logged in) */}
