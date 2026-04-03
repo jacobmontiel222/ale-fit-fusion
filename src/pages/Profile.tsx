@@ -41,7 +41,7 @@ import { StreakCard } from "@/components/profile/StreakCard";
 import { FitnessScoreCard } from "@/components/profile/FitnessScoreCard";
 import { BadgesSection } from "@/components/profile/BadgesSection";
 import { BadgeUnlockModal } from "@/components/profile/BadgeUnlockModal";
-import { recalculateWeeklyScore, getISOWeekMonday } from "@/lib/weeklyScore";
+import { recalculateDailyScore, recalculateWeeklyScore, getISOWeekMonday, getTodayISO } from "@/lib/weeklyScore";
 
 interface ProfileData {
   name: string;
@@ -123,12 +123,14 @@ const Profile = () => {
     }
   }
 
-  // Recompute the current week's fitness score on every profile visit so the
-  // weekly_fitness_scores table stays fresh and badge/XP state is up to date.
+  // Recompute today's daily score, then the weekly average, on every profile
+  // visit so both tables stay fresh even without new activity writes.
   useEffect(() => {
     if (!user?.id) return;
+    const today     = getTodayISO();
     const weekStart = getISOWeekMonday();
-    recalculateWeeklyScore(user.id, weekStart)
+    recalculateDailyScore(user.id, today)
+      .then(() => recalculateWeeklyScore(user.id, weekStart))
       .then(() => queryClient.invalidateQueries({ queryKey: ['gamification', user.id] }))
       .catch(() => {}); // non-critical; silently skip on network errors
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -326,21 +328,21 @@ const Profile = () => {
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Fitness Score
             </span>
-            {gamification.weeklyFitnessScore ? (
+            {gamification.dailyFitnessScore ? (
               <div className="flex items-baseline gap-1 mt-1">
                 <span
                   className="text-4xl font-bold leading-none tabular-nums"
                   style={{
-                    color: gamification.weeklyFitnessScore.total >= 85
+                    color: gamification.dailyFitnessScore.finalScore >= 85
                       ? 'hsl(var(--accent))'
-                      : gamification.weeklyFitnessScore.total >= 70
+                      : gamification.dailyFitnessScore.finalScore >= 70
                         ? '#84cc16'
-                        : gamification.weeklyFitnessScore.total >= 50
+                        : gamification.dailyFitnessScore.finalScore >= 50
                           ? '#f59e0b'
                           : '#ef4444'
                   }}
                 >
-                  {gamification.weeklyFitnessScore.total}
+                  {gamification.dailyFitnessScore.finalScore}
                 </span>
                 <span className="text-sm text-muted-foreground">/100</span>
               </div>
@@ -351,9 +353,10 @@ const Profile = () => {
         </div>
 
         {/* Full fitness score breakdown */}
-        {gamification.weeklyFitnessScore && (
-          <FitnessScoreCard score={gamification.weeklyFitnessScore} />
-        )}
+        <FitnessScoreCard
+          dailyScore={gamification.dailyFitnessScore}
+          weeklyScore={gamification.weeklyFitnessScore}
+        />
 
         {/* Badges */}
         <BadgesSection unlockedBadges={gamification.unlockedBadges} />
