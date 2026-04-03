@@ -45,25 +45,28 @@ export function useGamification(): GamificationState {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // ── Real-time subscription for daily score updates ─────────────────────────
-  // DB triggers auto-update daily_fitness_scores whenever activity tables
-  // change.  This subscription detects those changes and refreshes the query.
+  // ── Real-time subscriptions ───────────────────────────────────────────────
+  // daily_fitness_scores: DB triggers update this on every activity change.
+  // weekly_fitness_scores: updated after recalculate_weekly_fitness_score runs.
+  // Both invalidate the same query so the UI always reflects latest data.
   useEffect(() => {
     if (!user?.id) return;
 
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
+    };
+
     const channel = supabase
-      .channel(`daily-score-${user.id}`)
+      .channel(`fitness-score-${user.id}`)
       .on(
         'postgres_changes' as any,
-        {
-          event: '*',
-          schema: 'public',
-          table: 'daily_fitness_scores',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
-        },
+        { event: '*', schema: 'public', table: 'daily_fitness_scores',  filter: `user_id=eq.${user.id}` },
+        invalidate,
+      )
+      .on(
+        'postgres_changes' as any,
+        { event: '*', schema: 'public', table: 'weekly_fitness_scores', filter: `user_id=eq.${user.id}` },
+        invalidate,
       )
       .subscribe();
 

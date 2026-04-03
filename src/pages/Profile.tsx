@@ -123,13 +123,25 @@ const Profile = () => {
     }
   }
 
-  // Recompute today's daily score, then the weekly average, on every profile
-  // visit so both tables stay fresh even without new activity writes.
+  // Backfill daily scores for every day from Monday to today, then recompute
+  // the weekly average.  This ensures yesterday and earlier days this week
+  // have rows in daily_fitness_scores even if the triggers weren't active yet.
   useEffect(() => {
     if (!user?.id) return;
-    const today     = getTodayISO();
     const weekStart = getISOWeekMonday();
-    recalculateDailyScore(user.id, today)
+    const today     = getTodayISO();
+
+    // Build list of dates: Monday → today
+    const dates: string[] = [];
+    const cursor = new Date(weekStart);
+    const end    = new Date(today);
+    while (cursor <= end) {
+      dates.push(cursor.toISOString().split('T')[0]);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // Recalculate all days in parallel, then update the weekly average
+    Promise.all(dates.map(d => recalculateDailyScore(user.id, d)))
       .then(() => recalculateWeeklyScore(user.id, weekStart))
       .then(() => queryClient.invalidateQueries({ queryKey: ['gamification', user.id] }))
       .catch(() => {}); // non-critical; silently skip on network errors
