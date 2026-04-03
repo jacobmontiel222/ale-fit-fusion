@@ -1,15 +1,10 @@
-import { ArrowLeft, Settings, ChevronRight, Pencil, ChevronDown } from "lucide-react";
+import { ArrowLeft, Settings, ChevronRight, Pencil, ChevronDown, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { getState, exportJSON, importJSON } from "@/lib/storage";
 import { toast } from "sonner";
@@ -596,187 +591,201 @@ const Profile = () => {
         onOpenChange={setShowLanguageSelector}
       />
 
-      {/* ── Edit Profile Bottom Sheet ──────────────────────────────────── */}
-      <Sheet open={isEditing} onOpenChange={(open) => { if (!open) handleCancelEdit(); }}>
-        <SheetContent
-          side="bottom"
-          className="rounded-t-2xl p-0 max-h-[88vh] flex flex-col"
-          style={{ left: '50%', right: 'auto', transform: 'translateX(-50%)', width: '100%', maxWidth: '448px' }}
+      {/* ── Edit Profile Modal ─────────────────────────────────────────── */}
+      {isEditing && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-0"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={handleCancelEdit}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 pt-5 pb-4 border-b border-border">
-            <SheetTitle className="text-lg font-semibold">Editar perfil</SheetTitle>
-          </div>
-
-          {/* Scrollable body */}
-          <div className="overflow-y-auto flex-1 px-4 py-5 space-y-6">
-
-            {/* 1. Avatar */}
-            <div className="flex justify-center">
-              <div className="relative">
-                <ProfileAvatar
-                  icon={editData.avatar_icon}
-                  color={editData.avatar_color}
-                  size="lg"
-                />
-                <button
-                  onClick={() => setShowAvatarSelector(true)}
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors"
-                >
-                  <Pencil className="w-4 h-4 text-primary-foreground" />
-                </button>
-              </div>
+          <div
+            className="w-full max-w-md bg-background rounded-t-2xl flex flex-col overflow-hidden"
+            style={{ maxHeight: '88vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
             </div>
 
-            {/* 2. Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="modal-name">{t('profile.name')}</Label>
-              <Input
-                id="modal-name"
-                value={editData.name || ''}
-                onChange={(e) => setEditData({ ...editData, name: e.target.value.slice(0, 24) })}
-                maxLength={24}
-                placeholder={t('profile.namePlaceholder')}
-              />
-              <p className="text-[11px] text-muted-foreground text-right">
-                {editData.name?.length || 0}/24
-              </p>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-2 pb-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Editar perfil</h2>
+              <button onClick={handleCancelEdit} className="p-1 rounded-full hover:bg-muted transition-colors">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
             </div>
 
-            {/* 3. Title */}
-            {unlockedTitles.length > 0 && (
-              <div className="space-y-1.5">
-                <Label>Profile title</Label>
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 px-4 py-5 space-y-6">
+
+              {/* 1. Avatar */}
+              <div className="flex justify-center">
                 <div className="relative">
-                  <select
-                    value={selectedTitle ?? ''}
-                    onChange={e => setSelectedTitle(e.target.value || null)}
-                    disabled={savingTitle}
-                    className="w-full appearance-none rounded-xl border border-border bg-muted/40 px-3 py-2 pr-8 text-sm font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  <ProfileAvatar
+                    icon={editData.avatar_icon}
+                    color={editData.avatar_color}
+                    size="lg"
+                  />
+                  <button
+                    onClick={() => setShowAvatarSelector(true)}
+                    className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center hover:bg-primary/90 transition-colors"
                   >
-                    <option value="">— No title —</option>
-                    {unlockedTitles.map(title => (
-                      <option key={title} value={title}>{title}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Pencil className="w-4 h-4 text-primary-foreground" />
+                  </button>
                 </div>
               </div>
-            )}
 
-            {/* 4. Personal info */}
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-foreground">{t('profile.personalInfo')}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.height')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={editData.height || ""}
-                    onChange={(e) => setEditData({ ...editData, height: e.target.value ? Number(e.target.value) : null })}
-                    className="w-20 h-8 text-right"
-                    placeholder="0"
-                  />
-                  <span className="text-sm text-muted-foreground">{t('profile.cm')}</span>
+              {/* 2. Name */}
+              <div className="space-y-1.5">
+                <Label htmlFor="modal-name">{t('profile.name')}</Label>
+                <Input
+                  id="modal-name"
+                  value={editData.name || ''}
+                  onChange={(e) => setEditData({ ...editData, name: e.target.value.slice(0, 24) })}
+                  maxLength={24}
+                  placeholder={t('profile.namePlaceholder')}
+                />
+                <p className="text-[11px] text-muted-foreground text-right">
+                  {editData.name?.length || 0}/24
+                </p>
+              </div>
+
+              {/* 3. Title */}
+              {unlockedTitles.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label>Profile title</Label>
+                  <div className="relative">
+                    <select
+                      value={selectedTitle ?? ''}
+                      onChange={e => setSelectedTitle(e.target.value || null)}
+                      disabled={savingTitle}
+                      className="w-full appearance-none rounded-xl border border-border bg-muted/40 px-3 py-2 pr-8 text-sm font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="">— No title —</option>
+                      {unlockedTitles.map(title => (
+                        <option key={title} value={title}>{title}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Personal info */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">{t('profile.personalInfo')}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.height')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={editData.height || ""}
+                      onChange={(e) => setEditData({ ...editData, height: e.target.value ? Number(e.target.value) : null })}
+                      className="w-20 h-8 text-right"
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-muted-foreground">{t('profile.cm')}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.currentWeight')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={editData.current_weight ?? ""}
+                      onChange={(e) => setEditData({ ...editData, current_weight: e.target.value ? Number(e.target.value) : null })}
+                      className="w-20 h-8 text-right"
+                      placeholder="--"
+                    />
+                    <span className="text-sm text-muted-foreground">{t('profile.kg')}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.currentWeight')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={editData.current_weight ?? ""}
-                    onChange={(e) => setEditData({ ...editData, current_weight: e.target.value ? Number(e.target.value) : null })}
-                    className="w-20 h-8 text-right"
-                    placeholder="--"
-                  />
-                  <span className="text-sm text-muted-foreground">{t('profile.kg')}</span>
+
+              {/* 5. Goals */}
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground">{t('profile.goalsCard', 'Objetivos')}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.targetWeight')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={editData.target_weight ?? ""}
+                      onChange={(e) => setEditData(prev => ({ ...prev, target_weight: e.target.value === '' ? null : Number(e.target.value) }))}
+                      className="w-24 h-8 text-right"
+                      placeholder="70"
+                    />
+                    <span className="text-sm text-muted-foreground">{t('profile.kg')}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.waterGoal', 'Objetivo de agua')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={editData.water_goal_ml ?? ""}
+                      onChange={(e) => setEditData(prev => ({ ...prev, water_goal_ml: e.target.value === '' ? null : Number(e.target.value) }))}
+                      className="w-28 h-8 text-right"
+                      placeholder="3000"
+                    />
+                    <span className="text-sm text-muted-foreground">ml</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.caloriesGoal', 'Objetivo de calorías')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={editData.calories_goal ?? ""}
+                      onChange={(e) => setEditData(prev => ({ ...prev, calories_goal: e.target.value === '' ? null : Number(e.target.value) }))}
+                      className="w-28 h-8 text-right"
+                      placeholder="2000"
+                    />
+                    <span className="text-sm text-muted-foreground">kcal</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.burnGoal', 'Objetivo de calorías quemadas')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={editData.burn_goal_kcal ?? ""}
+                      onChange={(e) => setEditData(prev => ({ ...prev, burn_goal_kcal: e.target.value === '' ? null : Number(e.target.value) }))}
+                      className="w-28 h-8 text-right"
+                      placeholder="500"
+                    />
+                    <span className="text-sm text-muted-foreground">kcal</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-foreground">{t('profile.stepsGoal', 'Objetivo de pasos')}</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={editData.steps_goal ?? ""}
+                      onChange={(e) => setEditData(prev => ({ ...prev, steps_goal: e.target.value === '' ? null : Number(e.target.value) }))}
+                      className="w-28 h-8 text-right"
+                      placeholder="10000"
+                    />
+                    <span className="text-sm text-muted-foreground">{t('dashboard.steps')}</span>
+                  </div>
                 </div>
               </div>
+
             </div>
 
-            {/* 5. Goals */}
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-foreground">{t('profile.goalsCard', 'Objetivos')}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.targetWeight')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={editData.target_weight ?? ""}
-                    onChange={(e) => setEditData(prev => ({ ...prev, target_weight: e.target.value === '' ? null : Number(e.target.value) }))}
-                    className="w-24 h-8 text-right"
-                    placeholder="70"
-                  />
-                  <span className="text-sm text-muted-foreground">{t('profile.kg')}</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.waterGoal', 'Objetivo de agua')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={editData.water_goal_ml ?? ""}
-                    onChange={(e) => setEditData(prev => ({ ...prev, water_goal_ml: e.target.value === '' ? null : Number(e.target.value) }))}
-                    className="w-28 h-8 text-right"
-                    placeholder="3000"
-                  />
-                  <span className="text-sm text-muted-foreground">ml</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.caloriesGoal', 'Objetivo de calorías')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={editData.calories_goal ?? ""}
-                    onChange={(e) => setEditData(prev => ({ ...prev, calories_goal: e.target.value === '' ? null : Number(e.target.value) }))}
-                    className="w-28 h-8 text-right"
-                    placeholder="2000"
-                  />
-                  <span className="text-sm text-muted-foreground">kcal</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.burnGoal', 'Objetivo de calorías quemadas')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={editData.burn_goal_kcal ?? ""}
-                    onChange={(e) => setEditData(prev => ({ ...prev, burn_goal_kcal: e.target.value === '' ? null : Number(e.target.value) }))}
-                    className="w-28 h-8 text-right"
-                    placeholder="500"
-                  />
-                  <span className="text-sm text-muted-foreground">kcal</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">{t('profile.stepsGoal', 'Objetivo de pasos')}</span>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={editData.steps_goal ?? ""}
-                    onChange={(e) => setEditData(prev => ({ ...prev, steps_goal: e.target.value === '' ? null : Number(e.target.value) }))}
-                    className="w-28 h-8 text-right"
-                    placeholder="10000"
-                  />
-                  <span className="text-sm text-muted-foreground">{t('dashboard.steps')}</span>
-                </div>
-              </div>
+            {/* Footer */}
+            <div className="px-4 py-4 border-t border-border">
+              <Button className="w-full" onClick={handleSaveProfile} disabled={isUpdating}>
+                {isUpdating ? t('profile.saving') : t('profile.save')}
+              </Button>
             </div>
-
           </div>
-
-          {/* Footer */}
-          <div className="px-4 py-4 border-t border-border">
-            <Button className="w-full" onClick={handleSaveProfile} disabled={isUpdating}>
-              {isUpdating ? t('profile.saving') : t('profile.save')}
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
 
       {/* Badge unlock celebration modal — shown automatically on first unlock */}
       <BadgeUnlockModal
