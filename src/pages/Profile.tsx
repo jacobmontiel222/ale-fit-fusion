@@ -323,26 +323,26 @@ const Profile = () => {
         {/* Streak + Fitness Score quick view */}
         <div className="grid grid-cols-2 gap-3">
           <StreakCard streak={gamification.currentStreak} frozen={gamification.freezeAvailable} />
-          {/* Mini score tile */}
+          {/* Mini weekly score tile */}
           <StatsCard className="flex flex-col justify-between">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Fitness Score
+              Weekly Score
             </span>
-            {gamification.dailyFitnessScore ? (
+            {gamification.weeklyFitnessScore ? (
               <div className="flex items-baseline gap-1 mt-1">
                 <span
                   className="text-4xl font-bold leading-none tabular-nums"
                   style={{
-                    color: gamification.dailyFitnessScore.finalScore >= 85
+                    color: gamification.weeklyFitnessScore.total >= 85
                       ? 'hsl(var(--accent))'
-                      : gamification.dailyFitnessScore.finalScore >= 70
+                      : gamification.weeklyFitnessScore.total >= 70
                         ? '#84cc16'
-                        : gamification.dailyFitnessScore.finalScore >= 50
+                        : gamification.weeklyFitnessScore.total >= 50
                           ? '#f59e0b'
                           : '#ef4444'
                   }}
                 >
-                  {gamification.dailyFitnessScore.finalScore}
+                  {gamification.weeklyFitnessScore.total}
                 </span>
                 <span className="text-sm text-muted-foreground">/100</span>
               </div>

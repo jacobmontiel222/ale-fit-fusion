@@ -15,37 +15,11 @@ function scoreColor(value: number): string {
   return '#ef4444';
 }
 
-// Each row shows pts earned out of max.
-// pts = subscore (0–100) * weight → nutrition 0–100 * 0.50 = 0–50 pts
 const BREAKDOWN_ROWS = [
-  {
-    key: 'nutritionSubscore' as const,
-    label: 'Nutrición',
-    Icon: UtensilsCrossed,
-    maxPts: 50,
-    weight: 0.50,
-  },
-  {
-    key: 'trainingSubscore' as const,
-    label: 'Entrenamiento',
-    Icon: Dumbbell,
-    maxPts: 25,
-    weight: 0.25,
-  },
-  {
-    key: 'stepsSubscore' as const,
-    label: 'Actividad',
-    Icon: Footprints,
-    maxPts: 15,
-    weight: 0.15,
-  },
-  {
-    key: 'consistencySubscore' as const,
-    label: 'Consistencia',
-    Icon: RotateCcw,
-    maxPts: 10,
-    weight: 0.10,
-  },
+  { key: 'nutritionSubscore'   as const, label: 'Nutrición',     Icon: UtensilsCrossed },
+  { key: 'trainingSubscore'    as const, label: 'Entrenamiento', Icon: Dumbbell        },
+  { key: 'stepsSubscore'       as const, label: 'Actividad',     Icon: Footprints      },
+  { key: 'consistencySubscore' as const, label: 'Consistencia',  Icon: RotateCcw       },
 ];
 
 export function FitnessScoreCard({ dailyScore, weeklyScore }: FitnessScoreCardProps) {
@@ -57,15 +31,12 @@ export function FitnessScoreCard({ dailyScore, weeklyScore }: FitnessScoreCardPr
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Score de hoy
+          Daily Fitness Score
         </span>
         {weeklyScore != null && (
           <span className="text-xs text-muted-foreground">
             Semana:{' '}
-            <span
-              className="font-semibold"
-              style={{ color: scoreColor(weeklyScore.total) }}
-            >
+            <span className="font-semibold" style={{ color: scoreColor(weeklyScore.total) }}>
               {weeklyScore.total}
             </span>
             /100
@@ -91,11 +62,10 @@ export function FitnessScoreCard({ dailyScore, weeklyScore }: FitnessScoreCardPr
             />
           </div>
 
-          {/* Breakdown rows — show pts/max */}
+          {/* Breakdown rows — all values out of 100 */}
           <div className="flex-1 space-y-2.5 min-w-0">
-            {BREAKDOWN_ROWS.map(({ key, label, Icon, maxPts, weight }) => {
+            {BREAKDOWN_ROWS.map(({ key, label, Icon }) => {
               const subscore = dailyScore[key];
-              const pts = Math.round(subscore * weight);
               const color = scoreColor(subscore);
               return (
                 <div key={key} className="flex items-center gap-2">
@@ -113,7 +83,7 @@ export function FitnessScoreCard({ dailyScore, weeklyScore }: FitnessScoreCardPr
                     className="text-xs font-semibold tabular-nums shrink-0 text-right"
                     style={{ color, minWidth: '2.75rem' }}
                   >
-                    {pts}/{maxPts}
+                    {subscore}/100
                   </span>
                 </div>
               );
