@@ -74,7 +74,7 @@ const FityAI = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No authenticated session");
 
-      const response = await fetch("https://jacobfityourself.app.n8n.cloud/webhook-test/fity-chatbot", {
+      const response = await fetch("https://jacobfityourself.app.n8n.cloud/webhook/fity-chatbot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
