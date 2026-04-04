@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CommunityCard, type Community } from "@/components/CommunityCard";
+import { CommunityIconSelector, getCommunityIcon, COMMUNITY_ICON_LIST } from "@/components/CommunityIconSelector";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,6 +32,8 @@ interface CommunityRow {
   name: string;
   description: string;
   tag: string | null;
+  icon: string | null;
+  icon_color: string | null;
   image_url: string | null;
   is_influencer: boolean;
   is_public: boolean;
@@ -47,6 +50,8 @@ function rowToCommunity(row: CommunityRow, userId: string): Community {
     description:         row.description,
     memberCount:         row.member_count,
     tag:                 row.tag ?? undefined,
+    icon:                row.icon ?? undefined,
+    iconColor:           row.icon_color ?? undefined,
     isJoined:            row.is_joined,
     isOwner:             row.owner_id === userId,
     createdByInfluencer: row.is_influencer,
@@ -100,17 +105,33 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
   const [name, setName]               = useState("");
   const [description, setDescription] = useState("");
   const [tag, setTag]                 = useState("");
+  const [icon, setIcon]               = useState(COMMUNITY_ICON_LIST[0].id as string);
+  const [iconColor, setIconColor]     = useState("#10B981");
+  const [showIconPicker, setShowIconPicker] = useState(false);
+
+  const IconComponent = getCommunityIcon(icon);
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { error } = await db.from("communities").insert({
-        owner_id:    userId,
-        name:        name.trim(),
-        description: description.trim(),
-        tag:         tag.trim() || null,
-        is_public:   true,
-      });
+      const { data, error } = await db
+        .from("communities")
+        .insert({
+          owner_id:    userId,
+          name:        name.trim(),
+          description: description.trim(),
+          tag:         tag.trim() || null,
+          icon,
+          icon_color:  iconColor,
+          is_public:   true,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+
+      const { error: memberError } = await db
+        .from("community_members")
+        .insert({ community_id: data.id, user_id: userId, role: "owner" });
+      if (memberError) throw memberError;
     },
     onSuccess: () => {
       toast.success("Community created!");
@@ -131,23 +152,26 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
     <StatsCard className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-foreground">Create a Community</h2>
-        <button
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-        >
-          ✕
-        </button>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm transition-colors">✕</button>
       </div>
 
       <div className="space-y-3">
+        {/* Icon picker */}
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowIconPicker(true)}
+            className="w-24 h-24 rounded-3xl flex items-center justify-center transition-all hover:opacity-80"
+            style={{ backgroundColor: `${iconColor}22`, border: `2px solid ${iconColor}44` }}
+          >
+            <IconComponent className="w-10 h-10" style={{ color: iconColor }} strokeWidth={1.5} />
+          </button>
+          <p className="text-xs text-muted-foreground">Toca para elegir icono</p>
+        </div>
+
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
-          <Input
-            placeholder="My Fitness Community"
-            value={name}
-            onChange={e => setName(e.target.value.slice(0, 50))}
-            className="rounded-xl"
-          />
+          <Input placeholder="My Fitness Community" value={name} onChange={e => setName(e.target.value.slice(0, 50))} className="rounded-xl" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Description</label>
@@ -161,12 +185,7 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Tag (optional)</label>
-          <Input
-            placeholder="e.g. fitness, nutrition, weightlifting"
-            value={tag}
-            onChange={e => setTag(e.target.value.slice(0, 30))}
-            className="rounded-xl"
-          />
+          <Input placeholder="e.g. fitness, nutrition, weightlifting" value={tag} onChange={e => setTag(e.target.value.slice(0, 30))} className="rounded-xl" />
         </div>
       </div>
 
@@ -177,6 +196,14 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
       >
         {mutation.isPending ? "Creating..." : "Create Community"}
       </Button>
+
+      <CommunityIconSelector
+        open={showIconPicker}
+        onOpenChange={setShowIconPicker}
+        currentIcon={icon}
+        currentColor={iconColor}
+        onSelect={(i, c) => { setIcon(i); setIconColor(c); }}
+      />
     </StatsCard>
   );
 };

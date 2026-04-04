@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MoreVertical, Users, BadgeCheck, TrendingUp, Star } from "lucide-react";
+import { ArrowLeft, MoreVertical, Users, BadgeCheck, TrendingUp, Star, Pencil } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CommunityIconSelector, getCommunityIcon, COMMUNITY_ICON_LIST } from "@/components/CommunityIconSelector";
 
 const db = supabase as any;
 
@@ -31,25 +34,18 @@ interface InsightsRow {
 // ── Deterministic color from user_id ──────────────────────────────────────────
 
 const PALETTE = ["#4ade80","#60a5fa","#f59e0b","#a78bfa","#f472b6","#34d399","#fb923c","#38bdf8"];
-
-const colorFor = (userId: string) =>
-  PALETTE[userId.charCodeAt(0) % PALETTE.length];
+const colorFor = (userId: string) => PALETTE[userId.charCodeAt(0) % PALETTE.length];
 
 // ── Avatar circle ─────────────────────────────────────────────────────────────
 
 const Avatar = ({ name, userId, size = 56 }: { name: string; userId: string; size?: number }) => {
   const color = colorFor(userId);
   return (
-    <div
-      style={{
-        width: size, height: size,
-        borderRadius: "50%",
-        background: `${color}22`,
-        border: `2px solid ${color}`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: `${color}22`, border: `2px solid ${color}`,
+      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+    }}>
       <span style={{ fontSize: size * 0.35, fontWeight: 700, color }}>
         {name.charAt(0).toUpperCase()}
       </span>
@@ -60,12 +56,8 @@ const Avatar = ({ name, userId, size = 56 }: { name: string; userId: string; siz
 // ── Top-3 podium ──────────────────────────────────────────────────────────────
 
 const Podium = ({ top3 }: { top3: RankingRow[] }) => {
-  const second = top3[1];
-  const first  = top3[0];
-  const third  = top3[2];
-
+  const [first, second, third] = [top3[0], top3[1], top3[2]];
   if (!first) return null;
-
   return (
     <div className="flex items-end justify-center gap-6 py-4">
       {second && (
@@ -76,7 +68,6 @@ const Podium = ({ top3 }: { top3: RankingRow[] }) => {
           <span className="text-xs font-bold text-primary">{second.score} pts</span>
         </div>
       )}
-
       <div className="flex flex-col items-center gap-1.5 -mt-4">
         <div className="relative">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
@@ -92,7 +83,6 @@ const Podium = ({ top3 }: { top3: RankingRow[] }) => {
         <span className="text-base font-bold text-foreground">{first.display_name}</span>
         <span className="text-sm font-bold text-primary">{first.score} pts</span>
       </div>
-
       {third && (
         <div className="flex flex-col items-center gap-1.5">
           <Avatar name={third.display_name} userId={third.user_id} size={52} />
@@ -105,6 +95,107 @@ const Podium = ({ top3 }: { top3: RankingRow[] }) => {
   );
 };
 
+// ── Edit form ─────────────────────────────────────────────────────────────────
+
+interface EditFormProps {
+  communityId: string;
+  initial: { name: string; description: string; tag: string; icon: string; iconColor: string };
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+const EditForm = ({ communityId, initial, onClose, onSaved }: EditFormProps) => {
+  const [name, setName]               = useState(initial.name);
+  const [description, setDescription] = useState(initial.description);
+  const [tag, setTag]                 = useState(initial.tag);
+  const [icon, setIcon]               = useState(initial.icon || COMMUNITY_ICON_LIST[0].id as string);
+  const [iconColor, setIconColor]     = useState(initial.iconColor || "#10B981");
+  const [showIconPicker, setShowIconPicker] = useState(false);
+
+  const IconComponent = getCommunityIcon(icon);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await db
+        .from("communities")
+        .update({
+          name:        name.trim(),
+          description: description.trim(),
+          tag:         tag.trim() || null,
+          icon,
+          icon_color:  iconColor,
+          updated_at:  new Date().toISOString(),
+        })
+        .eq("id", communityId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Community updated!");
+      onSaved();
+      onClose();
+    },
+    onError: () => toast.error("Failed to update. Try again."),
+  });
+
+  return (
+    <StatsCard className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-foreground">Edit Community</h2>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm transition-colors">✕</button>
+      </div>
+
+      <div className="space-y-3">
+        {/* Icon picker */}
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowIconPicker(true)}
+            className="w-24 h-24 rounded-3xl flex items-center justify-center transition-all hover:opacity-80"
+            style={{ backgroundColor: `${iconColor}22`, border: `2px solid ${iconColor}44` }}
+          >
+            <IconComponent className="w-10 h-10" style={{ color: iconColor }} strokeWidth={1.5} />
+          </button>
+          <p className="text-xs text-muted-foreground">Toca para cambiar icono</p>
+        </div>
+
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
+          <Input value={name} onChange={e => setName(e.target.value.slice(0, 50))} className="rounded-xl" />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Description</label>
+          <textarea
+            value={description}
+            onChange={e => setDescription(e.target.value.slice(0, 200))}
+            rows={3}
+            className="w-full resize-none rounded-xl bg-secondary text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 outline-none border border-border focus:border-accent transition-colors"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Tag (optional)</label>
+          <Input placeholder="e.g. fitness, nutrition" value={tag} onChange={e => setTag(e.target.value.slice(0, 30))} className="rounded-xl" />
+        </div>
+      </div>
+
+      <Button
+        className="w-full rounded-xl"
+        disabled={!name.trim() || mutation.isPending}
+        onClick={() => mutation.mutate()}
+      >
+        {mutation.isPending ? "Saving..." : "Save Changes"}
+      </Button>
+
+      <CommunityIconSelector
+        open={showIconPicker}
+        onOpenChange={setShowIconPicker}
+        currentIcon={icon}
+        currentColor={iconColor}
+        onSelect={(i, c) => { setIcon(i); setIconColor(c); }}
+      />
+    </StatsCard>
+  );
+};
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 const CommunityDetail = () => {
@@ -112,8 +203,8 @@ const CommunityDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [showEdit, setShowEdit] = useState(false);
 
-  // Community info
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
     queryFn: async () => {
@@ -125,14 +216,13 @@ const CommunityDetail = () => {
       if (error) throw error;
       return data as {
         id: string; owner_id: string; name: string; description: string;
-        tag: string | null; image_url: string | null;
-        is_influencer: boolean; member_count: number; is_joined: boolean;
+        tag: string | null; icon: string | null; icon_color: string | null;
+        image_url: string | null; is_influencer: boolean; member_count: number; is_joined: boolean;
       };
     },
     enabled: !!id && !!user?.id,
   });
 
-  // Rankings
   const { data: rankings = [] } = useQuery<RankingRow[]>({
     queryKey: ["community_rankings", id],
     queryFn: async () => {
@@ -148,7 +238,6 @@ const CommunityDetail = () => {
     enabled: !!id && !!user?.id,
   });
 
-  // Weekly insights
   const { data: insights } = useQuery<InsightsRow | null>({
     queryKey: ["community_insights", id],
     queryFn: async () => {
@@ -163,7 +252,6 @@ const CommunityDetail = () => {
     enabled: !!id && !!user?.id,
   });
 
-  // Join / Leave
   const joinMutation = useMutation({
     mutationFn: async () => {
       const { error } = await db
@@ -200,19 +288,17 @@ const CommunityDetail = () => {
   const formatCount = (n: number) =>
     n >= 1000 ? `${(n / 1000).toFixed(1)}k members` : `${n} members`;
 
-  const isOwner   = community?.owner_id === user?.id;
-  const top3      = rankings.slice(0, 3);
-  const rest      = rankings.slice(3);
-  const userRank  = rankings.find(r => r.user_id === user?.id);
+  const isOwner  = community?.owner_id === user?.id;
+  const top3     = rankings.slice(0, 3);
+  const rest     = rankings.slice(3);
+  const userRank = rankings.find(r => r.user_id === user?.id);
   const weekLabel = insights ? `Week ${insights.week_number}` : "—";
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="max-w-md mx-auto px-4 pt-6 space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-32 rounded-3xl bg-card animate-pulse" />
-          ))}
+          {[1, 2, 3].map(i => <div key={i} className="h-32 rounded-3xl bg-card animate-pulse" />)}
         </div>
         <BottomNav />
       </div>
@@ -241,22 +327,57 @@ const CommunityDetail = () => {
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <h1 className="text-lg font-bold text-foreground">Community</h1>
-          <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-secondary transition-colors">
-            <MoreVertical className="w-5 h-5 text-muted-foreground" />
-          </button>
+          {isOwner ? (
+            <button
+              onClick={() => setShowEdit(v => !v)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-secondary transition-colors"
+            >
+              <Pencil className="w-4 h-4 text-muted-foreground" />
+            </button>
+          ) : (
+            <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-secondary transition-colors">
+              <MoreVertical className="w-5 h-5 text-muted-foreground" />
+            </button>
+          )}
         </div>
+
+        {/* Edit form (admin only) */}
+        {showEdit && isOwner && (
+          <EditForm
+            communityId={community.id}
+            initial={{
+              name:        community.name,
+              description: community.description,
+              tag:         community.tag ?? "",
+              icon:        community.icon ?? COMMUNITY_ICON_LIST[0].id,
+              iconColor:   community.icon_color ?? "#10B981",
+            }}
+            onClose={() => setShowEdit(false)}
+            onSaved={() => {
+              queryClient.invalidateQueries({ queryKey: ["community", id] });
+              queryClient.invalidateQueries({ queryKey: ["communities", user?.id] });
+            }}
+          />
+        )}
 
         {/* Community info card */}
         <StatsCard className="space-y-3">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {community.image_url ? (
-                <img src={community.image_url} alt={community.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-primary/20 rounded-2xl">
-                  <Users className="w-6 h-6 text-primary" />
-                </div>
-              )}
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+              style={community.icon && !community.image_url ? {
+                backgroundColor: `${community.icon_color ?? "#10B981"}22`,
+              } : { backgroundColor: "hsl(var(--primary) / 0.1)" }}
+            >
+              {(() => {
+                if (community.image_url) return <img src={community.image_url} alt={community.name} className="w-full h-full object-cover" />;
+                if (community.icon) {
+                  const Ico = getCommunityIcon(community.icon);
+                  const col = community.icon_color ?? "#10B981";
+                  return <Ico className="w-7 h-7" style={{ color: col }} strokeWidth={1.5} />;
+                }
+                return <Users className="w-6 h-6 text-primary" />;
+              })()}
             </div>
 
             <div className="flex-1 min-w-0">
@@ -264,33 +385,33 @@ const CommunityDetail = () => {
                 <div>
                   <h2 className="text-xl font-bold text-foreground leading-tight">{community.name}</h2>
                   {community.tag && (
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide mt-0.5">
-                      {community.tag}
-                    </p>
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wide mt-0.5">{community.tag}</p>
                   )}
                 </div>
 
-                {!isOwner && (
-                  community.is_joined ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-2xl h-9 px-4 text-sm border-foreground/30 gap-1.5 shrink-0"
-                      onClick={() => leaveMutation.mutate()}
-                      disabled={leaveMutation.isPending}
-                    >
-                      ✓ Joined
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      className="rounded-2xl h-9 px-4 text-sm shrink-0"
-                      onClick={() => joinMutation.mutate()}
-                      disabled={joinMutation.isPending}
-                    >
-                      Join
-                    </Button>
-                  )
+                {isOwner ? (
+                  <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-2xl shrink-0">
+                    Admin
+                  </span>
+                ) : community.is_joined ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-2xl h-9 px-4 text-sm border-foreground/30 gap-1.5 shrink-0"
+                    onClick={() => leaveMutation.mutate()}
+                    disabled={leaveMutation.isPending}
+                  >
+                    ✓ Joined
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="rounded-2xl h-9 px-4 text-sm shrink-0"
+                    onClick={() => joinMutation.mutate()}
+                    disabled={joinMutation.isPending}
+                  >
+                    Join
+                  </Button>
                 )}
               </div>
             </div>
@@ -357,9 +478,7 @@ const CommunityDetail = () => {
         {/* Global Rankings */}
         {rankings.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">Global Rankings</h3>
-            </div>
+            <h3 className="text-base font-bold text-foreground">Global Rankings</h3>
 
             <StatsCard className="py-4">
               <Podium top3={top3} />
@@ -383,7 +502,6 @@ const CommunityDetail = () => {
               </div>
             )}
 
-            {/* User's position */}
             {userRank && (
               <StatsCard className="py-4 px-5 border border-primary/30">
                 <div className="flex items-center gap-4">
