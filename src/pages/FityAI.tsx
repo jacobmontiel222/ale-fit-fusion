@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { setFitAIUnread } from "@/lib/fitai";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = {
   id: string;
@@ -70,13 +71,17 @@ const FityAI = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://jacobfityourself.app.n8n.cloud/webhook/fity-chatbot", {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No authenticated session");
+
+      const response = await fetch("https://jacobfityourself.app.n8n.cloud/webhook-test/fity-chatbot", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          user_id: user?.id || "anonymous",
+          user_id: session.user.id,
           message: userMessage.content,
           locale: "es-ES",
           device: "ios",
