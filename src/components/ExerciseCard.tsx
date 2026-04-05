@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Check } from "lucide-react";
@@ -77,7 +78,7 @@ export const ExerciseCard = ({
         toast.info(t('gym.noPreviousData'));
       }
     } catch (error) {
-      console.error('Error loading previous data:', error);
+      logger.error('Error loading previous data:', error);
       toast.error(t('common.error'));
     } finally {
       setIsLoadingPrevious(false);
@@ -98,7 +99,7 @@ export const ExerciseCard = ({
       onSave();
       toast.success(t('gym.exerciseSaved'));
     } catch (error) {
-      console.error('Error saving exercise:', error);
+      logger.error('Error saving exercise:', error);
       toast.error(t('common.error'));
     }
   };

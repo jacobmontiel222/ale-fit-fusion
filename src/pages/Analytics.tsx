@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Scale, Footprints, Droplet } from "lucide-react";
@@ -202,7 +203,7 @@ const Analytics = () => {
       // Notifica a otras pantallas para que refresquen pasos
       window.dispatchEvent(new Event('stepsUpdated'));
     } catch (e) {
-      console.error('Error saving steps', e);
+      logger.error('Error saving steps', e);
     } finally {
       setSavingSteps(false);
     }

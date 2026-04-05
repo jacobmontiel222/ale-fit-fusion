@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical, Check, CalendarDays, ListChecks } from "lucide-react";
@@ -215,7 +216,7 @@ const Gimnasio = () => {
       .single();
 
     if (error) {
-      console.error('Error creating session:', error);
+      logger.error('Error creating session:', error);
       return;
     }
 

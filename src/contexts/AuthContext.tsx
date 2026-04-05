@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
@@ -71,18 +72,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) {
-        console.error('Login error details:', {
+        logger.error('Login error details:', {
           message: error.message,
           status: error.status,
           name: error.name
         });
       } else {
-        console.log('Login successful');
+        logger.log('Login successful');
       }
       
       return { error };
     } catch (err: any) {
-      console.error('Unexpected login error:', err);
+      logger.error('Unexpected login error:', err);
       return { error: err };
     }
   };

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ export const AddExerciseDialog = ({ open, onClose, templateId, onExerciseAdded }
       onExerciseAdded();
       onClose();
     } catch (error) {
-      console.error('Error adding exercise:', error);
+      logger.error('Error adding exercise:', error);
     } finally {
       setSaving(false);
     }

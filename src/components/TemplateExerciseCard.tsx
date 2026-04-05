@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2, Plus, Check, X } from "lucide-react";
@@ -105,7 +106,7 @@ export const TemplateExerciseCard = ({ exercise, onUpdate, isEditMode = false }:
       .eq('id', exercise.id);
 
     if (error) {
-      console.error('Error saving sets:', error);
+      logger.error('Error saving sets:', error);
     }
   };
 

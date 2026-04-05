@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
@@ -95,7 +96,7 @@ const CreateRecipe = () => {
 
       if (recipeError || !recipe) {
         toast.error(t('recipes.saveError'));
-        console.error(recipeError);
+        logger.error(recipeError);
         return;
       }
 
@@ -120,7 +121,7 @@ const CreateRecipe = () => {
         // Si falla al guardar los items, eliminar la receta
         await supabase.from('recipes').delete().eq('id', recipe.id);
         toast.error(t('recipes.ingredientsError'));
-        console.error(itemsError);
+        logger.error(itemsError);
         return;
       }
 
@@ -132,7 +133,7 @@ const CreateRecipe = () => {
       navigate("/recipes");
     } catch (error) {
       toast.error(t('recipes.unexpectedError'));
-      console.error(error);
+      logger.error(error);
     }
   };
 

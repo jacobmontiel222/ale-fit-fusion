@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Check } from 'lucide-react';
@@ -49,7 +50,7 @@ const WorkoutSession = () => {
       });
       navigate('/gimnasio');
     } catch (error) {
-      console.error('Error completing workout:', error);
+      logger.error('Error completing workout:', error);
       toast({
         title: t('common.error'),
         description: t('gym.errorCompletingWorkout'),

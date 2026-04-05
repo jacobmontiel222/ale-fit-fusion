@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Languages } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { logger } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,7 @@ const Login = () => {
     
     if (!email || !password) return;
     
-    console.log("Attempting login from:", window.location.href);
+    logger.log("Attempting login from:", window.location.href);
     setIsLoading(true);
     
     const { error } = await signIn(email, password);
@@ -50,11 +51,7 @@ const Login = () => {
         variant: "destructive",
       });
       
-      console.error("Login failed:", {
-        error: error.message,
-        location: window.location.href,
-        userAgent: navigator.userAgent,
-      });
+      logger.error("Login failed:", error.message);
     }
     
     setIsLoading(false);

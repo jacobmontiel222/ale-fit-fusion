@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Search, Plus, Users } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -143,7 +144,7 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
         toast.error("You already have a community.");
       } else {
         toast.error("Failed to create community. Try again.");
-        console.error(err);
+        logger.error(err);
       }
     },
   });

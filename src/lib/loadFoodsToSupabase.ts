@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // Script para cargar alimentos del CSV a Supabase (ejecutar una sola vez)
 import { supabase } from '@/integrations/supabase/client';
 import { FoodItem, FoodCategory, FoodTag } from '@/types/food';
@@ -129,7 +130,7 @@ async function parseCSVToFoodItems(csvText: string): Promise<any[]> {
 
       foods.push(food);
     } catch (error) {
-      console.error(`Error parsing line ${i}:`, error);
+      logger.error(`Error parsing line ${i}:`, error);
     }
   }
 
@@ -138,7 +139,7 @@ async function parseCSVToFoodItems(csvText: string): Promise<any[]> {
 
 export async function loadFoodsToSupabase(): Promise<void> {
   try {
-    console.log('🔄 Verificando si ya hay alimentos en Supabase...');
+    logger.log('🔄 Verificando si ya hay alimentos en Supabase...');
     
     // Verificar si ya hay datos
     const { count } = await supabase
@@ -146,18 +147,18 @@ export async function loadFoodsToSupabase(): Promise<void> {
       .select('*', { count: 'exact', head: true });
     
     if (count && count > 0) {
-      console.log(`✅ Ya hay ${count} alimentos en Supabase`);
+      logger.log(`✅ Ya hay ${count} alimentos en Supabase`);
       return;
     }
 
-    console.log('📥 Cargando CSV de alimentos...');
+    logger.log('📥 Cargando CSV de alimentos...');
     const response = await fetch('/data/foods_database.csv');
     const csvText = await response.text();
     
-    console.log('🔄 Procesando CSV...');
+    logger.log('🔄 Procesando CSV...');
     const foods = await parseCSVToFoodItems(csvText);
     
-    console.log(`📤 Subiendo ${foods.length} alimentos a Supabase vía edge function...`);
+    logger.log(`📤 Subiendo ${foods.length} alimentos a Supabase vía edge function...`);
     
     // Usar edge function para insertar con service role
     const { data, error } = await supabase.functions.invoke('load-foods', {
@@ -165,13 +166,13 @@ export async function loadFoodsToSupabase(): Promise<void> {
     });
     
     if (error) {
-      console.error('Error llamando a la función:', error);
+      logger.error('Error llamando a la función:', error);
       throw error;
     }
     
-    console.log('🎉', data.message);
+    logger.log('🎉', data.message);
   } catch (error) {
-    console.error('❌ Error cargando alimentos a Supabase:', error);
+    logger.error('❌ Error cargando alimentos a Supabase:', error);
     throw error;
   }
 }

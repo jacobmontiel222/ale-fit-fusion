@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { GripVertical, X } from "lucide-react";
 import {
@@ -128,7 +129,7 @@ export const ReorderExercisesModal = ({
       onReorder();
       onClose();
     } catch (error) {
-      console.error('Error reordering exercises:', error);
+      logger.error('Error reordering exercises:', error);
       toast.error(t('gym.errorReordering') || 'Error al reordenar ejercicios');
     }
   };

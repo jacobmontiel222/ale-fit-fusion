@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { ArrowLeft, Settings, ChevronRight, Pencil, ChevronDown, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -187,7 +188,7 @@ const Profile = () => {
       toast.success(t('profile.profileUpdated'));
     } catch (error) {
       toast.error(t('profile.updateError'));
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -206,7 +207,7 @@ const Profile = () => {
       await updateProfile({ share_foods_with_community: value });
       toast.success(value ? t('profile.shareWithCommunityEnabled') : t('profile.shareWithCommunityDisabled'));
     } catch (error) {
-      console.error('Error updating share preference', error);
+      logger.error('Error updating share preference', error);
       setShareWithCommunity(previous);
       toast.error(t('profile.shareWithCommunityError'));
     }

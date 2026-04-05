@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, ChefHat, Trash2, ArrowLeft } from "lucide-react";
@@ -86,7 +87,7 @@ const Recipes = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading recipes:', error);
+        logger.error('Error loading recipes:', error);
         toast.error(t('recipes.loadError'));
         return;
       }
@@ -129,7 +130,7 @@ const Recipes = () => {
         setRecipes(formattedRecipes);
       }
     } catch (error) {
-      console.error('Error:', error);
+      logger.error('Error:', error);
       toast.error(t('recipes.loadError'));
     } finally {
       setLoading(false);
@@ -148,7 +149,7 @@ const Recipes = () => {
 
       if (error) {
         toast.error(t('recipes.deleteError'));
-        console.error(error);
+        logger.error(error);
         return;
       }
 
@@ -156,7 +157,7 @@ const Recipes = () => {
       setRecipes(recipes.filter((r) => r.id !== recipeToDelete));
     } catch (error) {
       toast.error(t('recipes.deleteError'));
-      console.error(error);
+      logger.error(error);
     } finally {
       setDeleteDialogOpen(false);
       setRecipeToDelete(null);
@@ -200,7 +201,7 @@ const Recipes = () => {
 
       if (error) {
         toast.error(t('recipes.addError'));
-        console.error(error);
+        logger.error(error);
         return;
       }
 
@@ -209,7 +210,7 @@ const Recipes = () => {
       setRecipeToAdd(null);
     } catch (error) {
       toast.error(t('recipes.addError'));
-      console.error(error);
+      logger.error(error);
     }
   };
 

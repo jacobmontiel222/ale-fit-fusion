@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useRef, useEffect } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -124,7 +125,7 @@ const FityAI = () => {
       }, typingSpeed);
       
     } catch (error) {
-      console.error("Error al conectar con FityAI:", error);
+      logger.error("Error al conectar con FityAI:", error);
       toast({
         title: "Error",
         description: t('fityai.error'),

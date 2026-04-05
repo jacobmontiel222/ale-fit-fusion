@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export const NewRoutineDialog = ({ open, onClose }: NewRoutineDialogProps) => {
       onClose();
       resetState();
     } catch (error) {
-      console.error("Error creating routine", error);
+      logger.error("Error creating routine", error);
     } finally {
       setSaving(false);
     }

@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { foodDatabase } from './foodDatabase';
 import { FoodItem, FoodCategory, FoodTag } from '@/types/food';
 
@@ -142,12 +143,12 @@ async function parseCSVToFoodItems(csvText: string, currentLanguage: string = 'e
 
       // Log para debug de micronutrientes
       if (food.name === 'Manzana' || food.name === 'Naranja' || food.name === 'Pechuga de pollo') {
-        console.log(`🍎 ${food.name} - Vitaminas:`, food.micronutrients.vitamins.length, 'Minerales:', food.micronutrients.minerals.length);
+        logger.log(`🍎 ${food.name} - Vitaminas:`, food.micronutrients.vitamins.length, 'Minerales:', food.micronutrients.minerals.length);
       }
 
       foods.push(food);
     } catch (error) {
-      console.error(`Error parsing line ${i}:`, error);
+      logger.error(`Error parsing line ${i}:`, error);
     }
   }
 
@@ -160,11 +161,11 @@ export async function initializeFoodDatabase(language: string = 'es'): Promise<v
     
     const count = await foodDatabase.getCount();
     if (count > 0) {
-      console.log(`Food database already initialized with ${count} items`);
+      logger.log(`Food database already initialized with ${count} items`);
       return;
     }
 
-    console.log('Loading food database from CSV...');
+    logger.log('Loading food database from CSV...');
     
     const response = await fetch('/data/foods_database.csv');
     const csvText = await response.text();
@@ -172,8 +173,8 @@ export async function initializeFoodDatabase(language: string = 'es'): Promise<v
     const foods = await parseCSVToFoodItems(csvText, language);
     await foodDatabase.addFoods(foods);
     
-    console.log(`Food database initialized with ${foods.length} items`);
+    logger.log(`Food database initialized with ${foods.length} items`);
   } catch (error) {
-    console.error('Error initializing food database:', error);
+    logger.error('Error initializing food database:', error);
   }
 }

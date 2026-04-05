@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Barcode, Search, Clock, Camera, Plus, Star, Trash2, ClipboardPen, Bookmark } from "lucide-react";
@@ -403,9 +404,9 @@ const AddFood = () => {
         
         const foods = await foodDatabase.getAllFoods();
         setDatabaseFoods(foods);
-        console.log(`Loaded ${foods.length} foods in ${i18n.language}`);
+        logger.log(`Loaded ${foods.length} foods in ${i18n.language}`);
       } catch (error) {
-        console.error('Error cargando base de datos de alimentos:', error);
+        logger.error('Error cargando base de datos de alimentos:', error);
       }
     };
     
@@ -516,7 +517,7 @@ const AddFood = () => {
 
         setCommunityResults(mapped);
       } catch (error) {
-        console.error('Error buscando alimentos comunitarios:', error);
+        logger.error('Error buscando alimentos comunitarios:', error);
         if (active) setCommunityResults([]);
       }
     };
@@ -631,7 +632,7 @@ const AddFood = () => {
 
       toast.success(t('addFood.photoSuccess'));
     } catch (error) {
-      console.error("Error uploading photo", error);
+      logger.error("Error uploading photo", error);
       toast.error(t('addFood.photoError'));
     } finally {
       setIsUploadingPhoto(false);
@@ -646,7 +647,7 @@ const AddFood = () => {
 
     const unit = (food.servingUnit || '').toLowerCase();
     if (unit !== 'g' && unit !== 'ml') {
-      console.warn('Saltando compartir: unidad no permitida', unit);
+      logger.warn('Saltando compartir: unidad no permitida', unit);
       return;
     }
 
@@ -681,7 +682,7 @@ const AddFood = () => {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error compartiendo alimento con la comunidad:', error);
+      logger.error('Error compartiendo alimento con la comunidad:', error);
     }
   };
 
@@ -726,8 +727,8 @@ const AddFood = () => {
           });
           const data = await res.json();
           
-          console.log("?? Datos recibidos del webhook:", data);
-          console.log("?? per_100g:", data?.per_100g);
+          logger.log("?? Datos recibidos del webhook:", data);
+          logger.log("?? per_100g:", data?.per_100g);
           
           // El webhook devuelve un array, tomamos el primer elemento
           const productData = Array.isArray(data) ? data[0] : data;
@@ -889,7 +890,7 @@ const AddFood = () => {
 
     if (error) {
       toast.error(t('addFood.addError'));
-      console.error(error);
+      logger.error(error);
       return;
     }
     
@@ -963,13 +964,13 @@ const AddFood = () => {
     };
     
     // Calcular micronutrientes ajustados
-    console.log('🍎 Alimento desde DB:', food.name);
-    console.log('🔬 Micronutrientes originales:', food.micronutrients);
+    logger.log('🍎 Alimento desde DB:', food.name);
+    logger.log('🔬 Micronutrientes originales:', food.micronutrients);
     
     const adjustedMicronutrients = computeAdjustedMicros(food, multiplier);
     const microCols = microsToColumns(adjustedMicronutrients);
     
-    console.log('📊 Micronutrientes ajustados a guardar:', adjustedMicronutrients);
+    logger.log('📊 Micronutrientes ajustados a guardar:', adjustedMicronutrients);
     
     // Check if adding to recipe
     if (meal === "recipe") {
@@ -1032,7 +1033,7 @@ const AddFood = () => {
 
     if (error) {
       toast.error(t('addFood.addError'));
-      console.error(error);
+      logger.error(error);
       return;
     }
 

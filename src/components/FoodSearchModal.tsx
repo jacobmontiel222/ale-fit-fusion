@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect, useRef } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -107,7 +108,7 @@ export function FoodSearchModal({ open, onOpenChange, onSelectFood }: FoodSearch
         setAvailableCategories(Array.from(categories));
         setAvailableTags(Array.from(tags));
       } catch (error) {
-        if (process.env.NODE_ENV !== 'production') console.error('Error cargando alimentos:', error);
+        if (process.env.NODE_ENV !== 'production') logger.error('Error cargando alimentos:', error);
       } finally {
         setLoading(false);
       }

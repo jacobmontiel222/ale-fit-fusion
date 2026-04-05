@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FoodItem, FoodCategory } from '@/types/food';
@@ -48,7 +49,7 @@ export function useFoodsDatabase() {
       const mappedFoods = (data || []).map(mapSupabaseFoodToFoodItem);
       setFoods(mappedFoods);
     } catch (err) {
-      console.error('Error loading foods from Supabase:', err);
+      logger.error('Error loading foods from Supabase:', err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -82,7 +83,7 @@ export function useFoodsDatabase() {
 
       return (data || []).map(mapSupabaseFoodToFoodItem);
     } catch (err) {
-      console.error('Error searching foods:', err);
+      logger.error('Error searching foods:', err);
       return [];
     }
   };
@@ -100,7 +101,7 @@ export function useFoodsDatabase() {
 
       return mapSupabaseFoodToFoodItem(data);
     } catch (err) {
-      console.error('Error getting food by id:', err);
+      logger.error('Error getting food by id:', err);
       return null;
     }
   };
