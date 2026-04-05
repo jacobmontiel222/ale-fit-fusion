@@ -35,19 +35,37 @@ const FityAI = () => {
     setFitAIUnread(false);
   }, []);
 
+  const MAX_STORED_MESSAGES = 50;
+
   useEffect(() => {
     // Load chat history from localStorage
-    const savedMessages = localStorage.getItem("fityai-chat-history");
-    if (savedMessages) {
-      const parsed = JSON.parse(savedMessages);
-      setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+    try {
+      const savedMessages = localStorage.getItem("fityai-chat-history");
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        if (Array.isArray(parsed)) {
+          setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+        }
+      }
+    } catch {
+      localStorage.removeItem("fityai-chat-history");
     }
   }, []);
 
   useEffect(() => {
-    // Save chat history to localStorage
+    // Save only the last MAX_STORED_MESSAGES to avoid filling localStorage
     if (messages.length > 0) {
-      localStorage.setItem("fityai-chat-history", JSON.stringify(messages));
+      const toStore = messages.slice(-MAX_STORED_MESSAGES);
+      try {
+        localStorage.setItem("fityai-chat-history", JSON.stringify(toStore));
+      } catch {
+        // Storage full — remove oldest half and retry
+        try {
+          localStorage.setItem("fityai-chat-history", JSON.stringify(toStore.slice(-25)));
+        } catch {
+          localStorage.removeItem("fityai-chat-history");
+        }
+      }
     }
     setFitAIUnread(false);
   }, [messages]);
