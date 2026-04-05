@@ -32,7 +32,12 @@ const CreateRecipe = () => {
   useEffect(() => {
     const pendingItems = sessionStorage.getItem("pendingRecipeItems");
     if (pendingItems) {
-      setItems(JSON.parse(pendingItems));
+      try {
+        const parsed = JSON.parse(pendingItems);
+        if (Array.isArray(parsed)) setItems(parsed);
+      } catch {
+        sessionStorage.removeItem("pendingRecipeItems");
+      }
     }
     
     const pendingName = sessionStorage.getItem("pendingRecipeName");

@@ -835,14 +835,20 @@ const AddFood = () => {
         carbs: adjustedMacros.carbs,
       };
       
-      const pendingRecipeItems = JSON.parse(sessionStorage.getItem("pendingRecipeItems") || "[]");
+      let pendingRecipeItems: unknown[] = [];
+      try {
+        const raw = JSON.parse(sessionStorage.getItem("pendingRecipeItems") || "[]");
+        if (Array.isArray(raw)) pendingRecipeItems = raw;
+      } catch {
+        sessionStorage.removeItem("pendingRecipeItems");
+      }
       pendingRecipeItems.push(recipeItem);
       sessionStorage.setItem("pendingRecipeItems", JSON.stringify(pendingRecipeItems));
-      
+
       navigate("/create-recipe");
       return;
     }
-    
+
     // Add to food history
     addToHistory({
       name: foodToAdd.name,
@@ -984,14 +990,20 @@ const AddFood = () => {
         carbs: adjustedMacros.carbs,
       };
       
-      const pendingRecipeItems = JSON.parse(sessionStorage.getItem("pendingRecipeItems") || "[]");
-      pendingRecipeItems.push(recipeItem);
-      sessionStorage.setItem("pendingRecipeItems", JSON.stringify(pendingRecipeItems));
-      
+      let pendingRecipeItems2: unknown[] = [];
+      try {
+        const raw = JSON.parse(sessionStorage.getItem("pendingRecipeItems") || "[]");
+        if (Array.isArray(raw)) pendingRecipeItems2 = raw;
+      } catch {
+        sessionStorage.removeItem("pendingRecipeItems");
+      }
+      pendingRecipeItems2.push(recipeItem);
+      sessionStorage.setItem("pendingRecipeItems", JSON.stringify(pendingRecipeItems2));
+
       navigate("/create-recipe");
       return;
     }
-    
+
     // Add to food history
     addToHistory({
       name: food.name,
