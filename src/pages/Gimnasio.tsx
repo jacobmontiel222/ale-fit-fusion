@@ -1,8 +1,6 @@
 import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Plus, ChevronLeft, ChevronRight, CalendarIcon, Settings, GripVertical, Check, CalendarDays, ListChecks } from "lucide-react";
-import { StatsCard } from "@/components/StatsCard";
+import { ChevronLeft, ChevronRight, CalendarIcon, CalendarDays, ListChecks } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,129 +13,42 @@ import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
 import { useWeeklySchedule } from "@/hooks/useWeeklySchedule";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { AddExerciseDialog } from "@/components/AddExerciseDialog";
-import { TemplateExerciseCard } from "@/components/TemplateExerciseCard";
-import { ReorderExercisesModal } from "@/components/ReorderExercisesModal";
 import { NewRoutineDialog } from "@/components/NewRoutineDialog";
 import { MyRoutinesDialog } from "@/components/MyRoutinesDialog";
+import { MUSCLE_COLORS, MUSCLE_LABELS } from "@/types/workout";
 
-interface WorkoutSession {
+// Active session from the new schema
+interface ActiveSession {
   id: string;
-  date: string;
-  template_id: string | null;
-  completed: boolean;
-  template?: {
-    name: string;
-    color: string;
-  };
-}
-
-interface PlannedSet {
-  weight?: number;
-  reps?: number;
-  rest_seconds?: number;
-  minutes?: number;
-}
-
-interface TemplateExercise {
-  id: string;
-  exercise_name: string;
-  exercise_type: string;
-  reps_min: number;
-  reps_max: number;
-  order_index: number;
-  planned_sets: PlannedSet[];
+  routine_id: string | null;
+  status: 'active' | 'completed' | 'discarded';
+  started_at: string;
 }
 
 const Gimnasio = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
-  const [showAddExerciseDialog, setShowAddExerciseDialog] = useState(false);
-  const [showReorderModal, setShowReorderModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNewRoutineDialog, setShowNewRoutineDialog] = useState(false);
   const [showMyRoutinesDialog, setShowMyRoutinesDialog] = useState(false);
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+
   const { templates } = useWorkoutTemplates();
   const { schedule } = useWeeklySchedule();
 
-  // Load workout sessions from Supabase
-  useEffect(() => {
-    const loadSessions = async () => {
-      if (!user) return;
-
-      // Get start and end of current month for efficient loading
-      const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-
-      const { data: sessionsData } = await supabase
-        .from('workout_sessions')
-        .select(`
-          *,
-          workout_templates:template_id(name, color)
-        `)
-        .eq('user_id', user.id)
-        .gte('date', startOfMonth.toISOString().split('T')[0])
-        .lte('date', endOfMonth.toISOString().split('T')[0])
-        .order('date', { ascending: false });
-
-      if (sessionsData) {
-        const formattedSessions: WorkoutSession[] = sessionsData.map(s => ({
-          id: s.id,
-          date: s.date,
-          template_id: s.template_id,
-          completed: s.completed,
-          template: s.workout_templates ? {
-            name: s.workout_templates.name,
-            color: s.workout_templates.color,
-          } : undefined,
-        }));
-        setSessions(formattedSessions);
-      }
-    };
-
-    loadSessions();
-  }, [user, selectedDate]);
-
-  // Load exercises for the scheduled template
-  const loadTemplateExercises = async () => {
-    const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
-    if (!scheduledTemplate || scheduledTemplate.isRest || !('id' in scheduledTemplate)) {
-      setTemplateExercises([]);
-      return;
-    }
-
-    const { data: exercises } = await supabase
-      .from('template_exercises')
-      .select('*')
-      .eq('template_id', scheduledTemplate.id)
-      .order('order_index', { ascending: true });
-
-    if (exercises) {
-      setTemplateExercises(exercises as TemplateExercise[]);
-    }
-  };
-
-  useEffect(() => {
-    loadTemplateExercises();
-  }, [selectedDate, schedule, templates]);
-
-  // Generate calendar days (current week - Monday to Sunday)
+  // ── Week helpers ────────────────────────────────────────────────────────
   const getWeekDays = () => {
     const days = [];
     const current = new Date(selectedDate);
     const dayOfWeek = current.getDay();
-    // Adjust so Monday = 0, Tuesday = 1, ..., Sunday = 6
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const startOfWeek = new Date(current);
     startOfWeek.setDate(current.getDate() - mondayOffset);
-
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
       day.setDate(startOfWeek.getDate() + i);
@@ -147,15 +58,15 @@ const Gimnasio = () => {
   };
 
   const goToPreviousWeek = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() - 7);
-    setSelectedDate(newDate);
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - 7);
+    setSelectedDate(d);
   };
 
   const goToNextWeek = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + 7);
-    setSelectedDate(newDate);
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + 7);
+    setSelectedDate(d);
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -165,104 +76,139 @@ const Gimnasio = () => {
     }
   };
 
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   const todayLabel = new Date().toLocaleDateString(
-    i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language,
-    { day: 'numeric', month: 'long', year: 'numeric' }
+    i18n.language === "en" ? "en-US" : i18n.language === "es" ? "es-ES" : i18n.language,
+    { day: "numeric", month: "long", year: "numeric" }
   );
 
-  const getSessionsForDate = (date: Date) => {
-    return sessions.filter(s => s.date === formatDate(date));
-  };
-
+  // ── Schedule helpers ────────────────────────────────────────────────────
   const getScheduledTemplateForDate = (date: Date) => {
     const dayOfWeek = date.getDay();
-    // Convert Sunday (0) to 6, and Monday-Saturday to 0-5
     const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    
     const scheduleEntry = schedule.find(s => s.day_of_week === adjustedDay);
     if (!scheduleEntry) return null;
 
     if (scheduleEntry.is_rest_day) {
-      return { name: t('gym.restDay'), color: '#6B7280', isRest: true };
+      return { name: t("gym.restDay"), color: "#6B7280", isRest: true as const, id: "" };
     }
 
-    const template = templates.find(t => t.id === scheduleEntry.template_id);
+    const template = templates.find(tmpl => tmpl.id === scheduleEntry.template_id);
     if (!template) return null;
-
-    return { ...template, isRest: false };
+    return { ...template, isRest: false as const };
   };
 
-  const createSessionForDate = async () => {
-    if (!user) return;
+  const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
 
-    const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
-    if (!scheduledTemplate || scheduledTemplate.isRest) return;
+  // ── Load active session for selected date ───────────────────────────────
+  useEffect(() => {
+    const loadActiveSession = async () => {
+      if (!user) return;
 
-    // Verificar que tiene id (no es día de descanso)
-    const templateId = 'id' in scheduledTemplate ? scheduledTemplate.id : null;
-    if (!templateId) return;
+      // Look for any active session today that matches the routine/template
+      // In the new schema we check status='active' for today
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
-      .from('workout_sessions')
-      .insert({
-        user_id: user.id,
-        date: formatDate(selectedDate),
-        template_id: templateId,
-        completed: false,
-      })
-      .select()
-      .single();
+      const { data } = await supabase
+        .from("workout_sessions")
+        .select("id, routine_id, status, started_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .gte("started_at", startOfDay.toISOString())
+        .lte("started_at", endOfDay.toISOString())
+        .maybeSingle();
 
-    if (error) {
-      logger.error('Error creating session:', error);
-      return;
-    }
+      setActiveSession(data ?? null);
+    };
 
-    queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
+    loadActiveSession();
+  }, [user, selectedDate]);
 
-    // Reload sessions
-    const { data: sessionsData } = await supabase
-      .from('workout_sessions')
-      .select(`
-        *,
-        workout_templates:template_id(name, color)
-      `)
-      .eq('user_id', user.id)
-      .eq('date', formatDate(selectedDate));
+  const isToday = formatDate(selectedDate) === formatDate(new Date());
 
-    if (sessionsData && sessionsData.length > 0) {
-      const newSession: WorkoutSession = {
-        id: sessionsData[0].id,
-        date: sessionsData[0].date,
-        template_id: sessionsData[0].template_id,
-        completed: sessionsData[0].completed,
-        template: sessionsData[0].workout_templates ? {
-          name: sessionsData[0].workout_templates.name,
-          color: sessionsData[0].workout_templates.color,
-        } : undefined,
-      };
-      setSessions([...sessions, newSession]);
+  // ── Start session ───────────────────────────────────────────────────────
+  const handleStartSession = async () => {
+    if (!user || !scheduledTemplate || scheduledTemplate.isRest) return;
+
+    setIsStarting(true);
+    try {
+      // 1. Crear la sesión
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("workout_sessions")
+        .insert({
+          user_id: user.id,
+          status: "active",
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (sessionError || !sessionData) {
+        logger.error("Error creating session:", sessionError);
+        return;
+      }
+
+      // 2. Insertar los ejercicios de la rutina en workout_exercises
+      const exercises = scheduledTemplate.template_exercises ?? [];
+      if (exercises.length > 0) {
+        const wePayload = exercises.map((ex, idx) => ({
+          session_id: sessionData.id,
+          exercise_id: ex.exercise_id ?? null,
+          display_name: ex.custom_name ?? ex.exercise_name,
+          position: idx,
+          muscle_weights_snapshot: (ex.exercise?.muscle_weights ?? null) as any,
+        }));
+
+        const { data: weData, error: weError } = await supabase
+          .from("workout_exercises")
+          .insert(wePayload)
+          .select();
+
+        if (weError) {
+          logger.error("Error inserting workout_exercises:", weError);
+        } else if (weData) {
+          // 3. Insertar un set inicial por cada ejercicio
+          const setsPayload = weData.map((we: any) => ({
+            workout_exercise_id: we.id,
+            set_number: 1,
+            set_type: "normal",
+            is_completed: false,
+          }));
+
+          const { error: setsError } = await supabase
+            .from("workout_sets")
+            .insert(setsPayload);
+
+          if (setsError) {
+            logger.error("Error inserting default sets:", setsError);
+          }
+        }
+      }
+
+      navigate(`/sesion/${sessionData.id}`);
+    } finally {
+      setIsStarting(false);
     }
   };
 
   const weekDays = getWeekDays();
-  const daySessions = getSessionsForDate(selectedDate);
-  const scheduledTemplate = getScheduledTemplateForDate(selectedDate);
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-md mx-auto px-4 py-6">
-        {/* Header compacto con fecha actual */}
+        {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h1 className="text-2xl font-bold text-foreground leading-tight">{t('gym.title')}</h1>
+            <h1 className="text-2xl font-bold text-foreground leading-tight">{t("gym.title")}</h1>
             <p className="text-sm text-muted-foreground">{todayLabel}</p>
           </div>
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t('analytics.date')}>
+              <Button variant="ghost" size="icon" aria-label={t("analytics.date")}>
                 <CalendarIcon className="w-5 h-5" />
               </Button>
             </PopoverTrigger>
@@ -278,30 +224,35 @@ const Gimnasio = () => {
           </Popover>
         </div>
 
-        {/* Tira semanal compacta manteniendo color de rutina */}
+        {/* Weekly strip */}
         <div className="flex items-center gap-2 mb-6">
-          <Button variant="ghost" size="icon" onClick={goToPreviousWeek} aria-label={t('common.previous')}>
+          <Button variant="ghost" size="icon" onClick={goToPreviousWeek} aria-label={t("common.previous")}>
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="grid grid-cols-7 gap-2 flex-1">
             {weekDays.map((day, idx) => {
               const isSelected = formatDate(day) === formatDate(selectedDate);
               const isToday = formatDate(day) === formatDate(new Date());
-              const hasSessions = getSessionsForDate(day).length > 0;
               const dayTemplate = getScheduledTemplateForDate(day);
-              
+
               return (
                 <button
                   key={idx}
                   onClick={() => setSelectedDate(day)}
                   className={`flex flex-col items-center py-2 rounded-lg transition-colors relative ${
-                    isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary'
+                    isSelected ? "bg-primary text-primary-foreground" : "hover:bg-secondary"
                   }`}
                 >
                   <span className="text-xs text-muted-foreground mb-1">
-                    {day.toLocaleDateString(i18n.language === 'en' ? 'en-US' : i18n.language === 'es' ? 'es-ES' : i18n.language, { weekday: 'short' }).charAt(0).toUpperCase()}
+                    {day
+                      .toLocaleDateString(
+                        i18n.language === "en" ? "en-US" : i18n.language === "es" ? "es-ES" : i18n.language,
+                        { weekday: "short" }
+                      )
+                      .charAt(0)
+                      .toUpperCase()}
                   </span>
-                  <span className={`text-sm font-semibold ${isToday ? 'text-accent' : ''}`}>
+                  <span className={`text-sm font-semibold ${isToday ? "text-accent" : ""}`}>
                     {day.getDate()}
                   </span>
                   {dayTemplate && (
@@ -310,187 +261,154 @@ const Gimnasio = () => {
                       style={{ backgroundColor: dayTemplate.color }}
                     />
                   )}
-                  {hasSessions && !dayTemplate && (
-                    <div className="w-1 h-1 rounded-full bg-accent mt-1" />
-                  )}
                 </button>
               );
             })}
           </div>
-          <Button variant="ghost" size="icon" onClick={goToNextWeek} aria-label={t('common.next')}>
+          <Button variant="ghost" size="icon" onClick={goToNextWeek} aria-label={t("common.next")}>
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Schedule Section - Moved below calendar */}
+        {/* Schedule buttons */}
         <div className="mb-6">
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowScheduleModal(true)}
-            >
+            <Button variant="outline" className="w-full" onClick={() => setShowScheduleModal(true)}>
               <CalendarDays className="w-4 h-4 mr-2" />
-              {t('gym.scheduleWeek')}
+              {t("gym.scheduleWeek")}
             </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowMyRoutinesDialog(true)}
-            >
+            <Button variant="outline" className="w-full" onClick={() => setShowMyRoutinesDialog(true)}>
               <ListChecks className="w-4 h-4 mr-2" />
-              {t('gym.myRoutines')}
+              {t("gym.myRoutines")}
             </Button>
           </div>
         </div>
 
-        {/* Date Header */}
+        {/* Date header */}
         <div className="mb-4">
           <h2 className="text-2xl font-semibold text-foreground">
-            {selectedDate.toLocaleDateString(i18n.language, { day: 'numeric', month: 'long' })}
+            {selectedDate.toLocaleDateString(i18n.language, { day: "numeric", month: "long" })}
           </h2>
         </div>
 
-        {/* Template Name Subtitle */}
-        {scheduledTemplate && !scheduledTemplate.isRest && (
-          <div className="mb-4 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowReorderModal(true)}
-                className="p-1 hover:bg-secondary rounded transition-colors"
-                disabled={templateExercises.length === 0}
-              >
-                <GripVertical className="w-5 h-5 text-muted-foreground cursor-pointer" />
-              </button>
-              <button
-                onClick={() => setIsEditMode(true)}
-                className={cn(
-                  "p-1 rounded transition-colors",
-                  isEditMode ? "bg-primary/10 text-primary" : "hover:bg-secondary text-muted-foreground"
-                )}
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-              <h3 className="text-xl font-semibold" style={{ color: scheduledTemplate.color }}>
-                {scheduledTemplate.name}
-              </h3>
-            </div>
-            {isEditMode && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsEditMode(false)}
-              >
-                <Check className="w-5 h-5" />
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Exercises List or Empty State */}
-        <div className="space-y-3 mb-6">
-          {daySessions.length === 0 && !scheduledTemplate && (
-            <p className="text-center text-muted-foreground py-4">
-              {t('gym.noRoutineScheduled')}
-            </p>
+        {/* Day content */}
+        <div className="space-y-4">
+          {/* No routine scheduled */}
+          {!scheduledTemplate && (
+            <p className="text-center text-muted-foreground py-8">{t("gym.noRoutineScheduled")}</p>
           )}
 
-          {daySessions.length === 0 && scheduledTemplate && scheduledTemplate.isRest && (
-            <p className="text-center text-muted-foreground py-4">
-              {t('gym.restDayMessage')}
-            </p>
+          {/* Rest day */}
+          {scheduledTemplate?.isRest && (
+            <p className="text-center text-muted-foreground py-8">{t("gym.restDayMessage")}</p>
           )}
 
-          {daySessions.length === 0 && scheduledTemplate && !scheduledTemplate.isRest && (
-            <>
-              {templateExercises.length > 0 ? (
-                <>
-                  <div className="space-y-3">
-                    {templateExercises.map((exercise) => (
-                      <TemplateExerciseCard
-                        key={exercise.id}
-                        exercise={exercise}
-                        onUpdate={loadTemplateExercises}
-                        isEditMode={isEditMode}
-                      />
-                    ))}
+          {/* Routine scheduled */}
+          {scheduledTemplate && !scheduledTemplate.isRest && (() => {
+            const exercises = scheduledTemplate.template_exercises ?? [];
+            return (
+              <div className="bg-card rounded-2xl overflow-hidden">
+                {/* Header */}
+                <div className="px-5 pt-5 pb-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className="w-10 h-10 rounded-full shrink-0"
+                      style={{ backgroundColor: scheduledTemplate.color }}
+                    />
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground leading-tight">
+                        {scheduledTemplate.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {exercises.length} {t("gym.exercisesLabel")}
+                      </p>
+                    </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    className="w-full mt-3"
-                    onClick={() => setShowAddExerciseDialog(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    {t('gym.addExercise')}
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowAddExerciseDialog(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t('gym.addExercise')}
-                </Button>
-              )}
-            </>
-          )}
 
-          {daySessions.map((session) => (
-            <StatsCard
-              key={session.id}
-              className="cursor-pointer hover:bg-secondary/50 transition-colors"
-              onClick={() => navigate(`/gimnasio/session/${session.id}`)}
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {session.template?.name || t('gym.workout')}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {session.completed ? t('gym.completed') : t('gym.inProgress')}
-                  </p>
+                  {/* Exercise list */}
+                  {exercises.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      {exercises.map((ex, idx) => {
+                        const displayName = ex.custom_name ?? ex.exercise_name;
+                        const muscleWeights = (ex.exercise?.muscle_weights ?? null) as Record<string, number> | null;
+                        const topMuscle = muscleWeights
+                          ? Object.entries(muscleWeights).sort(([, a], [, b]) => b - a)[0]?.[0]
+                          : null;
+
+                        return (
+                          <div key={ex.id} className="flex items-center gap-3">
+                            <span
+                              className="text-sm font-medium text-muted-foreground w-5 text-right shrink-0"
+                            >
+                              {idx + 1}
+                            </span>
+                            <div
+                              className="w-1 h-4 rounded-full shrink-0"
+                              style={{ backgroundColor: scheduledTemplate.color }}
+                            />
+                            <span className="text-sm text-foreground flex-1 truncate">{displayName}</span>
+                            {topMuscle && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded shrink-0"
+                                style={{
+                                  backgroundColor: `${MUSCLE_COLORS[topMuscle] ?? "hsl(var(--muted))"}22`,
+                                  color: MUSCLE_COLORS[topMuscle] ?? "hsl(var(--muted-foreground))",
+                                }}
+                              >
+                                {MUSCLE_LABELS[topMuscle as keyof typeof MUSCLE_LABELS] ?? topMuscle.replace(/_/g, " ")}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {exercises.length === 0 && (
+                    <p className="text-sm text-muted-foreground mb-4">{t("gym.noExercisesYet")}</p>
+                  )}
+
+                  {/* CTA — solo si es hoy */}
+                  {isToday && (
+                    activeSession ? (
+                      <Button
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                        size="lg"
+                        onClick={() => navigate(`/sesion/${activeSession.id}`)}
+                      >
+                        {t("gym.continueSession")} →
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                        size="lg"
+                        disabled={isStarting}
+                        onClick={handleStartSession}
+                      >
+                        {isStarting ? t("common.loading") : `${t("gym.startSession")} →`}
+                      </Button>
+                    )
+                  )}
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </div>
-            </StatsCard>
-          ))}
+            );
+          })()}
         </div>
 
+        {/* Modals */}
         <WeeklyScheduleModal
           open={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
         />
-
         <NewRoutineDialog
           open={showNewRoutineDialog}
           onClose={() => setShowNewRoutineDialog(false)}
         />
-
         <MyRoutinesDialog
           open={showMyRoutinesDialog}
           onClose={() => setShowMyRoutinesDialog(false)}
           onCreateNewRoutine={() => setShowNewRoutineDialog(true)}
         />
-
-        {scheduledTemplate && !scheduledTemplate.isRest && 'id' in scheduledTemplate && (
-          <>
-            <AddExerciseDialog
-              open={showAddExerciseDialog}
-              onClose={() => setShowAddExerciseDialog(false)}
-              templateId={scheduledTemplate.id}
-              onExerciseAdded={loadTemplateExercises}
-            />
-            <ReorderExercisesModal
-              open={showReorderModal}
-              onClose={() => setShowReorderModal(false)}
-              templateId={scheduledTemplate.id}
-              exercises={templateExercises}
-              onReorder={loadTemplateExercises}
-            />
-          </>
-        )}
       </div>
 
       <BottomNav />

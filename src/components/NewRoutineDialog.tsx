@@ -2,26 +2,16 @@ import { logger } from "@/lib/logger";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWorkoutTemplates } from "@/hooks/useWorkoutTemplates";
-import { X } from "lucide-react";
+import { RoutineEditorDialog } from "@/components/RoutineEditorDialog";
+import { cn } from "@/lib/utils";
 
 const COLOR_OPTIONS = [
-  "#3B82F6", // blue
-  "#10B981", // green
-  "#F59E0B", // amber
-  "#EF4444", // red
-  "#8B5CF6", // purple
-  "#EC4899", // pink
-  "#06B6D4", // cyan
+  "#3B82F6", "#10B981", "#F59E0B", "#EF4444",
+  "#8B5CF6", "#EC4899", "#06B6D4", "#F97316",
 ];
 
 interface NewRoutineDialogProps {
@@ -34,45 +24,24 @@ export const NewRoutineDialog = ({ open, onClose }: NewRoutineDialogProps) => {
   const { createTemplate } = useWorkoutTemplates();
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLOR_OPTIONS[0]);
-  const [exerciseInput, setExerciseInput] = useState("");
-  const [exercises, setExercises] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-
-  const resetState = () => {
-    setName("");
-    setColor(COLOR_OPTIONS[0]);
-    setExerciseInput("");
-    setExercises([]);
-  };
+  const [newTemplateId, setNewTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
-      resetState();
+      setName("");
+      setColor(COLOR_OPTIONS[0]);
     }
   }, [open]);
 
-  const handleAddExercise = () => {
-    const trimmed = exerciseInput.trim();
-    if (!trimmed) return;
-    setExercises((prev) => [...prev, trimmed]);
-    setExerciseInput("");
-  };
-
-  const handleRemoveExercise = (index: number) => {
-    setExercises((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
   const handleSave = async () => {
-    if (!name.trim() || exercises.length === 0) return;
+    if (!name.trim()) return;
     setSaving(true);
     try {
-      await createTemplate({
-        name: name.trim(),
-        color,
-        exercises,
-      });
+      const data = await createTemplate({ name: name.trim(), color });
+      // Open editor immediately after creation
+      setNewTemplateId(data.id);
       onClose();
-      resetState();
     } catch (error) {
       logger.error("Error creating routine", error);
     } finally {
@@ -81,90 +50,63 @@ export const NewRoutineDialog = ({ open, onClose }: NewRoutineDialogProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm max-h-[85vh] flex flex-col">
-        <DialogHeader className="pb-2">
-          <DialogTitle>{t("gym.newRoutine")}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={v => !v && onClose()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("gym.newRoutine")}</DialogTitle>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-1 space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>{t("gym.templateName")}</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("gym.templateNamePlaceholder")}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("gym.color")}</Label>
-            <div className="flex gap-2 flex-wrap">
-              {COLOR_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                    color === option ? "border-foreground scale-110" : "border-border"
-                  }`}
-                  style={{ backgroundColor: option }}
-                  onClick={() => setColor(option)}
-                  type="button"
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t("gym.exercisesLabel")}</Label>
-            <div className="flex gap-2">
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t("gym.templateName")}</Label>
               <Input
-                value={exerciseInput}
-                onChange={(e) => setExerciseInput(e.target.value)}
-                placeholder={t("gym.exerciseName")}
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder={t("gym.templateNamePlaceholder")}
+                onKeyDown={e => e.key === "Enter" && handleSave()}
+                autoFocus
               />
-              <Button
-                type="button"
-                onClick={handleAddExercise}
-                disabled={!exerciseInput.trim()}
-              >
-                {t("common.add")}
-              </Button>
             </div>
-            {exercises.length > 0 && (
-              <div className="space-y-2">
-                {exercises.map((exercise, index) => (
-                  <div
-                    key={`${exercise}-${index}`}
-                    className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
-                  >
-                    <span className="text-sm text-foreground">{exercise}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveExercise(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+
+            <div className="space-y-2">
+              <Label>{t("gym.color")}</Label>
+              <div className="flex gap-2 flex-wrap">
+                {COLOR_OPTIONS.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
+                      color === c ? "border-foreground scale-110" : "border-transparent"
+                    )}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setColor(c)}
+                  />
                 ))}
               </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        <DialogFooter className="gap-2 pt-2">
-          <Button variant="outline" onClick={onClose}>
-            {t("common.cancel")}
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!name.trim() || exercises.length === 0 || saving}
-          >
-            {saving ? t("common.saving") : t("common.save")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={onClose}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleSave} disabled={!name.trim() || saving}>
+              {saving ? t("common.saving") : t("common.next")} →
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Open editor right after creation */}
+      {newTemplateId && (
+        <RoutineEditorDialog
+          templateId={newTemplateId}
+          open={!!newTemplateId}
+          onClose={() => setNewTemplateId(null)}
+        />
+      )}
+    </>
   );
 };

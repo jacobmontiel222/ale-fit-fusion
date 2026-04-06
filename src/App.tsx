@@ -110,6 +110,7 @@ const App = () => {
                   <Route path="/comunidad" element={<ProtectedRoute><SwipeWrapper><Comunidad /></SwipeWrapper></ProtectedRoute>} />
                   <Route path="/comunidad/:id" element={<ProtectedRoute><CommunityDetail /></ProtectedRoute>} />
                   <Route path="/gimnasio/session/:sessionId" element={<ProtectedRoute><WorkoutSession /></ProtectedRoute>} />
+                  <Route path="/sesion/:sessionId" element={<ProtectedRoute><WorkoutSession /></ProtectedRoute>} />
                   <Route path="/fityai" element={<ProtectedRoute><FityAI /></ProtectedRoute>} />
                   <Route path="/analytics" element={<ProtectedRoute><SwipeWrapper><Analytics /></SwipeWrapper></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

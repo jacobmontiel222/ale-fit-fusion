@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface WeightEntry {
   date: string;
@@ -45,6 +46,7 @@ const Index = () => {
   const [animateMacros, setAnimateMacros] = useState(false);
   const [animatedWater, setAnimatedWater] = useState(0);
   const [animatedBurn, setAnimatedBurn] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -165,7 +167,8 @@ const Index = () => {
       setShowAddWater(false);
       setWaterInput("");
     } catch (err) {
-      if (process.env.NODE_ENV !== 'production') console.error('Error saving water', err);
+      console.error('Error saving water', err);
+      toast({ title: 'Error al guardar agua', description: String((err as any)?.message || err), variant: 'destructive' });
     } finally {
       setSavingWater(false);
     }
@@ -201,7 +204,8 @@ const Index = () => {
       setShowAddSteps(false);
       setNewStepsAmount("");
     } catch (err) {
-      if (process.env.NODE_ENV !== 'production') console.error('Error saving steps', err);
+      console.error('Error saving steps', err);
+      toast({ title: 'Error al guardar pasos', description: String((err as any)?.message || err), variant: 'destructive' });
     } finally {
       setSavingSteps(false);
     }

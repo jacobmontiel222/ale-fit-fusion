@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Scale, Footprints, Droplet } from "lucide-react";
@@ -37,6 +38,7 @@ const Analytics = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const focusSection = searchParams.get('focus');
   const shouldAddWeight = searchParams.get('add') === 'true';
 
@@ -199,11 +201,11 @@ const Analytics = () => {
 
       setShowAddSteps(false);
       setNewStepsAmount("");
-
-      // Notifica a otras pantallas para que refresquen pasos
-      window.dispatchEvent(new Event('stepsUpdated'));
+      queryClient.invalidateQueries({ queryKey: ['dashboard', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
     } catch (e) {
       logger.error('Error saving steps', e);
+      toast({ title: 'Error al guardar pasos', description: String((e as any)?.message || e), variant: 'destructive' });
     } finally {
       setSavingSteps(false);
     }
@@ -389,7 +391,7 @@ const Analytics = () => {
 
   const addWeight = async () => {
     if (!newWeight || isNaN(Number(newWeight)) || !user) return;
-    
+
     const { error } = await supabase
       .from('daily_weight')
       .upsert({
@@ -399,6 +401,11 @@ const Analytics = () => {
       }, {
         onConflict: 'user_id,date'
       });
+
+    if (error) {
+      toast({ title: 'Error al guardar peso', description: error.message, variant: 'destructive' });
+      return;
+    }
 
     if (!error) {
       // Update current_weight in profiles table
@@ -420,6 +427,8 @@ const Analytics = () => {
       
       setWeightData(updatedData);
       queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
       setShowAddWeight(false);
       setNewWeight("");
       setNewWeightDate(format(new Date(), 'yyyy-MM-dd'));
@@ -450,6 +459,11 @@ const Analytics = () => {
         onConflict: 'user_id,date'
       });
 
+    if (error) {
+      toast({ title: 'Error al guardar agua', description: error.message, variant: 'destructive' });
+      return;
+    }
+
     if (!error) {
       const newEntry: WaterEntry = {
         date: newWaterDate,
@@ -461,6 +475,8 @@ const Analytics = () => {
       );
       
       setWaterData(updatedData);
+      queryClient.invalidateQueries({ queryKey: ['dashboard', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['gamification', user.id] });
       setShowAddWater(false);
       setNewWaterAmount("");
       setNewWaterDate(format(new Date(), 'yyyy-MM-dd'));

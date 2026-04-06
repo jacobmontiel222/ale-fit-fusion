@@ -57,10 +57,13 @@ export const CircularProgress = ({
   const carbsKcal = animatedCarbs * 4;
   
   // Calculate how much of the circle each macro should fill (based on kcal consumed vs total kcal goal)
-  const proteinArcLength = (proteinKcal / max) * circumference;
-  const fatArcLength = (fatKcal / max) * circumference;
-  const carbsArcLength = (carbsKcal / max) * circumference;
-  
+  // Cap total so arcs never exceed the full circle
+  const totalKcal = proteinKcal + fatKcal + carbsKcal;
+  const scale = totalKcal > max ? max / totalKcal : 1;
+  const proteinArcLength = Math.min((proteinKcal * scale / max) * circumference, circumference);
+  const fatArcLength = Math.min((fatKcal * scale / max) * circumference, circumference);
+  const carbsArcLength = Math.min((carbsKcal * scale / max) * circumference, circumference);
+
   // Calculate offsets so arcs appear sequentially (protein first, then fat, then carbs)
   const proteinOffset = circumference - proteinArcLength;
   const fatOffset = circumference - fatArcLength;
