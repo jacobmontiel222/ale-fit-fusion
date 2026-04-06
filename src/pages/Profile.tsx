@@ -329,7 +329,11 @@ const Profile = () => {
 
         {/* Streak + Fitness Score quick view */}
         <div className="grid grid-cols-2 gap-3">
-          <StreakCard streak={gamification.currentStreak} frozen={gamification.freezeAvailable} />
+          <StreakCard
+            streak={gamification.currentStreak}
+            freezeCount={gamification.freezeCount}
+            isStreakFrozen={gamification.isStreakFrozen}
+          />
           {/* Mini weekly score tile */}
           <StatsCard className="flex flex-col justify-between">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">

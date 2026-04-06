@@ -73,7 +73,10 @@ export interface GamificationState {
   totalXp: number;
   levelProgress: LevelProgress;
   currentStreak: number;
-  freezeAvailable: boolean;
+  /** Number of stored freezes (0–3). Earned at every new multiple-of-7 streak. */
+  freezeCount: number;
+  /** True when a freeze was consumed yesterday — the streak is actively protected. */
+  isStreakFrozen: boolean;
   dailyFitnessScore: DailyFitnessScore | null;
   weeklyFitnessScore: WeeklyFitnessScore | null;
   unlockedBadges: UserBadge[];

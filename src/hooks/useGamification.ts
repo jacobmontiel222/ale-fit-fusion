@@ -33,7 +33,8 @@ const EMPTY_STATE: GamificationState = {
   totalXp: 0,
   levelProgress: getLevelProgress(0),
   currentStreak: 0,
-  freezeAvailable: false,
+  freezeCount: 0,
+  isStreakFrozen: false,
   dailyFitnessScore: null,
   weeklyFitnessScore: null,
   unlockedBadges: [],
@@ -83,7 +84,7 @@ export function useGamification(): GamificationState {
       const [gamResult, badgesResult, weeklyResult, dailyResult] = await Promise.all([
         db
           .from('user_gamification')
-          .select('total_xp, current_streak, longest_streak, active_profile_title, freeze_available')
+          .select('total_xp, current_streak, longest_streak, active_profile_title, freeze_count, streak_frozen_date')
           .eq('user_id', userId)
           .single(),
 
@@ -117,7 +118,8 @@ export function useGamification(): GamificationState {
         gam: gamResult.data as {
           total_xp: number;
           current_streak: number;
-          freeze_available: boolean;
+          freeze_count: number;
+          streak_frozen_date: string | null;
           active_profile_title: string | null;
         } | null,
 
@@ -198,11 +200,19 @@ export function useGamification(): GamificationState {
       }
     : null;
 
+  // isStreakFrozen: a freeze was consumed yesterday — the UI shows "active frozen"
+  const yesterdayISO = (() => {
+    const d = new Date(getTodayISO());
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
+
   return {
     totalXp,
     levelProgress: getLevelProgress(totalXp),
     currentStreak: gam?.current_streak ?? 0,
-    freezeAvailable: gam?.freeze_available ?? false,
+    freezeCount: gam?.freeze_count ?? 0,
+    isStreakFrozen: (gam?.streak_frozen_date ?? null) === yesterdayISO,
     dailyFitnessScore,
     weeklyFitnessScore,
     unlockedBadges,
