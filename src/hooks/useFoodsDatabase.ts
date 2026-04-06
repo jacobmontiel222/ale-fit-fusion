@@ -112,6 +112,5 @@ export function useFoodsDatabase() {
     error,
     searchFoods,
     getFoodById,
-    reload: loadFoods,
   };
 }

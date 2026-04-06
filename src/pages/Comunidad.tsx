@@ -13,9 +13,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// NOTE: communities, community_members, communities_with_count are new tables/views.
-// Cast supabase as `any` until you regenerate types after applying the SQL migrations.
-const db = supabase as any;
+// communities, community_members, communities_with_count are not yet in the generated
+// Supabase types — cast per-query until `supabase gen types` is re-run after migrations.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const untypedDb = (table: string) => (supabase as any).from(table);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -114,8 +115,7 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await db
-        .from("communities")
+      const { data, error } = await untypedDb("communities")
         .insert({
           owner_id:    userId,
           name:        name.trim(),
@@ -129,8 +129,7 @@ const CreateCommunityForm = ({ onClose, onCreated, userId }: CreateCommunityForm
         .single();
       if (error) throw error;
 
-      const { error: memberError } = await db
-        .from("community_members")
+      const { error: memberError } = await untypedDb("community_members")
         .insert({ community_id: data.id, user_id: userId, role: "owner" });
       if (memberError) throw memberError;
     },
@@ -224,8 +223,7 @@ const Comunidad = () => {
   const { data: rows = [], isLoading } = useQuery<CommunityRow[]>({
     queryKey: ["communities", user?.id],
     queryFn: async () => {
-      const { data, error } = await db
-        .from("communities_with_count")
+      const { data, error } = await untypedDb("communities_with_count")
         .select("*")
         .order("member_count", { ascending: false });
       if (error) throw error;
@@ -238,8 +236,7 @@ const Comunidad = () => {
   const { data: ownedCommunity } = useQuery({
     queryKey: ["ownedCommunity", user?.id],
     queryFn: async () => {
-      const { data } = await db
-        .from("communities")
+      const { data } = await untypedDb("communities")
         .select("id")
         .eq("owner_id", user!.id)
         .maybeSingle();
@@ -253,8 +250,7 @@ const Comunidad = () => {
   // ── Join ───────────────────────────────────────────────────────────────────
   const joinMutation = useMutation({
     mutationFn: async (communityId: string) => {
-      const { error } = await db
-        .from("community_members")
+      const { error } = await untypedDb("community_members")
         .insert({ community_id: communityId, user_id: user!.id, role: "member" });
       if (error) throw error;
     },

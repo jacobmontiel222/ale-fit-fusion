@@ -35,10 +35,6 @@ const FityAI = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setFitAIUnread(false);
-  }, []);
-
-  useEffect(() => {
     try {
       const savedMessages = localStorage.getItem("fityai-chat-history");
       if (savedMessages) {

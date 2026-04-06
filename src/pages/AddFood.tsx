@@ -113,15 +113,15 @@ const AddFood = () => {
     protein: item.protein,
     fat: item.fat,
     carbs: item.carbs,
-    sugar: (item as any).sugar,
-    fiber: (item as any).fiber,
-    satFat: (item as any).satFat,
-    monoFat: (item as any).monoFat,
-    polyFat: (item as any).polyFat,
-    micronutrients: (item as any).micronutrients || { vitamins: [], minerals: [] },
+    sugar: item.sugar,
+    fiber: item.fiber,
+    satFat: item.satFat,
+    monoFat: item.monoFat,
+    polyFat: item.polyFat,
+    micronutrients: item.micronutrients || { vitamins: [], minerals: [] },
     servingSize: item.servingSize,
     servingUnit: item.servingUnit,
-    barcode: (item as any)?.barcode || undefined,
+    barcode: item.barcode || undefined,
     searchTerms: [],
     lastUpdated: undefined,
   });
@@ -163,12 +163,12 @@ const AddFood = () => {
     return { vitamins, minerals };
   };
 
-  const computeAdjustedMicros = (food: FoodItemType, multiplier: number) => ({
-    vitamins: food.micronutrients.vitamins.map(v => ({
+  const computeAdjustedMicros = (food: { micronutrients?: { vitamins: Micronutrient[]; minerals: Micronutrient[] } }, multiplier: number) => ({
+    vitamins: (food.micronutrients?.vitamins ?? []).map(v => ({
       ...v,
       amount: Math.round(v.amount * multiplier * 100) / 100,
     })),
-    minerals: food.micronutrients.minerals.map(m => ({
+    minerals: (food.micronutrients?.minerals ?? []).map(m => ({
       ...m,
       amount: Math.round(m.amount * multiplier * 100) / 100,
     })),
@@ -266,9 +266,9 @@ const AddFood = () => {
     carbs: seed?.carbs ?? 0,
     fiber: seed?.fiber,
     sugar: seed?.sugar,
-    satFat: (seed as any)?.satFat,
-    monoFat: (seed as any)?.monoFat,
-    polyFat: (seed as any)?.polyFat,
+    satFat: seed?.satFat,
+    monoFat: seed?.monoFat,
+    polyFat: seed?.polyFat,
     micronutrients: seed?.micronutrients || { vitamins: [], minerals: [] },
     servingSize: seed?.servingSize ?? 100,
     servingUnit: seed?.servingUnit || 'g',
@@ -634,7 +634,7 @@ const AddFood = () => {
     }
   };
 
-  const upsertCommunityFood = async (food: FoodItem, source: 'scan' | 'manual') => {
+  const upsertCommunityFood = async (food: FoodItem | FoodItemType, source: 'scan' | 'manual') => {
     if (!profile?.share_foods_with_community) return;
 
     const unit = (food.servingUnit || '').toLowerCase();
@@ -661,9 +661,9 @@ const AddFood = () => {
           fat: food.fat,
           sugars_g: food.sugar ?? 0,
           fiber_g: food.fiber ?? 0,
-          sat_fat_g: (food as any).satFat ?? 0,
-          mono_fat_g: (food as any).monoFat ?? 0,
-          poly_fat_g: (food as any).polyFat ?? 0,
+          sat_fat_g: food.satFat ?? 0,
+          mono_fat_g: food.monoFat ?? 0,
+          poly_fat_g: food.polyFat ?? 0,
           micronutrients: baseMicros,
           ...microCols,
           created_by: user?.id || null,
@@ -789,9 +789,9 @@ const AddFood = () => {
       carbs: round1(food.carbs),
       sugar: round1(food.sugar),
       fiber: round1(food.fiber),
-      satFat: round1((food as any).satFat),
-      monoFat: round1((food as any).monoFat),
-      polyFat: round1((food as any).polyFat),
+      satFat: round1(food.satFat),
+      monoFat: round1(food.monoFat),
+      polyFat: round1(food.polyFat),
     };
   };
 
@@ -811,7 +811,7 @@ const AddFood = () => {
       return;
     }
     const adjustedMacros = calculateAdjustedMacros(foodToAdd, servingAmount);
-    const adjustedMicronutrients = computeAdjustedMicros(foodToAdd as any, servingAmount / (foodToAdd.servingSize || 100));
+    const adjustedMicronutrients = computeAdjustedMicros(foodToAdd, servingAmount / (foodToAdd.servingSize || 100));
     const microCols = microsToColumns(adjustedMicronutrients);
     
     // Check if adding to recipe
@@ -849,12 +849,12 @@ const AddFood = () => {
       protein: foodToAdd.protein,
       fat: foodToAdd.fat,
       carbs: foodToAdd.carbs,
-      sugar: (foodToAdd as any).sugar,
-      fiber: (foodToAdd as any).fiber,
-      satFat: (foodToAdd as any).satFat,
-      monoFat: (foodToAdd as any).monoFat,
-      polyFat: (foodToAdd as any).polyFat,
-      micronutrients: (foodToAdd as any).micronutrients,
+      sugar: foodToAdd.sugar,
+      fiber: foodToAdd.fiber,
+      satFat: foodToAdd.satFat,
+      monoFat: foodToAdd.monoFat,
+      polyFat: foodToAdd.polyFat,
+      micronutrients: foodToAdd.micronutrients,
       servingSize: foodToAdd.servingSize,
       servingUnit: foodToAdd.servingUnit,
       meal: meal,
@@ -956,9 +956,9 @@ const AddFood = () => {
       carbs: Math.round(food.carbs * multiplier * 10) / 10,
       sugar: Math.round((food.sugar || 0) * multiplier * 10) / 10,
       fiber: Math.round((food.fiber || 0) * multiplier * 10) / 10,
-      satFat: Math.round(((food as any).satFat || 0) * multiplier * 10) / 10,
-      monoFat: Math.round(((food as any).monoFat || 0) * multiplier * 10) / 10,
-      polyFat: Math.round(((food as any).polyFat || 0) * multiplier * 10) / 10,
+      satFat: Math.round((food.satFat || 0) * multiplier * 10) / 10,
+      monoFat: Math.round((food.monoFat || 0) * multiplier * 10) / 10,
+      polyFat: Math.round((food.polyFat || 0) * multiplier * 10) / 10,
     };
     
     // Calcular micronutrientes ajustados
@@ -1043,7 +1043,7 @@ const AddFood = () => {
 
     // Compartir con comunidad si aplica
     const source: 'scan' | 'manual' = food.barcode ? 'scan' : 'manual';
-    upsertCommunityFood(food as any, source);
+    upsertCommunityFood(food, source);
     
     invalidateMeals(selectedDate);
     toast.success(t('addFood.addSuccess', { food: food.name, meal }));
