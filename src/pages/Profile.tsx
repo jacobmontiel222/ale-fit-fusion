@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
-import { getState, exportJSON, importJSON } from "@/lib/storage";
+import { exportJSON, importJSON } from "@/lib/storage";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { AvatarSelector } from "@/components/AvatarSelector";
@@ -56,7 +56,6 @@ interface ProfileData {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const state = getState();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<ProfileData>({
@@ -448,7 +447,7 @@ const Profile = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-foreground">{t('profile.units')}</span>
-              <span className="text-muted-foreground">{state.profile.weightUnit === 'kg' ? t('profile.metric') : t('profile.imperial')}</span>
+              <span className="text-muted-foreground">{t('profile.metric')}</span>
             </div>
             <button
               className="w-full flex justify-between items-center text-left"
